@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import admin from 'firebase-admin';
 import HealthCheckLog from '../../models/HealthCheckLog';
+import { testConnection as testCloudinary } from '../../services/cloudinary.service';
 import { success, error } from '../../utils/response';
 import config from '../../config';
 
@@ -18,6 +20,14 @@ export async function check(req: Request, res: Response): Promise<void> {
     dbWrite = false;
   }
 
+  let cloudinary = false;
+  try {
+    cloudinary = await testCloudinary();
+  } catch {
+    cloudinary = false;
+  }
+
+  const firebase = admin.apps.length > 0;
   const dbConnected = mongoose.connection.readyState === 1;
 
   if (!dbConnected && !dbWrite) {
@@ -29,6 +39,8 @@ export async function check(req: Request, res: Response): Promise<void> {
     status: 'ok',
     db: dbConnected ? 'connected' : 'disconnected',
     dbWrite,
+    cloudinary,
+    firebase,
     version: process.env.npm_package_version ?? '1.0.0',
     environment: config.NODE_ENV,
     timestamp: new Date().toISOString(),
