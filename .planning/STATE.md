@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-17"
+last_updated: "2026-05-17T15:04:46Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State — Ủ App
@@ -56,7 +56,7 @@ Phase 6 [          ] 0%
 
 - Requirements covered: 62/62
 - Phases completed: 0/6
-- Plans completed: 3 (01-01 scaffold, 01-02 backend core, 01-03 mobile foundation)
+- Plans completed: 4 (01-01 scaffold, 01-02 backend core, 01-03 mobile foundation, 01-05 CI/CD)
 
 ## Accumulated Context
 
@@ -69,6 +69,9 @@ Phase 6 [          ] 0%
 - Google OAuth uses `@react-native-google-signin/google-signin` (native), not `expo-auth-session`
 - MongoDB requires compound index `{ userId: 1, date: -1 }` from Phase 1
 - Push notifications use server-side FCM (not local scheduling) for OEM device compatibility
+- Render deploy target: singapore region, free tier, healthCheckPath /api/health
+- EAS build: 3 profiles (development/preview/production), free tier for dev phase
+- Mobile CI excluded from GitHub Actions (requires Expo environment) — run typecheck locally
 
 ### Open Questions
 
@@ -92,8 +95,8 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: 01-03 (Mobile Foundation) complete — Expo Router layout, providers, API client, push token module, health-check screen.
-**Next action**: Execute 01-PLAN-04 (Third-Party Services) and 01-PLAN-05 (CI/CD + Environment) — Wave 3
+**Last action**: 01-05 (CI/CD + Environment) complete — GitHub Actions CI, EAS 3-profile build, Render deploy config, ESLint configs, README.
+**Next action**: Execute 01-PLAN-04 (Third-Party Services) — Wave 3 remaining plan
 **Resume file**: `.planning/phases/01-infrastructure/01-PLAN-04.md`
 
 ## Last Updated

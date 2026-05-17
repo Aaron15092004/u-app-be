@@ -51,7 +51,7 @@ Wave 2 *(blocked on Wave 1)*:
 Wave 3 *(blocked on Wave 2)*:
 
 - [ ] 01-PLAN-04.md — Third-party services: Cloudinary upload, Firebase Admin SDK, FCM service, AI food service stubs, push token endpoint
-- [ ] 01-PLAN-05.md — CI/CD: GitHub Actions lint+typecheck, EAS 3-profile config, Render deploy config, env file audit
+- [x] 01-PLAN-05.md — CI/CD: GitHub Actions lint+typecheck, EAS 3-profile config, Render deploy config, env file audit
 
 **Cross-cutting constraints:** TypeScript strict mode across all workspaces (D-07); compound indexes on all health collections required before Phase 2 (D-11); JWT tokens only in expo-secure-store never AsyncStorage (D-22)
 
