@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: authentication
-status: draft
+status: approved
+reviewed_at: 2026-05-17
 shadcn_initialized: false
 preset: none
 created: 2026-05-17
@@ -50,7 +51,7 @@ All values are multiples of 4. NativeWind uses numeric notation (`p-4` = 16px, `
 - Touch targets for all tappable elements: minimum 44px height (Apple HIG requirement) — use `min-h-[44px]` on pressable elements
 - Primary button height: 52px (`h-[52px]`) — matches Figma button height
 - Input field height: 52px (`h-[52px]`) — visual parity with button
-- Dot indicator (onboarding pagination): 8px diameter active, 6px inactive — `w-2 h-2` active, `w-1.5 h-1.5` inactive
+- Dot indicator (onboarding pagination): 8px diameter active, 8px inactive — `w-2 h-2` active, `w-2 h-2` inactive (active dot is a pill: `w-5 h-2 rounded-full`; inactive dot is a circle: `w-2 h-2 rounded-full`)
 
 ---
 
@@ -92,7 +93,7 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 
 **Accent reserved for:** Primary CTA button fill, active pagination dot, navigation link text, input focus border, onboarding feature icon tile background (at ~15% opacity = `bg-primary/15`).
 
-**Orange accent (`#FF6B35`) is NOT used in Phase 2.** Reserved exclusively for workout timer screens (Phase 3).
+**Orange accent (`#FF6B35`) is used only in Screen 3 decorative illustration badges (non-interactive); reserved for workout screens in all functional UI.**
 
 **60/30/10 breakdown:**
 - 60%: White screen backgrounds (`#FFFFFF`)
@@ -115,7 +116,7 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 3. **Heading** — "Chào mừng đến với Ủ" — Display size (28px), Bold, `text-text`, centered, `mt-8`
 4. **Subtitle** — "Ứng dụng quản lý sức khỏe toàn diện với dinh dưỡng từ thực vật" — Body size (16px), Regular, `text-text-secondary`, centered, `mt-3`, `px-8`
 5. **Flex spacer**
-6. **Pagination dots** — 3 dots. Dot 1 active (green, 8px wide pill shape `w-5 h-2 rounded-full bg-primary`), Dots 2-3 inactive (grey, `w-2 h-2 rounded-full bg-gray-300`). Centered row, `gap-2`, `mb-6`
+6. **Pagination dots** — 3 dots. Dot 1 active (green, pill shape `w-5 h-2 rounded-full bg-primary`), Dots 2-3 inactive (grey, `w-2 h-2 rounded-full bg-gray-300`). Centered row, `gap-2`, `mb-6`
 7. **Primary button** — "Tiếp tục" — full-width, `h-[52px]`, `bg-primary`, white text, `rounded-2xl`, `mx-6`, `mb-3`
 8. **No skip button** — "Bỏ qua" link shown in Figma is REMOVED per D-35. Do not render it.
 
@@ -135,7 +136,7 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 3. **Heading** — "Theo dõi sức khỏe hàng ngày" — Display size (28px), Bold, `text-text`, centered, `mt-8`, `px-6`
 4. **Subtitle** — "Phân tích bữa ăn, theo dõi BMI, và quản lý lịch tập luyện một cách dễ dàng" — Body size (16px), Regular, `text-text-secondary`, centered, `mt-3`, `px-8`
 5. **Flex spacer**
-6. **Pagination dots** — Dot 2 active, Dots 1 and 3 inactive. Same dimensions as Screen 1.
+6. **Pagination dots** — Dot 2 active (pill `w-5 h-2 rounded-full bg-primary`), Dots 1 and 3 inactive (`w-2 h-2 rounded-full bg-gray-300`). Same gap and row spec as Screen 1.
 7. **Primary button** — "Tiếp tục" — same spec as Screen 1
 8. **No skip button** — Do not render per D-35.
 
@@ -151,15 +152,15 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 
 **Structure (top to bottom):**
 1. **Flex spacer**
-2. **Hero illustration** — Green circle (`w-32 h-32 rounded-full bg-primary`), centered, with white heart icon overlay (Ionicons `heart` size 48, white). Two small orange accent badges floating: lightning bolt (`bg-accent`, top-left of circle) and smiley face (`bg-accent`, top-right). Badge size: `w-8 h-8 rounded-full`. This matches Figma Screen 3 illustration exactly. **Note:** Orange badge here is decorative illustration only — not a functional UI element. Still follows the no-orange-on-auth-screens rule for interactive elements.
+2. **Hero illustration** — Green circle (`w-32 h-32 rounded-full bg-primary`), centered, with white heart icon overlay (Ionicons `heart` size 48, white). Two small orange accent badges floating: lightning bolt (`bg-accent`, top-left of circle) and smiley face (`bg-accent`, top-right). Badge size: `w-8 h-8 rounded-full`. This matches Figma Screen 3 illustration exactly. **Note:** Orange (`#FF6B35`) badges here are decorative illustration elements only — not interactive UI. The orange accent is not used on any button, label, border, or functional element in Phase 2.
 3. **Heading** — "Bắt đầu hành trình khỏe mạnh" — Display size (28px), Bold, `text-text`, centered, `mt-8`, `px-6`
 4. **Subtitle** — "Xây dựng thói quen lành mạnh và đạt được mục tiêu sức khỏe của bạn" — Body (16px), Regular, `text-text-secondary`, centered, `mt-3`, `px-8`
 5. **Flex spacer**
-6. **Pagination dots** — Dot 3 active, Dots 1-2 inactive.
+6. **Pagination dots** — Dot 3 active (pill `w-5 h-2 rounded-full bg-primary`), Dots 1-2 inactive (`w-2 h-2 rounded-full bg-gray-300`).
 7. **Primary button "Tạo tài khoản"** — full-width, `h-[52px]`, `bg-primary`, white text, `rounded-2xl`, `mx-6`, `mb-3`
 8. **Secondary button "Đăng nhập"** — full-width, `h-[52px]`, white background, `border border-primary`, green text (`text-primary`), `rounded-2xl`, `mx-6`, `mb-6`
 
-**Note on Screen 3 buttons:** The Figma shows two CTAs ("Tạo tài khoản" + "Đăng nhập"), which overrides the CONTEXT description of a single "Bắt đầu" button. Following Figma as visual source of truth. Both routes to the auth group: "Tạo tài khoản" → `/(auth)/register`; "Đăng nhập" → `/(auth)/login`.
+**Note on D-36 deviation:** CONTEXT.md D-36 described a single "Bắt đầu" button on this screen. The Figma (Screen 3) shows two separate CTAs: "Tạo tài khoản" (primary filled) and "Đăng nhập" (secondary outlined). This spec follows the Figma as visual source of truth. The planner must account for two distinct navigation paths from Screen 3: "Tạo tài khoản" → `/(auth)/register`; "Đăng nhập" → `/(auth)/login`. D-36 is superseded by this Figma-based decision.
 
 **On tap of either button:** Set `onboarding_seen = true` in MMKV (D-34) before navigating.
 
@@ -177,8 +178,8 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 1. **Back chevron** — top-left, `mt-4`, Ionicons `chevron-back`, size 24, `text-text`. Navigate back (only shown if navigated from Onboarding Screen 3 "Đăng nhập" path; hidden if user arrived from cold start with `onboarding_seen = true`). Use Expo Router `router.canGoBack()` to conditionally render.
 2. **Screen title** — "Đăng nhập" — Heading (24px), Bold, `text-text`, `mt-8`
 3. **Subtitle** — "Chào mừng trở lại! Tiếp tục hành trình sức khỏe của bạn" — Body (16px), Regular, `text-text-secondary`, `mt-2`
-4. **Email field** — Label: "Email" (Label 14px, Bold `font-semibold`, `text-text`, `mt-6`). Input: `h-[52px]`, `bg-background`, `border border-gray-300`, `rounded-xl`, `px-4`, `pl-10` (for icon). Left icon: Ionicons `mail-outline` size 18, `text-text-secondary`, absolutely positioned at left center. Placeholder: "email@example.com" (`text-text-secondary`).
-5. **Password field** — Label: "Mật khẩu" (same label spec, `mt-4`). Input: same dimensions. Left icon: Ionicons `lock-closed-outline`. Right icon: eye toggle (Ionicons `eye-outline` / `eye-off-outline`, tappable, `text-text-secondary`). Placeholder: "Nhập mật khẩu".
+4. **Email field** — Label: "Email" (Label 14px, Bold `font-bold`, `text-text`, `mt-6`). Input: `h-[52px]`, `bg-background`, `border border-gray-300`, `rounded-xl`, `px-4`, `pl-10` (for icon). Left icon: Ionicons `mail-outline` size 18, `text-text-secondary`, absolutely positioned at left center. Placeholder: "email@example.com" (`text-text-secondary`).
+5. **Password field** — Label: "Mật khẩu" (same label spec: Label 14px, Bold `font-bold`, `text-text`, `mt-4`). Input: same dimensions. Left icon: Ionicons `lock-closed-outline`. Right icon: eye toggle (Ionicons `eye-outline` / `eye-off-outline`, tappable, `text-text-secondary`). Placeholder: "Nhập mật khẩu".
 6. **"Quên mật khẩu?"** — Label (14px), Regular, `text-primary`, right-aligned (`self-end`), `mt-2`. Navigate to `/(auth)/forgot-password`.
 7. **"Đăng nhập" primary button** — full-width, `h-[52px]`, `bg-primary`, white text Bold, `rounded-2xl`, `mt-6`. Shows `ActivityIndicator` (white) in place of text while loading.
 8. **Divider row** — `mt-6`, horizontal line `flex-1 h-[1px] bg-gray-200` with "hoặc" text Body (16px) `text-text-secondary` centered. Used to separate email login from OAuth.
@@ -206,7 +207,7 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 3. **Subtitle** — "Tham gia cộng đồng Ủ để bắt đầu hành trình sức khỏe" — Body (16px), Regular, `text-text-secondary`, `mt-2`
 4. **Email field** — same spec as Login email field, Label: "Email", `mt-6`
 5. **Password field** — same spec as Login password field, Label: "Mật khẩu", `mt-4`. Placeholder: "Tối thiểu 8 ký tự".
-6. **Confirm password field** — Label: "Xác nhận mật khẩu", same spec, `mt-4`. Placeholder: "Nhập lại mật khẩu". Left icon: Ionicons `lock-closed-outline`. Right eye toggle.
+6. **Confirm password field** — Label: "Xác nhận mật khẩu" (Label 14px, Bold `font-bold`, `text-text`), same input spec, `mt-4`. Placeholder: "Nhập lại mật khẩu". Left icon: Ionicons `lock-closed-outline`. Right eye toggle.
 7. **Terms agreement text** — inline text (not checkbox per Figma Screen 5). Label (14px), Regular, `text-text-secondary`, `mt-4`: "Tôi đồng ý với " + "Điều khoản dịch vụ" (`text-primary`, tappable, opens modal/webview) + " và " + "Chính sách bảo mật" (`text-primary`, tappable). User must have scrolled through and tapped "Tôi đồng ý" — implement as checkbox state internally (terms must be agreed before submission); visually render as inline tappable text per Figma.
 8. **"Đăng ký" primary button** — full-width, `h-[52px]`, `bg-primary`, white text Bold, `rounded-2xl`, `mt-6`. Disabled + dimmed (`opacity-50`) until Terms accepted. Shows `ActivityIndicator` while loading.
 9. **Login link row** — "Đã có tài khoản? " (`text-text-secondary`) + "Đăng nhập" (`text-primary`, Bold). Centered, `mt-6`, `mb-8`.
@@ -225,11 +226,11 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 1. **Progress indicator** — "Bước cuối cùng" — Label (14px), `text-text-secondary`, centered, `mt-6`. Below it: thin progress bar showing ~80% complete (`h-1 bg-primary rounded-full`) within grey track (`bg-gray-200`). Visual cue that user is almost done.
 2. **Screen title** — "Hoàn thiện hồ sơ" — Heading (24px), Bold, `text-text`, `mt-4`
 3. **Subtitle** — "Chúng tôi cần thêm một vài thông tin để cá nhân hóa trải nghiệm của bạn" — Body (16px), Regular, `text-text-secondary`, `mt-2`
-4. **Tên field** — Label: "Họ và tên", Input: `h-[52px]`, same input spec as auth screens. Placeholder: "Nguyễn Văn A". `mt-6`.
-5. **Tuổi field** — Label: "Tuổi", Input: numeric keyboard (`keyboardType="numeric"`), `h-[52px]`. Placeholder: "25". `mt-4`. Right unit label: "tuổi" (`text-text-secondary`, absolutely positioned right inside input).
-6. **Chiều cao field** — Label: "Chiều cao", Input: numeric keyboard, `h-[52px]`. Placeholder: "170". `mt-4`. Right unit label: "cm".
-7. **Cân nặng field** — Label: "Cân nặng", Input: numeric keyboard, `h-[52px]`. Placeholder: "60". `mt-4`. Right unit label: "kg".
-8. **Mục tiêu sức khỏe** — Label: "Mục tiêu sức khỏe", `mt-4`. Three tappable option cards in a column, each `h-[52px]`, `rounded-xl`, `border`, `px-4`. Default state: `border-gray-300 bg-background`. Selected state: `border-primary bg-primary/10`. Options:
+4. **Tên field** — Label: "Họ và tên" (Label 14px, Bold `font-bold`, `text-text`), Input: `h-[52px]`, same input spec as auth screens. Placeholder: "Nguyễn Văn A". `mt-6`.
+5. **Tuổi field** — Label: "Tuổi" (Label 14px, Bold `font-bold`, `text-text`), Input: numeric keyboard (`keyboardType="numeric"`), `h-[52px]`. Placeholder: "25". `mt-4`. Right unit label: "tuổi" (`text-text-secondary`, absolutely positioned right inside input).
+6. **Chiều cao field** — Label: "Chiều cao" (Label 14px, Bold `font-bold`, `text-text`), Input: numeric keyboard, `h-[52px]`. Placeholder: "170". `mt-4`. Right unit label: "cm".
+7. **Cân nặng field** — Label: "Cân nặng" (Label 14px, Bold `font-bold`, `text-text`), Input: numeric keyboard, `h-[52px]`. Placeholder: "60". `mt-4`. Right unit label: "kg".
+8. **Mục tiêu sức khỏe** — Label: "Mục tiêu sức khỏe" (Label 14px, Bold `font-bold`, `text-text`), `mt-4`. Three tappable option cards in a column, each `h-[52px]`, `rounded-xl`, `border`, `px-4`. Default state: `border-gray-300 bg-background`. Selected state: `border-primary bg-primary/10`. Options:
    - "Giảm cân" (value: `lose`) — Ionicons `trending-down-outline` left icon
    - "Duy trì cân nặng" (value: `maintain`) — Ionicons `remove-outline` left icon
    - "Tăng cân / Tăng cơ" (value: `gain`) — Ionicons `trending-up-outline` left icon
@@ -251,7 +252,7 @@ Values sourced from `mobile/tailwind.config.js` and `mobile/src/constants/colors
 1. **Back chevron**, `mt-4`
 2. **Screen title** — "Quên mật khẩu" — Heading (24px), Bold, `mt-8`
 3. **Subtitle** — "Nhập email của bạn và chúng tôi sẽ gửi link đặt lại mật khẩu" — Body (16px), `text-text-secondary`, `mt-2`
-4. **Email field** — same spec, Label: "Email", `mt-6`
+4. **Email field** — same spec, Label: "Email" (Label 14px, Bold `font-bold`, `text-text`), `mt-6`
 5. **"Gửi link đặt lại" button** — full-width, `h-[52px]`, `bg-primary`, white text, `rounded-2xl`, `mt-6`
 6. **Success state** (after submission): Replace form with a centered success message — Ionicons `checkmark-circle` size 64 in `text-primary`, then "Email đã được gửi!" (Heading 24px), then "Kiểm tra hộp thư của bạn và nhấn vào link để đặt lại mật khẩu." (Body, `text-text-secondary`). Button: "Quay lại đăng nhập" (outlined, `border-primary`, `text-primary`).
 
@@ -433,12 +434,12 @@ Auth Actions:
 |----------------|--------|--------|
 | Primary color `#4CAF50` | `tailwind.config.js` line 9 | Pre-populated from codebase |
 | Primary dark `#388E3C` | `tailwind.config.js` line 10 | Pre-populated from codebase |
-| Accent `#FF6B35` (excluded from auth) | `tailwind.config.js` line 11 | Confirmed: not used in Phase 2 |
+| Accent `#FF6B35` (decorative-only in auth) | `tailwind.config.js` line 11 | Confirmed: non-interactive use only in Screen 3 illustration |
 | Background `#F5F5F5` | `tailwind.config.js` line 13 | Pre-populated from codebase |
 | Surface `#FFFFFF` | `tailwind.config.js` line 14 | Pre-populated from codebase |
 | NativeWind v4 styling | D-18, `package.json` | Pre-populated from Phase 1 |
 | No skip button | D-35 | Pre-populated from CONTEXT.md |
-| Screen 3 → Login (or Register) | D-36 + Figma Screen 3 | Figma shows two buttons; followed |
+| Screen 3 → two CTAs (overrides D-36 single button) | D-36 + Figma Screen 3 | Figma takes precedence; D-36 superseded |
 | Profile setup fields (5 fields) | D-31 | Pre-populated from CONTEXT.md |
 | Register fields (email+pw+confirm+terms) | D-32 | Pre-populated from CONTEXT.md |
 | MMKV onboarding_seen key | D-34 | Pre-populated from CONTEXT.md |
@@ -467,6 +468,7 @@ Auth Actions:
 
 *Phase: 2-Authentication*
 *UI-SPEC created: 2026-05-17*
+*UI-SPEC revised: 2026-05-17 — fixed font-semibold → font-bold (D4 block), fixed inactive dot w-1.5→w-2 (D5 block), clarified orange accent usage, added explicit D-36 deviation note*
 *Figma screens analyzed: 5 (Screen 1–5); Screen 6 (complete-profile) and Screen 7 (forgot-password) derived from requirements.*
 *Pre-populated decisions: 20 from upstream artifacts (CONTEXT.md, Phase 1 decisions, tailwind.config.js)*
 *User questions asked: 0 (all design decisions resolved from upstream)*
