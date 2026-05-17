@@ -2,49 +2,41 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-17T15:04:46Z"
+status: in_progress
+last_updated: "2026-05-17T15:27:04.509Z"
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 5
-  completed_plans: 4
-  percent: 80
+  total_plans: 0
+  completed_plans: 5
+  percent: 0
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — Infrastructure (Planned, ready to execute)
+Phase 2 — Authentication (Not Started)
 
 ## Status
 
-Phase 1 planned — 5 plans in 3 waves
+Phase 1 completed — all 5 plans executed across 3 waves
 
 ## Phase Progress
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Infrastructure | Planned (5 plans) |
+| 1 | Infrastructure | Completed (5/5 plans) |
 | 2 | Authentication | Not Started |
 | 3 | Core Health Tracking | Not Started |
 | 4 | AI Food Scan | Not Started |
 | 5 | Home Dashboard, Profile & Notifications | Not Started |
 | 6 | Admin Web Dashboard | Not Started |
 
-## Current Plan
-
-Phase 1 — 5 plans across 3 waves:
-
-- Wave 1: 01-PLAN-01 (Project Scaffold)
-- Wave 2: 01-PLAN-02 (Backend Core + MongoDB), 01-PLAN-03 (Mobile Foundation) [parallel]
-- Wave 3: 01-PLAN-04 (Third-Party Services), 01-PLAN-05 (CI/CD + Environment) [parallel]
-
 ## Progress Bar
 
 ```
-Phase 1 [          ] 0%
+Phase 1 [##########] 100%
 Phase 2 [          ] 0%
 Phase 3 [          ] 0%
 Phase 4 [          ] 0%
@@ -55,8 +47,8 @@ Phase 6 [          ] 0%
 ## Performance Metrics
 
 - Requirements covered: 62/62
-- Phases completed: 0/6
-- Plans completed: 4 (01-01 scaffold, 01-02 backend core, 01-03 mobile foundation, 01-05 CI/CD)
+- Phases completed: 1/6
+- Plans completed: 5/5 (Phase 1 all waves done)
 
 ## Accumulated Context
 
@@ -69,9 +61,12 @@ Phase 6 [          ] 0%
 - Google OAuth uses `@react-native-google-signin/google-signin` (native), not `expo-auth-session`
 - MongoDB requires compound index `{ userId: 1, date: -1 }` from Phase 1
 - Push notifications use server-side FCM (not local scheduling) for OEM device compatibility
-- Render deploy target: singapore region, free tier, healthCheckPath /api/health
-- EAS build: 3 profiles (development/preview/production), free tier for dev phase
-- Mobile CI excluded from GitHub Actions (requires Expo environment) — run typecheck locally
+- Render deploy target: singapore region, free tier, healthCheckPath /api/health ✓ Done
+- EAS build: 3 profiles (development/preview/production), free tier for dev phase ✓ Done
+- Mobile CI excluded from GitHub Actions (requires Expo environment) — run typecheck locally ✓ Done
+- All 8 Mongoose models created with required compound indexes ✓ Done
+- GET /api/health performs real write/read/delete DB probe (not just readyState) ✓ Done
+- Cloudinary, Firebase Admin SDK, FCM, AI stub all wired ✓ Done
 
 ### Open Questions
 
@@ -92,12 +87,16 @@ None currently.
 - [ ] Activate Apple Developer Account before Phase 2
 - [ ] Confirm LogMeal pricing or choose GPT-4o-mini sole provider
 - [x] Decide EAS plan tier — Free tier cho dev, upgrade trước App Store
+- [ ] Fill in backend/.env with real MongoDB Atlas URI + Cloudinary + Firebase credentials
+- [ ] Run `eas init` in mobile/ to assign real EAS projectId in app.json
+- [ ] Verify health endpoint with real DB: `curl http://localhost:3000/api/health`
+- [ ] Activate Apple Developer Account before Phase 2
 
 ## Session Continuity
 
-**Last action**: 01-05 (CI/CD + Environment) complete — GitHub Actions CI, EAS 3-profile build, Render deploy config, ESLint configs, README.
-**Next action**: Execute 01-PLAN-04 (Third-Party Services) — Wave 3 remaining plan
-**Resume file**: `.planning/phases/01-infrastructure/01-PLAN-04.md`
+**Last action**: Phase 1 fully executed — all 5 plans complete, backend TypeScript exits 0.
+**Next action**: `/clear` then `/gsd:discuss-phase 2` (Authentication)
+**Resume file**: `.planning/ROADMAP.md` — Phase 2: Authentication
 
 ## Last Updated
 
