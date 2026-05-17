@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: TypeScript typecheck (backend)
+        run: npm run typecheck --prefix backend
+
+      - name: Lint (backend)
+        run: npm run lint --prefix backend
+
+  admin-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'admin/package-lock.json'
+
+      - name: Install admin dependencies
+        run: npm ci --prefix admin
+
+      - name: TypeScript typecheck (admin)
+        run: npm run typecheck --prefix admin
+
+      - name: Lint (admin)
+        run: npm run lint --prefix admin
+
+# Mobile typecheck requires Expo environment — run locally with: cd mobile && npx tsc --noEmit
