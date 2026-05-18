@@ -6,6 +6,8 @@ import notificationRouter from './api/notifications/notification.routes';
 import authRouter from './api/auth/auth.routes';
 import exercisesRouter from './api/exercises/exercises.routes';
 import workoutsRouter from './api/workouts/workouts.routes';
+import habitsRouter from './api/habits/habits.routes';
+import bmiRouter from './api/bmi/bmi.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
@@ -18,6 +20,8 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/exercises', exercisesRouter);
 app.use('/api/workouts', workoutsRouter);
+app.use('/api/habits', habitsRouter);
+app.use('/api/bmi', bmiRouter);
 
 app.use(errorMiddleware);
 

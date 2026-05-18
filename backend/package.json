@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test:auth": "node --env-file=.env.test --require tsx/cjs --test src/api/auth/auth.integration.test.ts",
     "test:workouts": "node --env-file=.env.test --require tsx/cjs --test src/api/workouts/workouts.integration.test.ts",
-    "test:exercises": "node --env-file=.env.test --require tsx/cjs --test src/api/exercises/exercises.integration.test.ts"
+    "test:exercises": "node --env-file=.env.test --require tsx/cjs --test src/api/exercises/exercises.integration.test.ts",
+    "test:habits": "node --env-file=.env.test --require tsx/cjs --test src/api/habits/habits.integration.test.ts",
+    "test:bmi": "node --require tsx/cjs --test src/api/bmi/bmi.integration.test.ts"
   },
   "dependencies": {
     "express": "^5.1.0",
