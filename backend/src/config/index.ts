@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
-dotenv.config();
+// override: false ensures process.env values set before this module loads (e.g., test stubs)
+// are not overwritten by .env file values.
+dotenv.config({ override: false });
 
 function required(key: string): string {
   const value = process.env[key];
