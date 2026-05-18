@@ -94,9 +94,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 3 context gathered — 16 implementation decisions locked across 4 areas (seed data, timer, habits, BMI).
+**Last action**: Phase 3 UI design contract approved — 6/6 dimensions passed (1 non-blocking flag).
 **Next action**: `/clear` then `/gsd:plan-phase 3` (Core Health Tracking)
-**Resume file**: `.planning/phases/03-core-health-tracking/03-CONTEXT.md`
+**Resume file**: `.planning/phases/03-core-health-tracking/03-UI-SPEC.md`
 
 ## Last Updated
 
