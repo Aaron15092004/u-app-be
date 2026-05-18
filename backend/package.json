@@ -5,12 +5,14 @@
   "engines": { "node": ">=20.0.0" },
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "seed": "tsx src/scripts/seed-exercises.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "test:auth": "node --env-file=.env.test --require tsx/cjs --test src/api/auth/auth.integration.test.ts",
-    "test:workouts": "node --env-file=.env.test --require tsx/cjs --test src/api/workouts/workouts.integration.test.ts"
+    "test:workouts": "node --env-file=.env.test --require tsx/cjs --test src/api/workouts/workouts.integration.test.ts",
+    "test:exercises": "node --env-file=.env.test --require tsx/cjs --test src/api/exercises/exercises.integration.test.ts"
   },
   "dependencies": {
     "express": "^5.1.0",
