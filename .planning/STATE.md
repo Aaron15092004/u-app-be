@@ -7,20 +7,20 @@ last_updated: "2026-05-18T00:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
-  percent: 33
+  total_plans: 21
+  completed_plans: 13
+  percent: 38
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 3 — Core Health Tracking (Planned — Ready to Execute)
+Phase 3 — Core Health Tracking (In Progress — 1/9 plans complete)
 
 ## Status
 
-Phase 3 planned — 9 plans across 5 waves. Verification passed (4 blockers resolved in revision). Ready to execute.
+Phase 3 executing — 9 plans across 5 waves. Plan 03-01 (Exercises API) complete.
 
 ## Phase Progress
 
@@ -28,7 +28,7 @@ Phase 3 planned — 9 plans across 5 waves. Verification passed (4 blockers reso
 |-------|------|--------|
 | 1 | Infrastructure | Completed (5/5 plans) |
 | 2 | Authentication | Completed (7/7 plans) |
-| 3 | Core Health Tracking | Planned (9 plans) |
+| 3 | Core Health Tracking | In Progress (1/9 plans) |
 | 4 | AI Food Scan | Not Started |
 | 5 | Home Dashboard, Profile & Notifications | Not Started |
 | 6 | Admin Web Dashboard | Not Started |
@@ -38,7 +38,7 @@ Phase 3 planned — 9 plans across 5 waves. Verification passed (4 blockers reso
 ```
 Phase 1 [##########] 100%
 Phase 2 [##########] 100%
-Phase 3 [          ] 0%
+Phase 3 [#         ] 11%
 Phase 4 [          ] 0%
 Phase 5 [          ] 0%
 Phase 6 [          ] 0%
@@ -47,8 +47,8 @@ Phase 6 [          ] 0%
 ## Performance Metrics
 
 - Requirements covered: 62/62
-- Phases completed: 2/6
-- Plans completed: 12/12 (Phase 1: 5 plans, Phase 2: 7 plans)
+- Phases completed: 2/6 (Phase 3 in progress)
+- Plans completed: 13/21 (Phase 1: 5, Phase 2: 7, Phase 3: 1/9)
 
 ## Accumulated Context
 
@@ -61,6 +61,7 @@ Phase 6 [          ] 0%
 - Google OAuth uses `@react-native-google-signin/google-signin` (native), not `expo-auth-session`
 - MongoDB requires compound index `{ userId: 1, date: -1 }` from Phase 1
 - Push notifications use server-side FCM (not local scheduling) for OEM device compatibility
+- Exercises API uses lean() queries for performance; seed script idempotent via countDocuments threshold 100
 - Render deploy target: singapore region, free tier, healthCheckPath /api/health ✓ Done
 - EAS build: 3 profiles (development/preview/production), free tier for dev phase ✓ Done
 - Mobile CI excluded from GitHub Actions (requires Expo environment) — run typecheck locally ✓ Done
@@ -94,9 +95,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 3 planned — 9 plans (03-01 to 03-09) across 5 waves. Verification passed after 1 revision (4 blockers fixed: HAB-03 D-57 decision locked, wave dependencies corrected for 03-03/03-04, 03-09 lockfile/babel fixes).
-**Next action**: `/clear` then `/gsd:execute-phase 3` (Core Health Tracking)
-**Resume file**: `.planning/phases/03-core-health-tracking/03-01-PLAN.md`
+**Last action**: Completed 03-01 — Exercises API + Vietnamese seed script (100 exercises). 7/7 integration tests passing.
+**Next action**: Execute plan 03-02 (next plan in Phase 3 Wave 1)
+**Resume file**: `.planning/phases/03-core-health-tracking/03-02-PLAN.md`
 
 ## Last Updated
 
