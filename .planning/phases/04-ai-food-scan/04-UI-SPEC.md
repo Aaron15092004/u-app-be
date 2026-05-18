@@ -56,10 +56,15 @@ All sizes from established project tokens (`mobile/src/constants/colors.ts` + Ph
 
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 16px | 400 | 1.5 | Body copy, form labels, diary item names |
-| Label | 14px | 400 | 1.4 | Tag pills, secondary metadata, kcal sub-labels, serving size hint |
-| Heading | 24px | 700 | 1.2 | Screen title (ScreenHeader reuse), food name on result screen |
+| Body | 16px | 400 | 1.5 | Body copy, form labels, diary item names, macro labels, bottom sheet food name |
+| Label | 14px | 400 | 1.4 | Tag pills, secondary metadata, kcal sub-labels, serving size hint, diary timestamps, macro sub-labels, calculated kcal label |
+| Heading | 24px | 700 | 1.2 | Screen title (ScreenHeader reuse), food name on result screen, diary daily kcal, macro values |
 | Display | 36px | 700 | 1.1 | Total kcal number on AI result screen |
+
+**Consolidation notes (fixed by checker revision):**
+- 12px (diary timestamp, macro sub-labels) → mapped to **14px** (Label role)
+- 20px (macro values, bottom sheet food name, calculated kcal) → macro values mapped to **24px** (Heading); bottom sheet food name mapped to **24px** (Heading); calculated kcal value mapped to **16px** (Body)
+- 28px (diary daily kcal summary) → mapped to **24px** (Heading role)
 
 **Source:** Figma mockup (iPhone 16 - 7.png: "320 kcal" display size, "Salad rau củ" heading size) + PrimaryButton.tsx (16px/700 established).
 
@@ -148,7 +153,7 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 - Loading state: disable all buttons, show `ActivityIndicator` white centered on capture button area
 - Rate limit 429 response: show Alert "Bạn đã quét 20 lần hôm nay. Vui lòng thử lại vào ngày mai."
 
-**Camera permission:** If not granted, show permission request card (centered, white text on dark bg): "Ứng dụng cần quyền truy cập camera để quét bữa ăn" + `PrimaryButton` "Cấp quyền" + link "Chọn từ thư viện" below.
+**Camera permission:** If not granted, show permission request card (centered, white text on dark bg): "Ứng dụng cần quyền truy cập camera để quét bữa ăn" + `PrimaryButton` "Cấp quyền Camera" + link "Chọn từ thư viện" below.
 
 ---
 
@@ -163,7 +168,7 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 1. **Header** — `ScreenHeader` reuse: title "Kết quả phân tích", subtitle "Thông tin dinh dưỡng bữa ăn", showBack=true
 2. **Food image** — if image URI available from picker/camera: `Image` component, width 100%, height 200px, border-radius 0 (full bleed)
 3. **Food name + tags row** — food name (24px/700/#212121) + green leaf Ionicons `leaf-outline` 16px #4CAF50 inline. Tags below: horizontal ScrollView of pill badges (background: #E8F5E9, text: #4CAF50, 14px/400, paddingH 8px, paddingV 4px, borderRadius 12px)
-4. **Tổng quan dinh dưỡng section** — Section heading "Tổng quan dinh dưỡng" (16px/700/#212121). Green kcal card: `backgroundColor: '#4CAF50'`, borderRadius 16px, padding 16px, "Tổng calo" label (14px/400/white), kcal value (36px/700/white), progress sub-label "X% mục tiêu hàng ngày" (14px/400/rgba(255,255,255,0.8)). Below: 3-column macro row (Protein / Carbs / Chất béo), each: icon (Ionicons) + value (20px/700/#212121) + label (12px/400/#757575)
+4. **Tổng quan dinh dưỡng section** — Section heading "Tổng quan dinh dưỡng" (16px/700/#212121). Green kcal card: `backgroundColor: '#4CAF50'`, borderRadius 16px, padding 16px, "Tổng calo" label (14px/400/white), kcal value (36px/700/white), progress sub-label "X% mục tiêu hàng ngày" (14px/400/rgba(255,255,255,0.8)). Below: 3-column macro row (Protein / Carbs / Chất béo), each: icon (Ionicons) + value (24px/700/#212121) + label (14px/400/#757575)
 5. **Thông tin chi tiết section** — Section heading "Thông tin chi tiết" (16px/700/#212121). 4 rows (Chất xơ / Đường / Natri / Vitamin C): label (16px/400/#212121) left, value+unit (16px/400/#757575) right, 1px #F0F0F0 divider between rows
 6. **CTA buttons** (fixed bottom, paddingH 16px, paddingBottom 24px + safe area):
    - `PrimaryButton` variant="filled" label="Xác nhận & Lưu" (full width)
@@ -191,16 +196,16 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 
 1. **Header** — `ScreenHeader` title "Tìm kiếm thực phẩm", subtitle "Tìm trong cơ sở dữ liệu Việt Nam", showBack=true
 2. **Search bar** — `TextInput` styled: height 48px, borderRadius 12px, border 1.5px solid #E0E0E0, paddingH 12px, Ionicons `search-outline` 20px #757575 left icon, placeholder "Tìm theo tên món ăn..." (#BDBDBD), focus border #4CAF50. Background: white.
-3. **Results FlatList** — background #F5F5F5, each item: white card, borderRadius 12px, marginH 16px, marginBottom 8px, paddingH 16px, paddingV 12px. Row: food name (16px/600/#212121) left, kcal value (14px/400/#757575) right "Xkcal/100g". Tap → bottom sheet serving size input.
-4. **Empty state** (when query has text but no results): centered, Ionicons `search-outline` 48px #BDBDBD, heading "Không tìm thấy kết quả" (16px/600/#212121), body "Thử từ khoá khác hoặc quét ảnh bữa ăn" (14px/400/#757575)
+3. **Results FlatList** — background #F5F5F5, each item: white card, borderRadius 12px, marginH 16px, marginBottom 8px, paddingH 16px, paddingV 12px. Row: food name (16px/700/#212121) left, kcal value (14px/400/#757575) right "Xkcal/100g". Tap → bottom sheet serving size input.
+4. **Empty state** (when query has text but no results): centered, Ionicons `search-outline` 48px #BDBDBD, heading "Không tìm thấy kết quả" (16px/700/#212121), body "Thử từ khoá khác hoặc quét ảnh bữa ăn" (14px/400/#757575)
 5. **Initial state** (no query yet): centered hint, Ionicons `restaurant-outline` 48px #BDBDBD, "Nhập tên món ăn để tìm kiếm" (14px/400/#757575)
 
 **Serving size bottom sheet** (opens on item tap):
 - Background: white, top borderRadius 20px, handle bar 40px×4px #E0E0E0 centered
-- Food name heading (20px/700/#212121)
+- Food name heading (24px/700/#212121)
 - Kcal per 100g sub-label (14px/400/#757575)
 - `TextInput` for serving size: "Khối lượng (g)" label above, value default 100, keyboardType="numeric", borderRadius 12px
-- Live calc row: "Dinh dưỡng ước tính:" label + calculated kcal (20px/600/#4CAF50)
+- Live calc row: "Dinh dưỡng ước tính:" label (14px/400/#757575) + calculated kcal value (16px/700/#4CAF50)
 - `PrimaryButton` variant="filled" label="Thêm vào nhật ký" full width, marginBottom 24px + safe area
 
 **Interactions:**
@@ -219,10 +224,10 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 **Layout top to bottom:**
 
 1. **Header** — `ScreenHeader` title "Nhật ký bữa ăn", subtitle "Lịch sử các bữa ăn của bạn", showBack=true
-2. **Date selector row** — horizontal scroll of date pills (today + 6 days back). Each pill: 44px height, borderRadius 22px, active: #4CAF50 background + white text (14px/600), inactive: #F5F5F5 background + #212121 text (14px/400). Format: "Hôm nay", "T7 17/5", "T6 16/5" etc.
-3. **Daily kcal summary card** — `backgroundColor: '#F5F5F5'`, borderRadius 16px, marginH 16px, padding 16px. "Tổng calo hôm nay" label (14px/400/#757575), kcal value (28px/700/#212121), goal sub-text "/ 2,000 kcal mục tiêu" (14px/400/#757575).
-4. **Meal list FlatList** — each item: white background, marginH 16px, marginBottom 8px, borderRadius 12px, padding 16px. Row layout: food name (16px/600/#212121), timestamp (12px/400/#BDBDBD), kcal right (16px/600/#4CAF50 + "kcal" in 12px/400/#757575). Divider 1px #F0F0F0 between items within same day.
-5. **Empty state** (no meals logged for selected date): centered, Ionicons `restaurant-outline` 56px #BDBDBD, heading "Chưa có bữa ăn nào" (18px/600/#212121), body "Quét bữa ăn hoặc tìm kiếm thủ công để ghi lại" (14px/400/#757575), `PrimaryButton` label="Quét bữa ăn" below (navigates to scan screen).
+2. **Date selector row** — horizontal scroll of date pills (today + 6 days back). Each pill: 44px height, borderRadius 22px, active: #4CAF50 background + white text (14px/700), inactive: #F5F5F5 background + #212121 text (14px/400). Format: "Hôm nay", "T7 17/5", "T6 16/5" etc.
+3. **Daily kcal summary card** — `backgroundColor: '#F5F5F5'`, borderRadius 16px, marginH 16px, padding 16px. "Tổng calo hôm nay" label (14px/400/#757575), kcal value (24px/700/#212121), goal sub-text "/ 2,000 kcal mục tiêu" (14px/400/#757575).
+4. **Meal list FlatList** — each item: white background, marginH 16px, marginBottom 8px, borderRadius 12px, padding 16px. Row layout: food name (16px/700/#212121), timestamp (14px/400/#BDBDBD), kcal right (16px/700/#4CAF50 + "kcal" in 14px/400/#757575). Divider 1px #F0F0F0 between items within same day.
+5. **Empty state** (no meals logged for selected date): centered, Ionicons `restaurant-outline` 56px #BDBDBD, heading "Chưa có bữa ăn nào" (16px/700/#212121), body "Quét bữa ăn hoặc tìm kiếm thủ công để ghi lại" (14px/400/#757575), `PrimaryButton` label="Quét bữa ăn" below (navigates to scan screen).
 
 **Interactions:**
 - Tap date pill → GET `/api/food/logs?date=YYYY-MM-DD` → reload list
@@ -259,7 +264,7 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 | Success toast (save) | Global | "Đã lưu bữa ăn!" |
 | Rate limit error | Camera | "Bạn đã quét 20 lần hôm nay. Vui lòng thử lại vào ngày mai." |
 | Camera permission text | Camera | "Ứng dụng cần quyền truy cập camera để quét bữa ăn" |
-| Camera permission CTA | Camera | "Cấp quyền" |
+| Camera permission CTA | Camera | "Cấp quyền Camera" |
 | Camera permission alt link | Camera | "Chọn từ thư viện" |
 | Destructive delete title | Diary | "Xóa bữa ăn" |
 | Destructive delete message | Diary | "Bữa ăn này sẽ bị xóa vĩnh viễn. Bạn có chắc không?" |
@@ -335,7 +340,7 @@ All values from `mobile/src/constants/colors.ts` (established Phase 3).
 
 ### Delete swipe-to-delete
 - Swipe gesture: react-native Animated API (no extra lib needed)
-- Reveal: red (#EF5350) background, "Xóa" (white, 14px/600), Ionicons `trash-outline` 20px white
+- Reveal: red (#EF5350) background, "Xóa" (white, 14px/700), Ionicons `trash-outline` 20px white
 - Confirm via Alert (do not auto-delete on swipe)
 
 ---
