@@ -39,12 +39,13 @@ Ba tính năng độc lập cùng được xây dựng trong Phase 3:
 - **D-47:** Stop button: Nhấn "Dừng" = **hủy buổi tập, không lưu vào lịch sử**. WorkoutLog chỉ được tạo khi user nhấn "Hoàn thành". Bảo toàn tính toàn vẹn của dữ liệu workout history.
 - **D-48:** Timer duration: Lấy từ `exercise.durationMinutes * 60` giây. Không có field nhập thủ công trước khi bắt đầu.
 
-### Habit Streak & Completion (HAB-04, HAB-07)
+### Habit Streak & Completion (HAB-03, HAB-04, HAB-07)
 
 - **D-49:** Streak definition: Một ngày **tính vào streak khi user hoàn thành ≥3/6 thói quen** trong ngày đó. Cân bằng giữa motivation và ý nghĩa thực của streak.
 - **D-50:** Streak calculation: **Computed từ HabitLog query** — đếm số ngày liên tục (tính ngược từ hôm nay) mà ngày đó có ≥3 distinct habitId cho userId. Không denormalize vào User model.
 - **D-51:** Daily reset: **Implicit qua date-based query**. Server timezone `Asia/Ho_Chi_Minh` (UTC+7). HabitLog.date lưu theo ngày local Việt Nam. Mỗi ngày tự là 1 bucket riêng — không cần cron job reset.
 - **D-52:** Weekly heatmap (HAB-05): **Ô được tô màu xanh khi ≥3 habits hoàn thành** trong ngày đó. Nhất quán với streak definition (D-49). Ô xám = chưa đủ.
+- **D-57:** HAB-03 = **strict 1 check per habit per day (binary)**. The "Đánh dấu +1" label is the CTA button label only — it does NOT mean multiple increments. `HabitLog` unique index `{ userId, date, habitId }` enforces this at the database level. Once a habit is checked today, tapping the button again is a no-op (idempotent upsert returns the existing record). The row UI should appear disabled/checked after the first tap. There is no counter model for any of the 6 default habits in Phase 3.
 
 ### BMI Save Behavior (BMI-03, BMI-06)
 
@@ -114,11 +115,10 @@ Ba tính năng độc lập cùng được xây dựng trong Phase 3:
 ## Specific Ideas
 
 - Timer screen dùng **orange theme** (CLAUDE.md + Figma): background màu cam, text trắng. Hoàn thành màn "Xuất sắc!" cũng orange theme.
-- Habit list: "Đánh dấu +1" CTA button mỗi habit row. Counter hiển thị số lần đã đánh dấu hôm nay (mô hình HAB-03 là multiple check-ins per habit per day cho water/food tracking).
+- Habit list: "Đánh dấu +1" CTA button mỗi habit row. **Resolved → D-57:** HAB-03 is binary 1 check per habit per day. The label "Đánh dấu +1" is the CTA label only; it does not mean multiple increments. Once tapped, the row is disabled for the rest of the day. HabitLog unique index enforces this.
 - BMI categories tiếng Việt: `underweight` = "Thiếu cân", `normal` = "Bình thường", `overweight` = "Thừa cân", `obese` = "Béo phì" (BMI-01).
 - Daily challenge (WO-04): "Đốt X calo" — X có thể hardcode 300 kcal cho v1 hoặc random từ seed exercises.
 - Weekly stats labels tiếng Việt: "Ngày tập", "Bài tập", "kcal", "Phút" (WO-03).
-- HabitLog unique index `{ userId, date, habitId }` với unique: true — điều này nghĩa là mỗi habit chỉ check 1 lần/ngày. Cần xem lại nếu HAB-03 "Đánh dấu +1" cho phép multiple check-ins cho water/rau củ. **Planner cần quyết định:** strict 1 check/ngày hay counter-based.
 
 </specifics>
 
