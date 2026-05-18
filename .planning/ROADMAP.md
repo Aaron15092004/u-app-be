@@ -5,14 +5,14 @@
 **Project**: Ủ App — Vietnamese Health & Wellness Mobile Application
 **Coverage**: 62/62 v1 requirements mapped
 **Granularity**: Standard (6 phases)
-**Last updated**: 2026-05-17
+**Last updated**: 2026-05-18
 
 ---
 
 ## Phases
 
-- [ ] **Phase 1: Infrastructure** — Project scaffold, API skeleton, all third-party services wired up, CI/CD pipeline ready
-- [ ] **Phase 2: Authentication** — Onboarding + full auth flow (email, Google, Apple, JWT sessions)
+- [x] **Phase 1: Infrastructure** — Project scaffold, API skeleton, all third-party services wired up, CI/CD pipeline ready
+- [x] **Phase 2: Authentication** — Onboarding + full auth flow (email, Google, Apple, JWT sessions)
 - [ ] **Phase 3: Core Health Tracking** — Workout library + timer, Habit tracking + streaks, BMI calculator + 30-day chart
 - [ ] **Phase 4: AI Food Scan** — Camera scan, AI proxy, Vietnamese food database, meal logging + history
 - [ ] **Phase 5: Home Dashboard, Profile & Notifications** — Assembled dashboard, user profile, push notification reminders
@@ -41,16 +41,16 @@
 
 Wave 1:
 
-- [ ] 01-PLAN-01.md — Project scaffold: mobile, backend, admin directory structure + package.json + tsconfig
+- [x] 01-PLAN-01.md — Project scaffold: mobile, backend, admin directory structure + package.json + tsconfig
 
 Wave 2 *(blocked on Wave 1)*:
 
-- [ ] 01-PLAN-02.md — Backend core: Express app, Mongoose loader (M2 pool settings), all models with compound indexes, GET /api/health
+- [x] 01-PLAN-02.md — Backend core: Express app, Mongoose loader (M2 pool settings), all models with compound indexes, GET /api/health
 - [x] 01-PLAN-03.md — Mobile foundation: Expo Router layout, providers (Query/Auth/Theme), API client, Walking Skeleton health-check screen
 
 Wave 3 *(blocked on Wave 2)*:
 
-- [ ] 01-PLAN-04.md — Third-party services: Cloudinary upload, Firebase Admin SDK, FCM service, AI food service stubs, push token endpoint
+- [x] 01-PLAN-04.md — Third-party services: Cloudinary upload, Firebase Admin SDK, FCM service, AI food service stubs, push token endpoint
 - [x] 01-PLAN-05.md — CI/CD: GitHub Actions lint+typecheck, EAS 3-profile config, Render deploy config, env file audit
 
 **Cross-cutting constraints:** TypeScript strict mode across all workspaces (D-07); compound indexes on all health collections required before Phase 2 (D-11); JWT tokens only in expo-secure-store never AsyncStorage (D-22)
@@ -73,8 +73,31 @@ Wave 3 *(blocked on Wave 2)*:
 5. User can authenticate with Google OAuth and Apple Sign In on iOS without redirect errors
 6. User can log out and be returned to the login screen with session cleared
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 7 plans
+
+Wave 1:
+
+- [x] 02-01-PLAN.md — Backend foundations: User model patch + JWT/password utilities + Resend email service + JWT middleware (AUTH-02/03/04/07)
+- [x] 02-02-PLAN.md — Mobile foundations: MMKV singleton + Zustand auth store + API types + 5 reusable UI components (AUTH-01/02/03/07)
+
+Wave 2 *(blocked on Wave 1)*:
+
+- [x] 02-03-PLAN.md — Onboarding vertical slice: 3 screens, MMKV gating, gestureEnabled=false (AUTH-01)
+- [x] 02-04-PLAN.md — Backend email auth: register/login/refresh/logout/complete-profile endpoints + zod validation + supertest integration tests (AUTH-02/03/07)
+
+Wave 3 *(blocked on Wave 2)*:
+
+- [x] 02-05-PLAN.md — Mobile email auth: AuthProvider rewrite + 401 refresh-and-retry interceptor + login/register/complete-profile screens + root layout state-diagram routing + SplashScreen orchestration (AUTH-02/03/07)
+
+Wave 4 *(blocked on Wave 3)*:
+
+- [x] 02-06-PLAN.md — Password reset vertical slice: backend forgot/reset endpoints + Resend Vietnamese email + mobile forgot-password and reset-password screens + uapp:// deep link (AUTH-04)
+
+Wave 5 *(blocked on Wave 4)*:
+
+- [x] 02-07-PLAN.md — OAuth + logout: Google OAuth (native SDK D-19) + Apple Sign In (D-23) backend verification + mobile SDK wrappers + real logout button on /(tabs) (AUTH-05/06/08)
+
+**Cross-cutting constraints:** JWT access token 15min in-memory in Zustand (D-22); refresh token 7d in expo-secure-store, hashed in MongoDB (D-22); Apple Sign In mandatory alongside Google (D-23 + App Store 4.8); no AsyncStorage anywhere (CLAUDE.md); MMKV onboarding_seen preserved across logout (D-37); no Bỏ qua skip button on onboarding (D-35); SplashScreen.hideAsync() called from AuthProvider not root layout (D-38).
 
 ---
 
@@ -92,8 +115,30 @@ Wave 3 *(blocked on Wave 2)*:
 3. User sees the 6 default habits with a daily progress counter, can tap "Đánh dấu +1" on each, and the streak counter increments for consecutive days; progress resets at 00:00
 4. User can update height and weight via sliders, the BMI score and category label (Thiếu cân/Bình thường/Thừa cân/Béo phì) recalculate instantly, and a 30-day bar chart reflects past entries
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 9 plans
+
+Wave 1 *(parallel — backend foundations, no inter-plan file conflicts)*:
+
+- [ ] 03-01-PLAN.md — Exercise API + Vietnamese seed script (100 exercises, idempotent npm run seed) (WO-01/02/05/11)
+- [ ] 03-02-PLAN.md — Workout API: POST /api/workouts + GET /api/workouts/stats/weekly + date utility (WO-03/04/06–10)
+- [ ] 03-03-PLAN.md — Habit API: check-in (idempotent upsert) + today + weekly heatmap + streak (HAB-01–HAB-07, D-49 ≥3/6 rule)
+- [ ] 03-04-PLAN.md — BMI API: PATCH atomic save (BMIRecord + User.profile) + GET 30-day history (BMI-01–BMI-06, D-54)
+
+Wave 2 *(blocked on Wave 1 — mobile shared infrastructure)*:
+
+- [ ] 03-05-PLAN.md — Tab layout (4 tabs), design tokens (11 new), API clients (4 modules), Zustand timer store (Phase 3 cross-cutting)
+
+Wave 3 *(parallel — mobile vertical slices, blocked on Wave 2)*:
+
+- [ ] 03-06-PLAN.md — Workout slice part 1: Exercise List + Detail screens + 4 components (WO-01/02/03/04/05/06/11)
+- [ ] 03-08-PLAN.md — Habit slice: Habit screen + 3 components, optimistic check-in (HAB-01–HAB-07)
+- [ ] 03-09-PLAN.md — BMI slice: BMI screen + 3 components (incl. victory-native chart), slider install (BMI-01–BMI-06)
+
+Wave 4 *(blocked on Wave 3 — workout completion path depends on /exercises/[id] route from 03-06)*:
+
+- [ ] 03-07-PLAN.md — Workout slice part 2: Timer + Complete screens + 2 components, AppState auto-pause, POST /api/workouts on mount (WO-06/07/08/09/10)
+
+**Cross-cutting constraints:** Exercise model enum is English (yoga/cardio/weights/stretching, easy/medium/hard) — UI maps to Vietnamese display labels; victory-native@40.2.1 chosen over gifted-charts (already in mobile/package.json); D-49 streak rule = ≥3/6 distinct habits/day UTC+7; D-47 only Complete creates WorkoutLog (Stop discards); D-54 PATCH /api/bmi atomically writes BMIRecord + User.profile; HabitLog unique index enforces strict 1-check-per-habit-per-day (planner-locked binary semantics — "Đánh dấu +1" is CTA label only).
 
 ---
 
@@ -159,9 +204,9 @@ Wave 3 *(blocked on Wave 2)*:
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | Infrastructure | 3/5 | In Progress | - |
-| 2 | Authentication | 0/? | Not started | - |
-| 3 | Core Health Tracking | 0/? | Not started | - |
+| 1 | Infrastructure | 5/5 | Done | 2026-05-17 |
+| 2 | Authentication | 7/7 | Done | 2026-05-18 |
+| 3 | Core Health Tracking | 0/9 | Planned | - |
 | 4 | AI Food Scan | 0/? | Not started | - |
 | 5 | Home Dashboard, Profile & Notifications | 0/? | Not started | - |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
@@ -172,14 +217,14 @@ Wave 3 *(blocked on Wave 2)*:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| AUTH-06 | Phase 2 | Pending |
-| AUTH-07 | Phase 2 | Pending |
-| AUTH-08 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Done |
+| AUTH-02 | Phase 2 | Done |
+| AUTH-03 | Phase 2 | Done |
+| AUTH-04 | Phase 2 | Done |
+| AUTH-05 | Phase 2 | Done |
+| AUTH-06 | Phase 2 | Done |
+| AUTH-07 | Phase 2 | Done |
+| AUTH-08 | Phase 2 | Done |
 | HOME-01 | Phase 5 | Pending |
 | HOME-02 | Phase 5 | Pending |
 | HOME-03 | Phase 5 | Pending |
@@ -195,30 +240,30 @@ Wave 3 *(blocked on Wave 2)*:
 | FOOD-07 | Phase 4 | Pending |
 | FOOD-08 | Phase 4 | Pending |
 | FOOD-09 | Phase 4 | Pending |
-| WO-01 | Phase 3 | Pending |
-| WO-02 | Phase 3 | Pending |
-| WO-03 | Phase 3 | Pending |
-| WO-04 | Phase 3 | Pending |
-| WO-05 | Phase 3 | Pending |
-| WO-06 | Phase 3 | Pending |
-| WO-07 | Phase 3 | Pending |
-| WO-08 | Phase 3 | Pending |
-| WO-09 | Phase 3 | Pending |
-| WO-10 | Phase 3 | Pending |
-| WO-11 | Phase 3 | Pending |
-| HAB-01 | Phase 3 | Pending |
-| HAB-02 | Phase 3 | Pending |
-| HAB-03 | Phase 3 | Pending |
-| HAB-04 | Phase 3 | Pending |
-| HAB-05 | Phase 3 | Pending |
-| HAB-06 | Phase 3 | Pending |
-| HAB-07 | Phase 3 | Pending |
-| BMI-01 | Phase 3 | Pending |
-| BMI-02 | Phase 3 | Pending |
-| BMI-03 | Phase 3 | Pending |
-| BMI-04 | Phase 3 | Pending |
-| BMI-05 | Phase 3 | Pending |
-| BMI-06 | Phase 3 | Pending |
+| WO-01 | Phase 3 | Planned |
+| WO-02 | Phase 3 | Planned |
+| WO-03 | Phase 3 | Planned |
+| WO-04 | Phase 3 | Planned |
+| WO-05 | Phase 3 | Planned |
+| WO-06 | Phase 3 | Planned |
+| WO-07 | Phase 3 | Planned |
+| WO-08 | Phase 3 | Planned |
+| WO-09 | Phase 3 | Planned |
+| WO-10 | Phase 3 | Planned |
+| WO-11 | Phase 3 | Planned |
+| HAB-01 | Phase 3 | Planned |
+| HAB-02 | Phase 3 | Planned |
+| HAB-03 | Phase 3 | Planned |
+| HAB-04 | Phase 3 | Planned |
+| HAB-05 | Phase 3 | Planned |
+| HAB-06 | Phase 3 | Planned |
+| HAB-07 | Phase 3 | Planned |
+| BMI-01 | Phase 3 | Planned |
+| BMI-02 | Phase 3 | Planned |
+| BMI-03 | Phase 3 | Planned |
+| BMI-04 | Phase 3 | Planned |
+| BMI-05 | Phase 3 | Planned |
+| BMI-06 | Phase 3 | Planned |
 | PRO-01 | Phase 5 | Pending |
 | PRO-02 | Phase 5 | Pending |
 | PRO-03 | Phase 5 | Pending |
@@ -240,4 +285,4 @@ Wave 3 *(blocked on Wave 2)*:
 ---
 
 *Created: 2026-05-17*
-*Updated: 2026-05-17 — Phase 1 planning complete (5 plans)*
+*Updated: 2026-05-18 — Phase 3 planning complete (9 plans, 4 waves, all 25 WO/HAB/BMI requirements covered)*
