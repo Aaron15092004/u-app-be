@@ -174,7 +174,7 @@ Wave 3 *(parallel — blocked on Wave 2; food API and seed can run in parallel)*
 
 Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)*:
 
-- [ ] 04-05-PLAN.md — Mobile foundations: foodScanStore (Zustand) + food.api.ts (5 functions, 30s timeout) + Phase 4 types + (food)/ route group layout + 4 screen stubs (FOOD-01/02/03/04/05/06/07/08/09)
+- [x] 04-05-PLAN.md — Mobile foundations: foodScanStore (Zustand) + food.api.ts (5 functions, 30s timeout) + Phase 4 types + (food)/ route group layout + 4 screen stubs (FOOD-01/02/03/04/05/06/07/08/09)
 
 Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 
