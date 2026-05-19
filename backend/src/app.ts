@@ -10,6 +10,8 @@ import habitsRouter from './api/habits/habits.routes';
 import bmiRouter from './api/bmi/bmi.routes';
 import foodRouter from './api/food/food.routes';
 import waterRouter from './api/water/water.routes';
+import homeRouter from './api/home/home.routes';
+import configRouter from './api/config/config.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
@@ -26,6 +28,8 @@ app.use('/api/habits', habitsRouter);
 app.use('/api/bmi', bmiRouter);
 app.use('/api/food', foodRouter);
 app.use('/api/water', waterRouter);
+app.use('/api/home', homeRouter);
+app.use('/api/config', configRouter);
 
 app.use(errorMiddleware);
 
