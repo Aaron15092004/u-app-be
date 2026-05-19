@@ -25,7 +25,12 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from '../../app';
 import User from '../../models/User';
+import FoodLog from '../../models/FoodLog';
+import WaterLog from '../../models/WaterLog';
+import WorkoutLog from '../../models/WorkoutLog';
+import BMIRecord from '../../models/BMIRecord';
 import { signAccessToken } from '../../utils/jwt';
+import { vietnamDayStart } from '../../utils/date';
 
 // ---------------------------------------------------------------------------
 // MongoMemoryServer + test user setup
@@ -50,6 +55,10 @@ after(async () => {
 beforeEach(async () => {
   // Clean DB state before each test
   await User.deleteMany({});
+  await FoodLog.deleteMany({});
+  await WaterLog.deleteMany({});
+  await WorkoutLog.deleteMany({});
+  await BMIRecord.deleteMany({});
 
   // Create user A
   const userA = await User.create({
@@ -71,10 +80,186 @@ beforeEach(async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Wave 0 placeholder — Wave 1 plans will add real tests here
-// HOME-02, HOME-05, HOME-06 tests go in this file
+// HOME-02, HOME-05, HOME-06 tests (7 tests total)
 // ---------------------------------------------------------------------------
 
-test('placeholder: home test suite wired', () => {
-  assert.equal(1, 1);
+// Test 1: GET /api/home/today-summary without auth → 401
+test('GET /api/home/today-summary without auth returns 401', async () => {
+  const res = await request(app).get('/api/home/today-summary');
+  assert.equal(res.status, 401);
+});
+
+// Test 2: Empty data → all zeros, bmi: null, waterGoal: 8
+test('GET /api/home/today-summary with no data returns all zeros and bmi null', async () => {
+  const res = await request(app)
+    .get('/api/home/today-summary')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+  const d = res.body.data;
+  assert.equal(d.kcalConsumed, 0);
+  assert.deepEqual(d.macros, { protein: 0, carbs: 0, fat: 0 });
+  assert.equal(d.waterGlasses, 0);
+  assert.equal(d.waterGoal, 8);
+  assert.equal(d.workoutMinutes, 0);
+  assert.equal(d.bmi, null);
+});
+
+// Test 3: Seed data → aggregated correctly
+test('GET /api/home/today-summary aggregates kcal, macros, water, workout, BMI correctly', async () => {
+  const todayStart = vietnamDayStart(new Date());
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+
+  // Seed FoodLog
+  await FoodLog.create({
+    userId: userObjId,
+    date: todayStart,
+    aiProvider: 'manual',
+    foods: [{ name: 'Test food', calories: 500, protein: 30, carbs: 50, fat: 20, fiber: 0, sugar: 0 }],
+    totals: { calories: 500, protein: 30, carbs: 50, fat: 20 },
+  });
+
+  // Seed 2 WaterLogs
+  const waterTime = new Date(todayStart.getTime() + 3600000); // +1 hour
+  await WaterLog.create({ userId: userObjId, loggedAt: waterTime });
+  await WaterLog.create({ userId: userObjId, loggedAt: new Date(waterTime.getTime() + 3600000) });
+
+  // Seed WorkoutLog with date = todayStart bucket
+  await WorkoutLog.create({
+    userId: userObjId,
+    exerciseName: 'Chạy bộ',
+    date: todayStart,
+    durationMinutes: 30,
+    caloriesBurned: 200,
+    completedAt: new Date(),
+  });
+
+  // Seed BMIRecord
+  await BMIRecord.create({
+    userId: userObjId,
+    heightCm: 170,
+    weightKg: 65,
+    bmi: 22.5,
+    category: 'normal',
+    recordedAt: new Date(),
+  });
+
+  // Update waterGoal
+  await User.findByIdAndUpdate(userIdA, { 'profile.waterGoal': 10 });
+
+  const res = await request(app)
+    .get('/api/home/today-summary')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 200);
+  const d = res.body.data;
+  assert.equal(d.kcalConsumed, 500);
+  assert.deepEqual(d.macros, { protein: 30, carbs: 50, fat: 20 });
+  assert.equal(d.waterGlasses, 2);
+  assert.equal(d.waterGoal, 10);
+  assert.equal(d.workoutMinutes, 30);
+  assert.ok(d.bmi);
+  assert.equal(d.bmi.value, 22.5);
+  assert.equal(d.bmi.category, 'normal');
+});
+
+// Test 4: Per-user scoping — userB sees all zeros
+test('GET /api/home/today-summary with userB token after userA seed returns all zeros', async () => {
+  const todayStart = vietnamDayStart(new Date());
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+
+  // Seed data for userA only
+  await FoodLog.create({
+    userId: userObjId,
+    date: todayStart,
+    aiProvider: 'manual',
+    foods: [{ name: 'Test', calories: 300, protein: 10, carbs: 30, fat: 10, fiber: 0, sugar: 0 }],
+    totals: { calories: 300, protein: 10, carbs: 30, fat: 10 },
+  });
+
+  // userB should see nothing
+  const res = await request(app)
+    .get('/api/home/today-summary')
+    .set('Authorization', `Bearer ${tokenB}`);
+
+  assert.equal(res.status, 200);
+  const d = res.body.data;
+  assert.equal(d.kcalConsumed, 0);
+  assert.equal(d.waterGlasses, 0);
+  assert.equal(d.workoutMinutes, 0);
+  assert.equal(d.bmi, null);
+});
+
+// Test 5: UTC+7 boundary — yesterday log excluded
+test('GET /api/home/today-summary excludes WaterLog from yesterday (UTC+7 boundary)', async () => {
+  const todayStart = vietnamDayStart(new Date());
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+
+  // WaterLog from yesterday (1ms before today start)
+  await WaterLog.create({
+    userId: userObjId,
+    loggedAt: new Date(todayStart.getTime() - 1),
+  });
+
+  const res = await request(app)
+    .get('/api/home/today-summary')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.waterGlasses, 0);
+});
+
+// Test 6: BMI latest — returns most recent record
+test('GET /api/home/today-summary returns latest BMI when multiple records exist', async () => {
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000);
+
+  // Older record
+  await BMIRecord.create({
+    userId: userObjId,
+    heightCm: 170,
+    weightKg: 70,
+    bmi: 24.2,
+    category: 'normal',
+    recordedAt: sevenDaysAgo,
+  });
+
+  // Newer record
+  await BMIRecord.create({
+    userId: userObjId,
+    heightCm: 170,
+    weightKg: 65,
+    bmi: 22.5,
+    category: 'normal',
+    recordedAt: now,
+  });
+
+  const res = await request(app)
+    .get('/api/home/today-summary')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 200);
+  assert.ok(res.body.data.bmi);
+  assert.equal(res.body.data.bmi.value, 22.5);
+});
+
+// Test 7: GET /api/config/shop-url → env var value
+test('GET /api/config/shop-url returns SHOP_URL env var value', async () => {
+  const savedShopUrl = process.env.SHOP_URL;
+  process.env.SHOP_URL = 'https://test-shop.example.com';
+
+  try {
+    const res = await request(app).get('/api/config/shop-url');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.data.url, 'https://test-shop.example.com');
+  } finally {
+    if (savedShopUrl === undefined) {
+      delete process.env.SHOP_URL;
+    } else {
+      process.env.SHOP_URL = savedShopUrl;
+    }
+  }
 });
