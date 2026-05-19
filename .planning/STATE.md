@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T14:16:02.591Z"
+last_updated: "2026-05-19T14:23:20.211Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 30
-  completed_plans: 33
+  completed_plans: 34
   percent: 50
 ---
 
@@ -16,11 +16,11 @@ progress:
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 2 complete, Plans 01-05 complete)
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 3 in progress, Plans 01-06 complete)
 
 ## Status
 
-Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
+Phase 5 Plan 06 complete. Home Dashboard + Water Log screens fully implemented. Plan 07 remaining.
 
 ## Phase Progress
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (5/7 — Plans 01-05 done) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (6/7 — Plans 01-06 done) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [#######   ] 71%
+Phase 5 [########  ] 86%
 Phase 6 [          ] 0%
 ```
 
@@ -146,6 +146,16 @@ Phase 6 [          ] 0%
 - Profile tab is 5th tab after BMI with person/person-outline icons and title 'Hồ sơ' (D-76)
 - Plan 05 requirements scope: HOME-01-06 + PRO-01/04/06/07 + NOTIF-01 contract surface; PRO-02/03/05 + NOTIF-02/03 full implementation deferred to Plan 07
 
+### Key Decisions Logged (Phase 5 Plan 06 additions)
+
+- waterGoal sourced exclusively from getTodayWaterApi() response (waterQuery.data.waterGoal) — water.tsx does NOT import getTodaySummaryApi (WARNING 4 fix confirmed in implementation)
+- All water mutations (logMutation, deleteMutation) use onSettled to invalidate ['water','today'] and ['home','summary'] — home dashboard stays coherent after water screen changes
+- logout NOT on home tab — delegated to Plan 07 Profile tab per D-76 and UI-SPEC (D-69 temp buttons removed)
+- ShopBanner returns null when url is null and not loading — prevents rendering broken banner
+- 9 new StyleSheet.create UI components — NativeWind v4 migration deferred per plan validation_note
+- Delete in water.tsx shows Alert confirmation before deleteMutation.mutate (UX safety guard)
+- WaterControls disables minus button (opacity 0.4, disabled prop) when count===0
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -186,10 +196,10 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 05 (Wave 2 — Mobile API contracts + route scaffolding) complete — 2 commits (ca483a4 types+API modules, 40cdedd tab+stubs). TypeScript compiles (pre-existing router.d.ts errors only). 5 Phase 5 types + 9 API functions + 5 stub screens created.
-**Next action**: Execute Phase 5 Plan 06 (Home Dashboard screen)
-**Resume file**: `.planning/phases/05-home-dashboard/05-06-PLAN.md`
+**Last action**: Phase 5 Plan 06 (Wave 3 — Home Dashboard + Water Log screens) complete — 2 commits (a779838 9 UI components, 4a9b6d8 screen rewrites). TypeScript compiles (pre-existing router.d.ts errors only). 9 new components + 2 screen rewrites delivered.
+**Next action**: Execute Phase 5 Plan 07 (Profile screens + notification permission rationale)
+**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md`
 
 ## Last Updated
 
-2026-05-19 (Phase 5 Plan 05 complete)
+2026-05-19 (Phase 5 Plan 06 complete)

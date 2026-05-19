@@ -213,11 +213,11 @@ Wave 1 (parallel — backend APIs):
 
 Wave 2 (blocked on Wave 1 — mobile foundations):
 
-- [ ] 05-05-PLAN.md — Mobile foundations: 5th Profile tab, 4 API modules, 5 Phase 5 types, (tabs)/profile + (home) stack layouts, 5 stub screens (HOME-01/03, PRO-01)
+- [x] 05-05-PLAN.md — Mobile foundations: 5th Profile tab, 4 API modules, 5 Phase 5 types, (tabs)/profile + (home) stack layouts, 5 stub screens (HOME-01/03, PRO-01)
 
 Wave 3 (parallel — mobile screens, blocked on Wave 2):
 
-- [ ] 05-06-PLAN.md — Home Dashboard + Water Log: full (tabs)/index.tsx rewrite + (home)/water.tsx + 9 UI components (HOME-01/02/03/04/05/06)
+- [x] 05-06-PLAN.md — Home Dashboard + Water Log: full (tabs)/index.tsx rewrite + (home)/water.tsx + 9 UI components (HOME-01/02/03/04/05/06)
 - [ ] 05-07-PLAN.md — Profile stack: tab + edit + notifications + help + rationale modal + permission flow + 8 UI components + logout (PRO-01/02/03/04/05/06/07, NOTIF-01)
 
 **UI hint**: yes
@@ -251,7 +251,7 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | 2 | Authentication | 7/7 | Done | 2026-05-18 |
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
 | 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
-| 5 | Home Dashboard, Profile & Notifications | 1/7 | In Progress | - |
+| 5 | Home Dashboard, Profile & Notifications | 6/7 | In Progress | - |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
 
 ---
@@ -268,9 +268,9 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | AUTH-06 | Phase 2 | Done |
 | AUTH-07 | Phase 2 | Done |
 | AUTH-08 | Phase 2 | Done |
-| HOME-01 | Phase 5 | Pending |
+| HOME-01 | Phase 5 | Done |
 | HOME-02 | Phase 5 | Done |
-| HOME-03 | Phase 5 | Pending |
+| HOME-03 | Phase 5 | Done |
 | HOME-04 | Phase 5 | Done |
 | HOME-05 | Phase 5 | Done |
 | HOME-06 | Phase 5 | Done |
