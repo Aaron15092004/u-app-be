@@ -3,7 +3,6 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IFoodLog extends Document {
   userId: mongoose.Types.ObjectId;
   date: Date;
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   imageUrl: string | null;
   aiProvider: 'openai' | 'logmeal' | 'manual';
   foods: Array<{
@@ -15,6 +14,8 @@ export interface IFoodLog extends Document {
     fat: number;
     fiber: number;
     sugar: number;
+    sodium?: number;
+    vitaminC?: number;
   }>;
   totals: {
     calories: number;
@@ -30,7 +31,6 @@ const FoodLogSchema = new Schema<IFoodLog>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     date: { type: Date, required: true },
-    mealType: { type: String, enum: ['breakfast', 'lunch', 'dinner', 'snack'], required: true },
     imageUrl: { type: String, default: null },
     aiProvider: { type: String, enum: ['openai', 'logmeal', 'manual'], default: 'manual' },
     foods: [
@@ -43,6 +43,8 @@ const FoodLogSchema = new Schema<IFoodLog>(
         fat: { type: Number, default: 0 },
         fiber: { type: Number, default: 0 },
         sugar: { type: Number, default: 0 },
+        sodium: { type: Number, default: 0 },
+        vitaminC: { type: Number, default: 0 },
       },
     ],
     totals: {
