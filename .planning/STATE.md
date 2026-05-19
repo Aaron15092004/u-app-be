@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T13:47:40Z"
+last_updated: "2026-05-19T14:30:00Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 37
-  completed_plans: 29
-  percent: 57
+  completed_plans: 30
+  percent: 60
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 1 in progress, Plan 04 complete)
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 2 in progress, Plans 01-04 complete, Plan 03 complete)
 
 ## Status
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (4/7) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (5/7) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [####      ] 57%
+Phase 5 [#####     ] 71%
 Phase 6 [          ] 0%
 ```
 
@@ -128,6 +128,14 @@ Phase 6 [          ] 0%
 - /api/users intentionally NOT mounted yet — Plan 03 Wave 2 owns that mount (checker BLOCKER 1 serialization)
 - WorkoutLog matched by exact todayStart bucket (not $gte/$lt range) — matches Phase 3 pattern
 
+### Key Decisions Logged (Phase 5 Plan 03 additions)
+
+- getProfileStats returns notifications block so mobile Plan 07 can initialise notification settings form from server state (WARNING 3 fix)
+- Zod .strict() on both PATCH schemas rejects role/email/passwordHash with 400 (mass-assignment defence, Test 7 asserts)
+- getStreak delegated to habits.service.ts — no streak logic reimplemented in users.service.ts (D-49/50 reuse)
+- Promise.all for 4 parallel queries in getProfileStats: streak + count + aggregate + notifications lookup
+- app.ts edit additive single-line mount only — Wave 2 serialization ensures no conflict with Plan 02
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -168,10 +176,10 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 04 (Wave 1 — FCM scheduling + notification hardening) complete — 2 commits (58b80aa fcm.service+routes, 8116edb scheduler+server). TypeScript clean. 24/24 auth tests pass.
-**Next action**: Execute Phase 5 Plan 05 or remaining Wave 1 plans
+**Last action**: Phase 5 Plan 03 (Wave 2 — Users profile stats + PATCH profile + PATCH notifications) complete — 2 commits (705b2dc RED tests, e9b272c GREEN implementation). TypeScript clean. 12/12 tests pass.
+**Next action**: Execute Phase 5 Plan 05 (mobile home dashboard screen)
 **Resume file**: `.planning/phases/05-home-dashboard/05-05-PLAN.md`
 
 ## Last Updated
 
-2026-05-19 (Phase 4 verified complete)
+2026-05-19 (Phase 5 Plan 03 complete)

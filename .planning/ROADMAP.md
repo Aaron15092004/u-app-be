@@ -208,8 +208,8 @@ Wave 0 (foundations — blocks all other waves):
 Wave 1 (parallel — backend APIs):
 
 - [x] 05-02-PLAN.md — Water + Home + Config APIs: water CRUD with IDOR-safe delete, /api/home/today-summary aggregation, /api/config/shop-url (HOME-02/04/05/06)
-- [ ] 05-03-PLAN.md — Users API: GET /profile/stats, PATCH /profile, PATCH /notifications with Zod whitelist + HH:MM regex (PRO-02/03/05)
-- [ ] 05-04-PLAN.md — FCM batch + cron scheduler (per-minute water/workout reminders, daily 20:00 streak alert), authenticate /register-token (NOTIF-02/03/04)
+- [x] 05-03-PLAN.md — Users API: GET /profile/stats, PATCH /profile, PATCH /notifications with Zod whitelist + HH:MM regex (PRO-02/03/05)
+- [x] 05-04-PLAN.md — FCM batch + cron scheduler (per-minute water/workout reminders, daily 20:00 streak alert), authenticate /register-token (NOTIF-02/03/04)
 
 Wave 2 (blocked on Wave 1 — mobile foundations):
 
