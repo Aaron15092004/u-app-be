@@ -218,7 +218,7 @@ Wave 2 (blocked on Wave 1 — mobile foundations):
 Wave 3 (parallel — mobile screens, blocked on Wave 2):
 
 - [x] 05-06-PLAN.md — Home Dashboard + Water Log: full (tabs)/index.tsx rewrite + (home)/water.tsx + 9 UI components (HOME-01/02/03/04/05/06)
-- [ ] 05-07-PLAN.md — Profile stack: tab + edit + notifications + help + rationale modal + permission flow + 8 UI components + logout (PRO-01/02/03/04/05/06/07, NOTIF-01)
+- [x] 05-07-PLAN.md — Profile stack: tab + edit + notifications + help + rationale modal + permission flow + 8 UI components + logout (PRO-01/02/03/04/05/06/07, NOTIF-01) ⚠ device checkpoint deferred
 
 **UI hint**: yes
 
@@ -251,7 +251,7 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | 2 | Authentication | 7/7 | Done | 2026-05-18 |
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
 | 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
-| 5 | Home Dashboard, Profile & Notifications | 6/7 | In Progress | - |
+| 5 | Home Dashboard, Profile & Notifications | 7/7 | Code-Complete (device checkpoint deferred) | 2026-05-19 |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
 
 ---

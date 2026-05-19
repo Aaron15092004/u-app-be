@@ -3,24 +3,24 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T15:30:00.000Z"
+last_updated: "2026-05-19T16:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 30
-  completed_plans: 34
-  percent: 50
+  completed_phases: 4
+  total_plans: 37
+  completed_plans: 35
+  percent: 78
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **Awaiting Device Verification** (Tasks 1+2 of Plan 07 complete; Task 3 blocking checkpoint pending)
+Phase 5 — Home Dashboard, Profile & Notifications — **Code-Complete** (7/7 plans done; device verification checkpoint deferred)
 
 ## Status
 
-Phase 5 Plan 07 Tasks 1 and 2 complete. 8 UI components + 4 Profile screens implemented. Awaiting Task 3 device verification checkpoint (blocking-human gate).
+Phase 5 code-complete. All 7 plans executed. Device verification checkpoint (Plan 07 Task 3) deferred — run EAS dev build and complete 17-step manual test before `/gsd:verify-work 5`.
 
 ## Phase Progress
 
@@ -30,7 +30,7 @@ Phase 5 Plan 07 Tasks 1 and 2 complete. 8 UI components + 4 Profile screens impl
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (6/7 code done — Plan 07 awaiting device checkpoint) |
+| 5 | Home Dashboard, Profile & Notifications | Code-Complete (7/7 plans, device checkpoint deferred) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [########  ] 86%
+Phase 5 [#########∙] 100% (code), device checkpoint pending
 Phase 6 [          ] 0%
 ```
 
@@ -204,12 +204,13 @@ None currently.
 - [ ] Verify health endpoint with real DB: `curl http://localhost:3000/api/health`
 - [ ] Before EAS build: restore real MMKV, Google Sign-In, Apple Sign-In, BMIChart (victory-native)
 - [ ] Export Figma assets (logo.png, icon.png, splash.png, adaptive-icon.png) to mobile/assets/images/
+- [ ] **Phase 5 device verification** — run EAS dev build + 17-step manual checklist (Plan 07 Task 3 deferred checkpoint): Home Dashboard render, Water Log +/- + WARNING 4 waterGoal, Profile tab navigation, Edit Profile PATCH, Notification settings persistence (WARNING 3), Rationale modal once-only, FCM water/workout reminders at configured time, FCM streak alert 20:00 UTC+7, Help FAQ + clipboard, Logout
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 07 Tasks 1+2 complete — 2 commits (90d6409: 8 UI components + MMKV helper, 53eaea1: 4 profile screens). TypeScript compiles (pre-existing router.d.ts errors only). Awaiting Task 3 device verification checkpoint.
-**Next action**: User runs device verification (Task 3 — 17-step manual checklist). After confirmation, mark Phase 5 complete.
-**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md` (Task 3 checkpoint)
+**Last action**: Phase 5 all 7 plans code-complete (commits 39d6f85 → 1b1b673). Device verification checkpoint (Plan 07 Task 3) deferred by user choice.
+**Next action**: After device verification passes, run `/gsd:verify-work 5` to close Phase 5. Then `/gsd:plan-phase 6` for Admin Web Dashboard.
+**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md` (Task 3 checkpoint — 17-step manual device test)
 
 ## Last Updated
 
