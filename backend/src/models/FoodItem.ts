@@ -11,6 +11,7 @@ export interface IFoodItem extends Document {
   sugar: number;
   sodium: number;
   vitaminC: number;
+  imageUrl: string | null;
   category?: string;
   source: 'openfoods' | 'manual';
 }
@@ -27,6 +28,7 @@ const FoodItemSchema = new Schema<IFoodItem>(
     sugar: { type: Number, default: 0 },
     sodium: { type: Number, default: 0 },
     vitaminC: { type: Number, default: 0 },
+    imageUrl: { type: String, default: null },
     category: String,
     source: { type: String, enum: ['openfoods', 'manual'], default: 'manual' },
   },
