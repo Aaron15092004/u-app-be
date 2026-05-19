@@ -3,7 +3,7 @@
 ## Overview
 
 **Project**: Ủ App — Vietnamese Health & Wellness Mobile Application
-**Coverage**: 62/62 v1 requirements mapped
+**Coverage**: 71/71 v1 requirements mapped
 **Granularity**: Standard (6 phases)
 **Last updated**: 2026-05-19
 
@@ -14,7 +14,7 @@
 - [x] **Phase 1: Infrastructure** — Project scaffold, API skeleton, all third-party services wired up, CI/CD pipeline ready
 - [x] **Phase 2: Authentication** — Onboarding + full auth flow (email, Google, Apple, JWT sessions)
 - [x] **Phase 3: Core Health Tracking** — Workout library + timer, Habit tracking + streaks, BMI calculator + 30-day chart
-- [ ] **Phase 4: AI Food Scan** — Camera scan, AI proxy, Vietnamese food database, meal logging + history
+- [x] **Phase 4: AI Food Scan** — Camera scan, AI proxy, Vietnamese food database, meal logging + history
 - [ ] **Phase 5: Home Dashboard, Profile & Notifications** — Assembled dashboard, user profile, push notification reminders
 - [ ] **Phase 6: Admin Web Dashboard** — Admin login, exercise CRUD, food DB CRUD, user management
 
