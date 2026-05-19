@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T13:39:16.064Z"
+last_updated: "2026-05-19T13:47:40Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 30
-  completed_plans: 28
-  percent: 50
+  completed_phases: 4
+  total_plans: 37
+  completed_plans: 29
+  percent: 57
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **Not Started**
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 0 executing)
 
 ## Status
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | Not Started |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (1/7) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [          ] 0%
+Phase 5 [#         ] 14%
 Phase 6 [          ] 0%
 ```
 
@@ -104,6 +104,13 @@ Phase 6 [          ] 0%
 - Idempotency threshold 50 (not 150) — allows partial re-seed if needed while preventing duplicate full runs
 - source field cast as 'manual' | 'openfoods' union in TypeScript — JSON import types strings generically
 
+### Key Decisions Logged (Phase 5 Plan 01 additions)
+
+- WaterLog model: non-unique compound index { userId: 1, loggedAt: -1 } per D-73 (one document per glass)
+- expo install resolved expo-linear-gradient@15.0.8 (not 55.x) and datetimepicker@8.4.4 (not 9.x) — SDK 54 compatible versions
+- All Wave 1 tests must extend existing scaffolds: home/water/users.integration.test.ts
+- User schema breaking change safe per RESEARCH.md A2 (no production users)
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -144,9 +151,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 discuss-phase complete — 11 decisions captured (D-73 to D-83). Commit 3e2546b.
-**Next action**: `/gsd:ui-phase 5` then `/gsd:plan-phase 5`
-**Resume file**: `.planning/phases/05-home-dashboard/05-CONTEXT.md`
+**Last action**: Phase 5 Plan 01 (Wave 0 foundations) complete — 3 tasks, commits 39d6f85, 8465dbb, 73f86ca, f4377f5.
+**Next action**: Execute Phase 5 Plan 02 (Wave 1 — first backend plan)
+**Resume file**: `.planning/phases/05-home-dashboard/05-02-PLAN.md`
 
 ## Last Updated
 

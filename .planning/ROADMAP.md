@@ -203,7 +203,7 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 
 Wave 0 (foundations — blocks all other waves):
 
-- [ ] 05-01-PLAN.md — Install node-cron + mobile packages, migrate User schema (waterGoal + waterReminderTime + workoutReminderTime), create WaterLog model, 3 integration test scaffolds, badge color tokens
+- [x] 05-01-PLAN.md — Install node-cron + mobile packages, migrate User schema (waterGoal + waterReminderTime + workoutReminderTime), create WaterLog model, 3 integration test scaffolds, badge color tokens
 
 Wave 1 (parallel — backend APIs):
 
@@ -251,7 +251,7 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | 2 | Authentication | 7/7 | Done | 2026-05-18 |
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
 | 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
-| 5 | Home Dashboard, Profile & Notifications | 0/? | Not started | - |
+| 5 | Home Dashboard, Profile & Notifications | 1/7 | In Progress | - |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
 
 ---
