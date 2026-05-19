@@ -12,6 +12,7 @@ import foodRouter from './api/food/food.routes';
 import waterRouter from './api/water/water.routes';
 import homeRouter from './api/home/home.routes';
 import configRouter from './api/config/config.routes';
+import usersRouter from './api/users/users.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api/food', foodRouter);
 app.use('/api/water', waterRouter);
 app.use('/api/home', homeRouter);
 app.use('/api/config', configRouter);
+app.use('/api/users', usersRouter);
 
 app.use(errorMiddleware);
 
