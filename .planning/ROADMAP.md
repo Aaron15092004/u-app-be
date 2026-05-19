@@ -199,7 +199,27 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 3. User can toggle notification permissions on/off from Profile settings; the app shows a rationale screen before requesting system permission for the first time
 4. User receives a push notification reminding them to drink water, start a workout, and a streak alert when they are about to break their streak — all delivered via Firebase Cloud Messaging on both iOS and Android (including OEM devices)
 
-**Plans**: TBD
+**Plans**: 7 plans
+
+Wave 0 (foundations — blocks all other waves):
+
+- [ ] 05-01-PLAN.md — Install node-cron + mobile packages, migrate User schema (waterGoal + waterReminderTime + workoutReminderTime), create WaterLog model, 3 integration test scaffolds, badge color tokens
+
+Wave 1 (parallel — backend APIs):
+
+- [ ] 05-02-PLAN.md — Water + Home + Config APIs: water CRUD with IDOR-safe delete, /api/home/today-summary aggregation, /api/config/shop-url (HOME-02/04/05/06)
+- [ ] 05-03-PLAN.md — Users API: GET /profile/stats, PATCH /profile, PATCH /notifications with Zod whitelist + HH:MM regex (PRO-02/03/05)
+- [ ] 05-04-PLAN.md — FCM batch + cron scheduler (per-minute water/workout reminders, daily 20:00 streak alert), authenticate /register-token (NOTIF-02/03/04)
+
+Wave 2 (blocked on Wave 1 — mobile foundations):
+
+- [ ] 05-05-PLAN.md — Mobile foundations: 5th Profile tab, 4 API modules, 5 Phase 5 types, (tabs)/profile + (home) stack layouts, 5 stub screens (HOME-01/03, PRO-01)
+
+Wave 3 (parallel — mobile screens, blocked on Wave 2):
+
+- [ ] 05-06-PLAN.md — Home Dashboard + Water Log: full (tabs)/index.tsx rewrite + (home)/water.tsx + 9 UI components (HOME-01/02/03/04/05/06)
+- [ ] 05-07-PLAN.md — Profile stack: tab + edit + notifications + help + rationale modal + permission flow + 8 UI components + logout (PRO-01/02/03/04/05/06/07, NOTIF-01)
+
 **UI hint**: yes
 
 ---
