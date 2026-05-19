@@ -86,7 +86,7 @@
 
 ### ADMIN — Web Dashboard
 
-- [ ] **ADM-01**: Admin đăng nhập web dashboard bằng email/password
+- [x] **ADM-01**: Admin đăng nhập web dashboard bằng email/password
 - [ ] **ADM-02**: Admin xem, tạo, sửa, xóa bài tập (tên, category, độ khó, thời gian, kcal, hình ảnh, danh sách động tác)
 - [ ] **ADM-03**: Admin xem, tạo, sửa, xóa thực phẩm trong database (tên, kcal, macros, micros)
 - [ ] **ADM-04**: Admin xem danh sách users (email, ngày đăng ký, trạng thái)
@@ -184,7 +184,7 @@
 | NOTIF-02 | Phase 5 | Pending |
 | NOTIF-03 | Phase 5 | Pending |
 | NOTIF-04 | Phase 5 | Pending |
-| ADM-01 | Phase 6 | Pending |
+| ADM-01 | Phase 6 | Complete |
 | ADM-02 | Phase 6 | Pending |
 | ADM-03 | Phase 6 | Pending |
 | ADM-04 | Phase 6 | Pending |
