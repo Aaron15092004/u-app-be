@@ -109,3 +109,67 @@ export interface IBMIHistoryEntry {
   bmi: number;
   category: IBMICategory;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 4 Types — AI Food Scan
+// ---------------------------------------------------------------------------
+
+export interface IFoodLogItem {
+  name: string;
+  weightG?: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
+  vitaminC: number;
+  tags?: string[];
+}
+
+export interface IFoodLog {
+  _id: string;
+  userId: string;
+  date: string;
+  aiProvider: 'openai' | 'logmeal' | 'manual';
+  imageUrl: string | null;
+  foods: IFoodLogItem[];
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+  createdAt: string;
+}
+
+export interface IFoodItem {
+  _id: string;
+  name: string;
+  nameEn?: string;
+  kcalPer100g: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
+  vitaminC: number;
+  category?: string;
+  source: 'openfoods' | 'manual';
+}
+
+export interface IScanFoodResponse {
+  foods: Array<{
+    name: string;
+    weightG: number;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+    sugar: number;
+    sodium: number;
+    vitaminC: number;
+    tags: string[];
+  }>;
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+  aiProvider: 'logmeal' | 'openai' | 'manual';
+  imageUrl: string | null;
+}
