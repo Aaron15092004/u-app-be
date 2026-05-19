@@ -238,7 +238,18 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 3. Admin can create, edit, and delete food items in the Vietnamese database (name, kcal, macros, micros) and changes are searchable in the mobile app
 4. Admin can view the user list with email, registration date, and account status
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Wave 1 *(sequential — Plan 01 before Plan 02)*:
+
+- [x] 06-01-PLAN.md — Backend foundations: User.isActive + FoodItem.imageUrl schema patches, authenticate isActive check, requireAdmin middleware, seed:admin script, admin integration test scaffold (ADM-01/04, D-97)
+- [x] 06-02-PLAN.md — Admin API: `/api/admin/*` router — upload endpoint, exercises CRUD, food-items CRUD, users list/ban/delete — all protected by authenticate + requireAdmin (ADM-01/02/03/04, D-90)
+
+Wave 2 *(blocked on Wave 1)*:
+
+- [ ] 06-03-PLAN.md — Admin frontend setup: Tailwind v4 + shadcn/ui install, tsconfig @/ alias, vite.config proxy, axios interceptor with JWT refresh queue, QueryProvider, ProtectedRoute, AppShell/Sidebar, LoginPage (ADM-01, D-84/85/86/87/88)
+- [ ] 06-04-PLAN.md — Admin CRUD pages: ExercisesPage (DataTable + dialog + useFieldArray steps editor + image upload), FoodItemsPage (DataTable + dialog + 7 macro fields + image upload), UsersPage (DataTable + ban toggle + delete) (ADM-02/03/04, D-95/96)
+
 **UI hint**: yes
 
 ---
@@ -252,7 +263,7 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
 | 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
 | 5 | Home Dashboard, Profile & Notifications | 7/7 | Code-Complete (device checkpoint deferred) | 2026-05-19 |
-| 6 | Admin Web Dashboard | 0/? | Not started | - |
+| 6 | Admin Web Dashboard | 2/4 | In Progress | 2026-05-20 |
 
 ---
 

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T19:32:33.612Z"
+last_updated: "2026-05-19T19:36:30.204Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 34
-  completed_plans: 36
+  completed_plans: 37
   percent: 67
 ---
 
@@ -31,7 +31,7 @@ Phase 5 code-complete. All 7 plans executed. Device verification checkpoint (Pla
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
 | 5 | Home Dashboard, Profile & Notifications | Code-Complete (7/7 plans, device checkpoint deferred) |
-| 6 | Admin Web Dashboard | In Progress (1/4 plans done) |
+| 6 | Admin Web Dashboard | In Progress (2/4 plans done) |
 
 ## Progress Bar
 
@@ -41,7 +41,7 @@ Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
 Phase 5 [#########∙] 100% (code), device checkpoint pending
-Phase 6 [##        ] 25% (1/4 plans)
+Phase 6 [####      ] 50% (2/4 plans)
 ```
 
 ## Performance Metrics
@@ -186,6 +186,14 @@ Phase 6 [##        ] 25% (1/4 plans)
 - seed-admin is idempotent: exits cleanly if email already exists — safe to run multiple times in CI/staging
 - Admin integration tests scaffold in failing state until Plan 02 routes exist — intentional RED-before-GREEN approach
 
+### Key Decisions Logged (Phase 6 Plan 02 additions)
+
+- All routes protected at router level via router.use(authenticate, requireAdmin) — not per-route
+- banUser is a toggle (isActive = !target.isActive) with self-ban and admin-ban protection (403)
+- lean() results cast through unknown to satisfy TypeScript strict mode (Mongoose FlattenMaps incompatibility)
+- IDOR protection: all resource IDs from req.params.id only, never from request body
+- createFoodItem always sets source: 'manual' regardless of request body
+
 ### Open Questions
 
 1. ~~Vietnamese food database source~~ — resolved: curated static JSON ~200 items from OpenFoodFacts filtered subset
@@ -216,10 +224,10 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 6 Plan 01 complete (commits 1d2cb03, 9943379, 780f21a). User.isActive, FoodItem.imageUrl, requireAdmin, authenticate ban-check, seed-admin script, and admin integration test scaffold.
-**Next action**: Execute Phase 6 Plan 02 — admin API routes (exercises, food items, users CRUD + ban).
-**Resume file**: `.planning/phases/06-admin-dashboard/06-02-PLAN.md`
+**Last action**: Phase 6 Plan 02 complete (commit 82b1d1d). Full /api/admin/* router: exercise CRUD, food-item CRUD, user list/ban/delete. 17/17 integration tests pass, typecheck clean.
+**Next action**: Execute Phase 6 Plan 03 — Admin Web Dashboard (React + Vite frontend).
+**Resume file**: `.planning/phases/06-admin-dashboard/06-03-PLAN.md`
 
 ## Last Updated
 
-2026-05-20 (Phase 6 Plan 01 complete)
+2026-05-20 (Phase 6 Plan 02 complete)
