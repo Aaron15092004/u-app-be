@@ -1,4 +1,5 @@
 import admin from 'firebase-admin';
+import mongoose from 'mongoose';
 import DeviceToken from '../models/DeviceToken';
 
 export async function sendNotificationToUser(
@@ -32,5 +33,28 @@ export async function registerDeviceToken(
     { token },
     { userId, token, platform, updatedAt: new Date() },
     { upsert: true, new: true }
+  );
+}
+
+export async function sendBatchNotificationToUsers(
+  userIds: string[],
+  notification: { title: string; body: string; data?: Record<string, string> }
+): Promise<void> {
+  if (userIds.length === 0) return;
+
+  const objIds = userIds.map((id) => new mongoose.Types.ObjectId(id));
+  const tokens = await DeviceToken.find({ userId: { $in: objIds } }).lean();
+
+  await Promise.allSettled(
+    tokens.map((t) =>
+      admin
+        .messaging()
+        .send({
+          notification: { title: notification.title, body: notification.body },
+          data: notification.data,
+          token: t.token,
+        })
+        .catch((err) => console.error(`FCM batch fail for token ${t.token}:`, err))
+    )
   );
 }
