@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T16:00:00.000Z"
+last_updated: "2026-05-19T19:32:33.612Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 37
-  completed_plans: 35
-  percent: 78
+  total_plans: 34
+  completed_plans: 36
+  percent: 67
 ---
 
 # Project State — Ủ App
@@ -31,7 +31,7 @@ Phase 5 code-complete. All 7 plans executed. Device verification checkpoint (Pla
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
 | 5 | Home Dashboard, Profile & Notifications | Code-Complete (7/7 plans, device checkpoint deferred) |
-| 6 | Admin Web Dashboard | Not Started |
+| 6 | Admin Web Dashboard | In Progress (1/4 plans done) |
 
 ## Progress Bar
 
@@ -41,7 +41,7 @@ Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
 Phase 5 [#########∙] 100% (code), device checkpoint pending
-Phase 6 [          ] 0%
+Phase 6 [##        ] 25% (1/4 plans)
 ```
 
 ## Performance Metrics
@@ -178,6 +178,14 @@ Phase 6 [          ] 0%
 - expo-camera was not installed — Wave 0 adds it + openai npm package in backend — RESEARCH Pitfall 1/2 [RESOLVED in 04-01]
 - expo-image-picker/manipulator upgraded SDK 51→54 with --legacy-peer-deps (React 19 conflict pre-existing)
 
+### Key Decisions Logged (Phase 6 Plan 01 additions)
+
+- User.isActive ban flag: authenticate checks `=== false` not `!== true` — existing docs with undefined pass safely (pre-migration compatibility)
+- authenticate made async for per-request DB lookup — no isActive in JWT payload per D-97 (revocation latency acceptable within JWT TTL)
+- requireAdmin checks role from JWT payload (req.user.role) — no extra DB query needed for role since role is low-churn
+- seed-admin is idempotent: exits cleanly if email already exists — safe to run multiple times in CI/staging
+- Admin integration tests scaffold in failing state until Plan 02 routes exist — intentional RED-before-GREEN approach
+
 ### Open Questions
 
 1. ~~Vietnamese food database source~~ — resolved: curated static JSON ~200 items from OpenFoodFacts filtered subset
@@ -208,10 +216,10 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 all 7 plans code-complete (commits 39d6f85 → 1b1b673). Device verification checkpoint (Plan 07 Task 3) deferred by user choice.
-**Next action**: After device verification passes, run `/gsd:verify-work 5` to close Phase 5. Then `/gsd:plan-phase 6` for Admin Web Dashboard.
-**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md` (Task 3 checkpoint — 17-step manual device test)
+**Last action**: Phase 6 Plan 01 complete (commits 1d2cb03, 9943379, 780f21a). User.isActive, FoodItem.imageUrl, requireAdmin, authenticate ban-check, seed-admin script, and admin integration test scaffold.
+**Next action**: Execute Phase 6 Plan 02 — admin API routes (exercises, food items, users CRUD + ban).
+**Resume file**: `.planning/phases/06-admin-dashboard/06-02-PLAN.md`
 
 ## Last Updated
 
-2026-05-19 (Phase 5 Plan 06 complete)
+2026-05-20 (Phase 6 Plan 01 complete)
