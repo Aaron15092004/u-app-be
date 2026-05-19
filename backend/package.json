@@ -9,6 +9,7 @@
     "dev": "tsx watch src/server.ts",
     "seed": "tsx src/scripts/seed-exercises.ts",
     "seed:foods": "tsx src/scripts/seed-foods.ts",
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
@@ -21,7 +22,8 @@
     "test:food": "node --env-file=.env.test --require tsx/cjs --test src/api/food/food.integration.test.ts",
     "test:home": "node --env-file=.env.test --require tsx/cjs --test src/api/home/home.integration.test.ts",
     "test:users": "node --env-file=.env.test --require tsx/cjs --test src/api/users/users.integration.test.ts",
-    "test:water": "node --env-file=.env.test --require tsx/cjs --test src/api/water/water.integration.test.ts"
+    "test:water": "node --env-file=.env.test --require tsx/cjs --test src/api/water/water.integration.test.ts",
+    "test:admin": "node --env-file=.env.test --require tsx/cjs --test src/api/admin/admin.integration.test.ts"
   },
   "dependencies": {
     "apple-signin-auth": "^2.0.0",
