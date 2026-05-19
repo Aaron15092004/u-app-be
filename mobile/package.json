@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-community/slider": "^5.0.1",
     "@react-native-google-signin/google-signin": "^13.0.0",
     "@react-navigation/drawer": "^7.1.1",
@@ -16,6 +17,7 @@
     "expo-font": "~13.0.0",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
+    "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~7.0.5",
     "expo-notifications": "~0.32.17",
     "expo-router": "~4.0.0",

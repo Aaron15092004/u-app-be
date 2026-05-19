@@ -13,12 +13,19 @@ export interface IUser extends Document {
     heightCm?: number;
     weightKg?: number;
     goalType?: 'lose' | 'maintain' | 'gain';
+    waterGoal?: number;
   };
   notifications: {
     waterReminder: boolean;
     workoutReminder: boolean;
-    reminderTime: string;
+    waterReminderTime: string;
+    workoutReminderTime: string;
   };
+  profileCompleted: boolean;
+  refreshTokenHash: string | null;
+  refreshTokenExpiry: Date | null;
+  passwordResetTokenHash: string | null;
+  passwordResetTokenExpiry: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,7 +34,7 @@ const UserSchema = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, default: null },
-    name: { type: String, required: true, trim: true },
+    name: { type: String, default: '', trim: true },
     avatar: { type: String, default: null },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     authProviders: [{ provider: String, providerId: String }],
@@ -37,16 +44,21 @@ const UserSchema = new Schema<IUser>(
       heightCm: Number,
       weightKg: Number,
       goalType: { type: String, enum: ['lose', 'maintain', 'gain'] },
+      waterGoal: { type: Number, default: 8 },
     },
     notifications: {
       waterReminder: { type: Boolean, default: true },
       workoutReminder: { type: Boolean, default: true },
-      reminderTime: { type: String, default: '08:00' },
+      waterReminderTime: { type: String, default: '08:00' },
+      workoutReminderTime: { type: String, default: '07:00' },
     },
+    profileCompleted: { type: Boolean, default: false },
+    refreshTokenHash: { type: String, default: null },
+    refreshTokenExpiry: { type: Date, default: null },
+    passwordResetTokenHash: { type: String, default: null },
+    passwordResetTokenExpiry: { type: Date, default: null },
   },
   { timestamps: true }
 );
-
-UserSchema.index({ email: 1 }, { unique: true });
 
 export default mongoose.model<IUser>('User', UserSchema);
