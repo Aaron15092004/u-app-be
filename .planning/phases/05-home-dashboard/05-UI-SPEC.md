@@ -36,6 +36,7 @@ Declared values (multiples of 4):
 |-------|-------|-------|
 | xs | 4px | Icon gaps, inline divider padding, badge inner gap |
 | sm | 8px | Compact element spacing, between stat columns, tag chips |
+| xs2 | 12px | Tight card content spacing, section heading margin-bottom, icon-label gaps |
 | md | 16px | Default card padding, screen horizontal padding, section gaps |
 | lg | 24px | Screen top padding, section heading margin, modal padding |
 | xl | 32px | Between major sections (dashboard widget rows) |
@@ -117,7 +118,7 @@ Additional confirmed sizes from existing components (do not deviate):
 **1.1 Greeting Row**
 - Left: "Xin chào, [user.name]!" — Display 28px weight 700 color TEXT (#212121)
 - Left sub-line (optional date): "Thứ Hai, 19 tháng 5" — Body 16px weight 400 TEXT_SECONDARY
-- Right: Bell icon button (`notifications-outline` Ionicons, size 24, color TEXT). Tap = no-op in Phase 5 (badge count not in scope). Touch target: 44×44px.
+- Right: Bell icon button (`notifications-outline` Ionicons, size 24, color TEXT). `accessibilityLabel="Thông báo"`. Tap = no-op in Phase 5 (badge count not in scope). Touch target: 44×44px.
 
 **1.2 Today Summary Cards Row**
 - 3 equal-width cards in a row (`flex: 1` each, `gap: 8`).
