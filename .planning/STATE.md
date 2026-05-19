@@ -16,7 +16,7 @@ progress:
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 1 in progress)
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 1 in progress, Plan 04 complete)
 
 ## Status
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (2/7) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (4/7) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [##        ] 29%
+Phase 5 [####      ] 57%
 Phase 6 [          ] 0%
 ```
 
@@ -111,6 +111,14 @@ Phase 6 [          ] 0%
 - All Wave 1 tests must extend existing scaffolds: home/water/users.integration.test.ts
 - User schema breaking change safe per RESEARCH.md A2 (no production users)
 
+### Key Decisions Logged (Phase 5 Plan 04 additions)
+
+- sendBatchNotificationToUsers uses single $in query + Promise.allSettled — batch FCM pattern
+- Per-minute cron uses manual UTC+7 offset math (never server local time) per Pitfall 2
+- startScheduler() bootstrapped AFTER connectDB() + loadFirebase() in server.ts — Pitfall 1
+- register-token endpoint hardened with authenticate middleware; controller uses req.user.id from JWT
+- All FCM notification bodies are generic strings (no PII) matching UI-SPEC Copywriting Contract
+
 ### Key Decisions Logged (Phase 5 Plan 02 additions)
 
 - waterGoal embedded in GET /api/water/today response (WARNING 4 fix): mobile water screen gets waterGoal in single query — no second roundtrip to /api/home/today-summary
@@ -160,9 +168,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 02 (Wave 1 — Water/Home/Config backend APIs) complete — 4 commits (a0e6f56 RED water, f3b1300 GREEN water, 1f3378d RED home, 6d109ee GREEN home+config). 16/16 tests pass.
-**Next action**: Execute Phase 5 Plan 03 (Wave 2 — Users/Profile API)
-**Resume file**: `.planning/phases/05-home-dashboard/05-03-PLAN.md`
+**Last action**: Phase 5 Plan 04 (Wave 1 — FCM scheduling + notification hardening) complete — 2 commits (58b80aa fcm.service+routes, 8116edb scheduler+server). TypeScript clean. 24/24 auth tests pass.
+**Next action**: Execute Phase 5 Plan 05 or remaining Wave 1 plans
+**Resume file**: `.planning/phases/05-home-dashboard/05-05-PLAN.md`
 
 ## Last Updated
 
