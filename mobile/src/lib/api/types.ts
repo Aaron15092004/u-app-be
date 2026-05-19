@@ -173,3 +173,43 @@ export interface IScanFoodResponse {
   aiProvider: 'logmeal' | 'openai' | 'manual';
   imageUrl: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 5 Types — Home Dashboard, Profile & Notifications
+// ---------------------------------------------------------------------------
+
+export interface ITodaySummary {
+  kcalConsumed: number;
+  macros: { protein: number; carbs: number; fat: number };
+  waterGlasses: number;
+  waterGoal: number;
+  workoutMinutes: number;
+  bmi: { value: number; category: string } | null;
+}
+
+export interface IWaterLog {
+  _id: string;
+  userId: string;
+  loggedAt: string;
+  createdAt: string;
+}
+
+export interface ITodayWater {
+  logs: IWaterLog[];
+  count: number;
+  waterGoal: number; // WARNING 4 fix — added so water.tsx does not need a second /api/home/today-summary query
+}
+
+export interface IUserNotifications {
+  waterReminder: boolean;
+  workoutReminder: boolean;
+  waterReminderTime: string;
+  workoutReminderTime: string;
+}
+
+export interface IProfileStats {
+  streakDays: number;
+  totalWorkouts: number;
+  totalKcalBurned: number;
+  notifications: IUserNotifications; // WARNING 3 fix — added so notifications.tsx initialises form state from server, not hardcoded defaults
+}
