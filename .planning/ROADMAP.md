@@ -16,7 +16,7 @@
 - [x] **Phase 3: Core Health Tracking** — Workout library + timer, Habit tracking + streaks, BMI calculator + 30-day chart
 - [x] **Phase 4: AI Food Scan** — Camera scan, AI proxy, Vietnamese food database, meal logging + history
 - [ ] **Phase 5: Home Dashboard, Profile & Notifications** — Assembled dashboard, user profile, push notification reminders
-- [ ] **Phase 6: Admin Web Dashboard** — Admin login, exercise CRUD, food DB CRUD, user management
+- [x] **Phase 6: Admin Web Dashboard** — Admin login, exercise CRUD, food DB CRUD, user management (completed 2026-05-19)
 
 ---
 
@@ -248,7 +248,7 @@ Wave 1 *(sequential — Plan 01 before Plan 02)*:
 Wave 2 *(blocked on Wave 1)*:
 
 - [x] 06-03-PLAN.md — Admin frontend setup: Tailwind v4 + shadcn/ui install, tsconfig @/ alias, vite.config proxy, axios interceptor with JWT refresh queue, QueryProvider, ProtectedRoute, AppShell/Sidebar, LoginPage (ADM-01, D-84/85/86/87/88)
-- [ ] 06-04-PLAN.md — Admin CRUD pages: ExercisesPage (DataTable + dialog + useFieldArray steps editor + image upload), FoodItemsPage (DataTable + dialog + 7 macro fields + image upload), UsersPage (DataTable + ban toggle + delete) (ADM-02/03/04, D-95/96)
+- [x] 06-04-PLAN.md — Admin CRUD pages: ExercisesPage (DataTable + dialog + useFieldArray steps editor + image upload), FoodItemsPage (DataTable + dialog + 7 macro fields + image upload), UsersPage (DataTable + ban toggle + delete) (ADM-02/03/04, D-95/96)
 
 **UI hint**: yes
 
@@ -263,7 +263,7 @@ Wave 2 *(blocked on Wave 1)*:
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
 | 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
 | 5 | Home Dashboard, Profile & Notifications | 7/7 | Code-Complete (device checkpoint deferred) | 2026-05-19 |
-| 6 | Admin Web Dashboard | 3/4 | In Progress|  |
+| 6 | Admin Web Dashboard | 4/4 | Complete   | 2026-05-19 |
 
 ---
 

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T19:45:24.776Z"
+last_updated: "2026-05-20T00:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 34
-  completed_plans: 39
-  percent: 72
+  completed_plans: 40
+  percent: 85
 ---
 
 # Project State — Ủ App
@@ -31,7 +31,7 @@ Phase 5 code-complete. All 7 plans executed. Device verification checkpoint (Pla
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
 | 5 | Home Dashboard, Profile & Notifications | Code-Complete (7/7 plans, device checkpoint deferred) |
-| 6 | Admin Web Dashboard | In Progress (3/4 plans done) |
+| 6 | Admin Web Dashboard | Complete (4/4 plans done) |
 
 ## Progress Bar
 
@@ -41,7 +41,7 @@ Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
 Phase 5 [#########∙] 100% (code), device checkpoint pending
-Phase 6 [######    ] 75% (3/4 plans)
+Phase 6 [##########] 100% (4/4 plans)
 ```
 
 ## Performance Metrics
@@ -196,6 +196,16 @@ Phase 6 [######    ] 75% (3/4 plans)
 - axios 401 refresh queue: isRefreshing flag + failedQueue array prevents concurrent token refresh storms
 - loginAdmin() validates role === 'admin' — rejects non-admin credentials with Vietnamese error message
 
+### Key Decisions Logged (Phase 6 Plan 04 additions)
+
+- zodResolver cast to FormResolver<T> for Zod v4 ZodPipe coerce.number() type mismatch with @hookform/resolvers v5
+- NumericField union type for MACRO_FIELDS to prevent null value from imageUrl spreading to Input.value
+- sonner toast() replaces useToast — @/hooks/use-toast does not exist in base-nova shadcn setup
+- useFieldArray rows keyed by field.id (not index) — required for correct re-render on remove
+- Admin rows in UsersPage return null for actions cell — cannot be banned/deleted from UI
+- DataTable<T, TValue> generic with getCoreRowModel + getPaginationRowModel + skeleton loading
+- ImageUploadField uploads via POST /api/admin/upload with FormData — no manual Content-Type header
+
 ### Key Decisions Logged (Phase 6 Plan 02 additions)
 
 - All routes protected at router level via router.use(authenticate, requireAdmin) — not per-route
@@ -234,9 +244,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 6 Plan 03 complete (commits f8b3e95, 511117f, bbf75aa). Admin SPA shell: Tailwind v4 + shadcn/ui + TanStack Query v5 + axios JWT refresh queue + ProtectedRoute + AppShell + LoginPage. typecheck clean, dev server starts on port 3001.
-**Next action**: Execute Phase 6 Plan 04 — Admin CRUD pages (ExercisesPage, FoodItemsPage, UsersPage full implementation).
-**Resume file**: `.planning/phases/06-admin-dashboard/06-04-PLAN.md`
+**Last action**: Phase 6 Plan 04 complete (commits 89cd905, 51b85f2). Admin CRUD pages: DataTable, ImageUploadField, feature hooks, ExercisesPage + FoodItemsPage + UsersPage full implementation. typecheck clean (0 errors), dev server starts on port 3001.
+**Next action**: Phase 6 complete — run `/gsd:verify-work 6` for admin dashboard verification.
+**Resume file**: None (Phase 6 all 4 plans done)
 
 ## Last Updated
 
