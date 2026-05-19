@@ -165,7 +165,7 @@ Wave 1 *(dependency installs + test scaffold — blocks all other waves)*:
 
 Wave 2 *(blocked on Wave 1 — backend model foundation)*:
 
-- [ ] 04-02-PLAN.md — FoodLog schema update (remove mealType, add sodium/vitaminC) + FoodItem model (text index) + ai-food.service.ts GPT-4o-mini vision implementation (D-58/59/60/61/63/65)
+- [x] 04-02-PLAN.md — FoodLog schema update (remove mealType, add sodium/vitaminC) + FoodItem model (text index) + ai-food.service.ts GPT-4o-mini vision implementation (D-58/59/60/61/63/65)
 
 Wave 3 *(parallel — blocked on Wave 2; food API and seed can run in parallel)*:
 

@@ -20,7 +20,7 @@ Phase 4 — AI Food Scan — **Ready to execute (7 plans, 5 waves)**
 
 ## Status
 
-Phase 4 executing — Plan 01 complete. 6 plans remaining.
+Phase 4 executing — Plan 02 complete. 5 plans remaining.
 
 ## Phase Progress
 
@@ -39,7 +39,7 @@ Phase 4 executing — Plan 01 complete. 6 plans remaining.
 Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
-Phase 4 [#>        ] 14% (1/7)
+Phase 4 [##>       ] 29% (2/7)
 Phase 5 [          ] 0%
 Phase 6 [          ] 0%
 ```
@@ -48,7 +48,7 @@ Phase 6 [          ] 0%
 
 - Requirements covered: 62/62
 - Phases completed: 3/6
-- Plans completed: 22/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 1/7)
+- Plans completed: 23/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 2/7)
 
 ## Accumulated Context
 
@@ -71,6 +71,13 @@ Phase 6 [          ] 0%
 - Phase 3 Expo Go fixes: React 18→19, Reanimated 3→4, worklets 0.5, expo-secure-store 14→15, expo-notifications 0.29→0.32 ✓ Done
 - victory-native/Skia replaced with plain RN chart in Expo Go (native build sẽ restore) ✓ Done
 - MMKV, Google Sign-In, Apple Sign-In mocked for Expo Go testing ✓ Done
+
+### Key Decisions Logged (Phase 4 Plan 02 additions)
+
+- FoodItem text index uses default_language: 'none' — prevents English stemmer from mangling Vietnamese diacritics
+- analyzeImage() OpenAI client instantiated at call time (not module scope) for test key override
+- NutritionResult.imageUrl changed to string|null; always null in Phase 4 (D-62)
+- Response normalization: Number(field) || 0 prevents NaN; totals recalculated from foods if AI omits them
 
 ### Key Decisions Logged (Phase 4 additions)
 
@@ -112,9 +119,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 4 Plan 01 complete — openai + expo-camera installed, test scaffold created.
-**Next action**: Execute Phase 4 Plan 02 (backend model updates + food API routes)
-**Resume file**: `.planning/phases/04-ai-food-scan/04-02-PLAN.md`
+**Last action**: Phase 4 Plan 02 complete — FoodLog schema updated, FoodItem model created, analyzeImage() implemented.
+**Next action**: Execute Phase 4 Plan 03 (food API routes: scan + logs + items endpoints)
+**Resume file**: `.planning/phases/04-ai-food-scan/04-03-PLAN.md`
 
 ## Last Updated
 
