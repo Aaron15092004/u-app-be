@@ -97,23 +97,31 @@ test('POST /api/water with userA token creates WaterLog (userId from JWT, logged
   assert.ok(res.body.data.loggedAt);
 });
 
-// Test 3: POST with explicit loggedAt; POST with userId in body → userId ignored
-test('POST /api/water with explicit loggedAt uses that timestamp; userId in body is ignored', async () => {
+// Test 3: POST with explicit loggedAt uses that timestamp; POST with userId in body → 400 (strict schema rejects extra fields)
+test('POST /api/water with explicit loggedAt uses that timestamp; userId in body rejected by strict schema', async () => {
   const explicitTime = new Date('2026-05-19T08:00:00.000Z').toISOString();
-  const fakeUserId = new mongoose.Types.ObjectId().toString();
 
-  const res = await request(app)
+  // (a) explicit loggedAt only → 201 with correct timestamp
+  const resA = await request(app)
     .post('/api/water')
     .set('Authorization', `Bearer ${tokenA}`)
-    .send({ loggedAt: explicitTime, userId: fakeUserId });
+    .send({ loggedAt: explicitTime });
 
-  assert.equal(res.status, 201);
-  assert.equal(res.body.success, true);
+  assert.equal(resA.status, 201);
+  assert.equal(resA.body.success, true);
   // loggedAt matches the explicit timestamp
-  assert.equal(new Date(res.body.data.loggedAt).toISOString(), explicitTime);
+  assert.equal(new Date(resA.body.data.loggedAt).toISOString(), explicitTime);
   // userId must be from JWT (userA), not from body
-  assert.equal(res.body.data.userId.toString(), userIdA);
-  assert.notEqual(res.body.data.userId.toString(), fakeUserId);
+  assert.equal(resA.body.data.userId.toString(), userIdA);
+
+  // (b) userId in body → 400 (strict schema rejects extra fields — IDOR protection)
+  const fakeUserId = new mongoose.Types.ObjectId().toString();
+  const resB = await request(app)
+    .post('/api/water')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ userId: fakeUserId });
+
+  assert.equal(resB.status, 400);
 });
 
 // Test 4: GET /api/water/today with userA after 3 POSTs → { logs: [3], count: 3, waterGoal: 8 }
