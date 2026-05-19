@@ -3,24 +3,24 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T00:00:00.000Z"
+last_updated: "2026-05-19T03:37:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 28
-  completed_plans: 21
-  percent: 50
+  completed_plans: 25
+  percent: 89
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 4 — AI Food Scan — **Ready to execute (7 plans, 5 waves)**
+Phase 4 — AI Food Scan — **Executing (7 plans, 5 waves)**
 
 ## Status
 
-Phase 4 executing — Plan 02 complete. 5 plans remaining.
+Phase 4 executing — Plans 01–04 complete. 3 plans remaining.
 
 ## Phase Progress
 
@@ -29,7 +29,7 @@ Phase 4 executing — Plan 02 complete. 5 plans remaining.
 | 1 | Infrastructure | Completed (5/5 plans) |
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
-| 4 | AI Food Scan | In Progress (1/7 plans complete) |
+| 4 | AI Food Scan | In Progress (4/7 plans complete) |
 | 5 | Home Dashboard, Profile & Notifications | Not Started |
 | 6 | Admin Web Dashboard | Not Started |
 
@@ -39,7 +39,7 @@ Phase 4 executing — Plan 02 complete. 5 plans remaining.
 Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
-Phase 4 [##>       ] 29% (2/7)
+Phase 4 [####>     ] 57% (4/7)
 Phase 5 [          ] 0%
 Phase 6 [          ] 0%
 ```
@@ -48,7 +48,7 @@ Phase 6 [          ] 0%
 
 - Requirements covered: 62/62
 - Phases completed: 3/6
-- Plans completed: 23/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 2/7)
+- Plans completed: 25/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 4/7)
 
 ## Accumulated Context
 
@@ -78,6 +78,12 @@ Phase 6 [          ] 0%
 - analyzeImage() OpenAI client instantiated at call time (not module scope) for test key override
 - NutritionResult.imageUrl changed to string|null; always null in Phase 4 (D-62)
 - Response normalization: Number(field) || 0 prevents NaN; totals recalculated from foods if AI omits them
+
+### Key Decisions Logged (Phase 4 Plan 04 additions)
+
+- Vietnamese food seed: 150-item static JSON committed to source control; seed:foods idempotent via countDocuments >= 50 check
+- Idempotency threshold 50 (not 150) — allows partial re-seed if needed while preventing duplicate full runs
+- source field cast as 'manual' | 'openfoods' union in TypeScript — JSON import types strings generically
 
 ### Key Decisions Logged (Phase 4 additions)
 
@@ -119,9 +125,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 4 Plan 02 complete — FoodLog schema updated, FoodItem model created, analyzeImage() implemented.
-**Next action**: Execute Phase 4 Plan 03 (food API routes: scan + logs + items endpoints)
-**Resume file**: `.planning/phases/04-ai-food-scan/04-03-PLAN.md`
+**Last action**: Phase 4 Plan 04 complete — Vietnamese food database (150 items) + idempotent seed script created.
+**Next action**: Execute Phase 4 Plan 05 (mobile food scan UI)
+**Resume file**: `.planning/phases/04-ai-food-scan/04-05-PLAN.md`
 
 ## Last Updated
 

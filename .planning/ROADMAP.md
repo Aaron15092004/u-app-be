@@ -170,7 +170,7 @@ Wave 2 *(blocked on Wave 1 — backend model foundation)*:
 Wave 3 *(parallel — blocked on Wave 2; food API and seed can run in parallel)*:
 
 - [ ] 04-03-PLAN.md — Food API: food.validation/service/controller/routes + app.ts mount — all 5 endpoints (POST scan, POST/GET/DELETE logs, GET items) (FOOD-01/02/05/06/07/09)
-- [ ] 04-04-PLAN.md — Vietnamese food seed: vietnamese-foods.json (150+ items) + seed-foods.ts (idempotent) + seed:foods npm script (FOOD-08)
+- [x] 04-04-PLAN.md — Vietnamese food seed: vietnamese-foods.json (150+ items) + seed-foods.ts (idempotent) + seed:foods npm script (FOOD-08)
 
 Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)*:
 
@@ -230,7 +230,7 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 | 1 | Infrastructure | 5/5 | Done | 2026-05-17 |
 | 2 | Authentication | 7/7 | Done | 2026-05-18 |
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
-| 4 | AI Food Scan | 0/7 | Planned | - |
+| 4 | AI Food Scan | 4/7 | In Progress | - |
 | 5 | Home Dashboard, Profile & Notifications | 0/? | Not started | - |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
 
@@ -261,7 +261,7 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 | FOOD-05 | Phase 4 | Planned |
 | FOOD-06 | Phase 4 | Planned |
 | FOOD-07 | Phase 4 | Planned |
-| FOOD-08 | Phase 4 | Planned |
+| FOOD-08 | Phase 4 | Done |
 | FOOD-09 | Phase 4 | Planned |
 | WO-01 | Phase 3 | Done |
 | WO-02 | Phase 3 | Done |
@@ -308,4 +308,4 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 ---
 
 *Created: 2026-05-17*
-*Updated: 2026-05-19 — Phase 4 planning complete (7 plans, 5 waves, all 9 FOOD requirements covered)*
+*Updated: 2026-05-19 — Phase 4 Plan 04 complete: vietnamese-foods.json (150 items) + seed-foods.ts seeder*
