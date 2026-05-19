@@ -54,15 +54,17 @@ Exceptions:
 
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 14px | 400 | 1.5 | Secondary labels, habit names, menu item subtitles, notification body copy |
-| Label | 16px | 400 | 1.5 | Menu item titles, form field values, card body text |
-| Heading | 20px | 700 | 1.2 | Card stat values (kcal, water count), section headings |
-| Display | 24px | 700 | 1.2 | Screen greeting, profile name, BMI widget number |
+| Caption | 12px | 400 | 1.5 | Unit suffixes, sublabels, badge milestone labels, notification sublabels, info footer text, version string |
+| Body/Label | 16px | 400 | 1.5 | Body text, button labels, menu item titles, form field values, notification row labels |
+| Heading | 20px | 700 | 1.2 | Card stat values (kcal, water count), section headings, profile name |
+| Display | 28px | 700 | 1.2 | Greeting text, BMI number, water log count display, profile large number displays |
+
+**Scale rationale:** Collapsed from 7 sizes (12/14/16/20/24/28/36) to 4 and from 3 weights (400/600/700) to 2 (400/700). All former 14px occurrences map to 16px; all former 24px occurrences map to 28px; all former 36px and 48px occurrences map to 28px. All former weight 600 occurrences map to 700.
 
 Additional confirmed sizes from existing components (do not deviate):
 - Unit suffix on stat cards: 12px weight 400 color TEXT_SECONDARY (matches WeeklyStatCard.unit)
 - Progress bar label: 12px weight 400 right-aligned color TEXT_SECONDARY (matches DailyChallengeCard.kcalLabel)
-- Badge milestone label: 12px weight 600 (below badge icon in Profile)
+- Badge milestone label: 12px weight 700 (below badge icon in Profile)
 - Button label: 16px weight 700 (matches PrimaryButton)
 - Screen section subtitle: 16px weight 400 color TEXT_SECONDARY (matches ScreenHeader.subtitle)
 
@@ -81,7 +83,7 @@ Additional confirmed sizes from existing components (do not deviate):
 1. Active tab bar icon tint
 2. Progress bar fill (kcal goal, water glasses, macro nutrition bars)
 3. Achievement badge background when unlocked: #E8F5E9 (bg) + #4CAF50 (icon/text)
-4. Quick action button fill (3 buttons: Quét bữa ăn / Bắt đầu tập / Thói quen) — filled PrimaryButton variant
+4. Quick action button fill (3 buttons: Quét bữa ăn / Bắt đầu tập / Thói quen) — filled PrimaryButton variant (green background, white icon + white label)
 5. Toggle switch track when ON (notification settings)
 6. "Bật thông báo" CTA on rationale screen
 
@@ -102,6 +104,8 @@ Additional confirmed sizes from existing components (do not deviate):
 
 **Layout:** ScrollView (bounces), `paddingHorizontal: 16`, `paddingTop: 16`, `paddingBottom: 48`.
 
+**Primary focal point:** Greeting row + Today Summary cards are the primary visual anchor — largest type (28px) and highest-contrast elements on screen.
+
 **Section order (top to bottom):**
 1. Greeting row + notification bell
 2. Today Summary cards row
@@ -111,8 +115,8 @@ Additional confirmed sizes from existing components (do not deviate):
 6. Nutrition Summary (macro progress bars)
 
 **1.1 Greeting Row**
-- Left: "Xin chào, [user.name]!" — Display 24px weight 700 color TEXT (#212121)
-- Left sub-line (optional date): "Thứ Hai, 19 tháng 5" — Body 14px weight 400 TEXT_SECONDARY
+- Left: "Xin chào, [user.name]!" — Display 28px weight 700 color TEXT (#212121)
+- Left sub-line (optional date): "Thứ Hai, 19 tháng 5" — Body 16px weight 400 TEXT_SECONDARY
 - Right: Bell icon button (`notifications-outline` Ionicons, size 24, color TEXT). Tap = no-op in Phase 5 (badge count not in scope). Touch target: 44×44px.
 
 **1.2 Today Summary Cards Row**
@@ -133,33 +137,33 @@ Additional confirmed sizes from existing components (do not deviate):
 - Loading state: shopUrl fetched via TanStack Query (cache 1 hour). While loading: banner shows with placeholder text, chevron hidden. On error: banner hidden (do not show broken banner).
 
 **1.4 Quick Actions Row**
-- 3 equal-width `Pressable` cards in a row, `gap: 8`.
-- Each card: white background, borderRadius 12, padding 16, alignItems center, elevation 2 (Android) / shadow (iOS: shadowColor #000, shadowOffset {0,1}, shadowOpacity 0.08, shadowRadius 4).
-- Content: Ionicons icon (size 28, color PRIMARY #4CAF50) + label below (14px weight 600 color TEXT).
+- 3 equal-width `Pressable` buttons in a row, `gap: 8`.
+- Each button: filled PrimaryButton variant — green background (#4CAF50), borderRadius 12, padding 16, alignItems center.
+- Content: Ionicons icon (size 28, color #FFFFFF) + label below (16px weight 700 color #FFFFFF).
 - Card 1: icon `scan-outline`, label "Quét bữa ăn" → `router.push('/(food)/scan')`
 - Card 2: icon `barbell-outline`, label "Bắt đầu tập" → `router.push('/(tabs)/exercises')`
 - Card 3: icon `checkmark-circle-outline`, label "Thói quen" → `router.push('/(tabs)/habits')`
 - Press feedback: `opacity: 0.85` on pressed state.
 
 **1.5 BMI Widget Card**
-- White card, borderRadius 12, padding 16, elevation 2 / shadow (same as Quick Actions).
-- Section heading "Chỉ số BMI" 14px weight 700 TEXT, `marginBottom: 12`.
+- White card, borderRadius 12, padding 16, elevation 2 / shadow (shadowColor #000, shadowOffset {0,1}, shadowOpacity 0.08, shadowRadius 4).
+- Section heading "Chỉ số BMI" 16px weight 700 TEXT, `marginBottom: 12`.
 - Large BMI number: 28px weight 700 color based on category (BMI_UNDERWEIGHT / BMI_NORMAL / BMI_OVERWEIGHT / BMI_OBESE from colors.ts).
-- Category label: 14px weight 600 same category color. e.g. "Bình thường".
+- Category label: 16px weight 700 same category color. e.g. "Bình thường".
 - Tap → `router.push('/(tabs)/bmi')`. Entire card is `Pressable`, activeOpacity 0.95.
-- Empty state: if no BMIRecord exists, show "Chưa có dữ liệu BMI" 14px TEXT_SECONDARY + "Cập nhật ngay →" 14px weight 600 PRIMARY.
+- Empty state: if no BMIRecord exists, show "Chưa có dữ liệu BMI" 16px TEXT_SECONDARY + "Cập nhật ngay →" 16px weight 700 PRIMARY.
 
 **1.6 Nutrition Summary Card**
 - White card, borderRadius 12, padding 16, elevation 2 / shadow.
-- Section heading "Dinh dưỡng hôm nay" 14px weight 700 TEXT, `marginBottom: 12`.
+- Section heading "Dinh dưỡng hôm nay" 16px weight 700 TEXT, `marginBottom: 12`.
 - 4 progress bars stacked vertically, `gap: 12`.
-- Each row: label left (14px weight 400 TEXT) + value+unit right (12px weight 400 TEXT_SECONDARY) + bar below (height 8px, borderRadius 4, track #E0E0E0, fill color per macro).
+- Each row: label left (16px weight 400 TEXT) + value+unit right (12px weight 400 TEXT_SECONDARY) + bar below (height 8px, borderRadius 4, track #E0E0E0, fill color per macro).
   - Calo: fill #4CAF50. Goal = 2000 kcal default (phase: no user kcal goal config, use constant).
   - Protein: fill #4CAF50. Goal = 50g.
   - Carbs: fill #FFA726. Goal = 250g.
   - Chất béo: fill #64B5F6. Goal = 70g.
 - Progress fill width = `Math.min(1, actual / goal) * 100%`.
-- Empty state (no food logs today): all bars at 0%. Show "Chưa có bữa ăn nào hôm nay" body text below bars.
+- Empty state (no food logs today): all bars at 0%. Show "Chưa có bữa ăn nào hôm nay" 16px TEXT_SECONDARY centered below bars.
 
 ---
 
@@ -171,25 +175,25 @@ Additional confirmed sizes from existing components (do not deviate):
 
 **Top section — daily goal card:**
 - White card, borderRadius 12, padding 16, elevation 2.
-- Large display: "[X] / [goal]" — X in 36px weight 700 PRIMARY, goal in 20px weight 400 TEXT_SECONDARY.
-- Unit label "ly hôm nay" 14px weight 400 TEXT_SECONDARY below.
+- Large display: "[X] / [goal]" — X in 28px weight 700 PRIMARY, goal in 20px weight 400 TEXT_SECONDARY.
+- Unit label "ly hôm nay" 16px weight 400 TEXT_SECONDARY below.
 - Progress bar: full-width, height 12px, borderRadius 6, track #E0E0E0, fill #4CAF50. Fill = min(X/goal, 1) × 100%.
-- Goal reached state: fill #4CAF50, label changes to "Đã đạt mục tiêu! Tuyệt vời" 14px weight 600 PRIMARY.
+- Goal reached state: fill #4CAF50, label changes to "Đã đạt mục tiêu! Tuyệt vời" 16px weight 700 PRIMARY.
 
 **Middle section — controls:**
 - Row centered with `gap: 24`. Three elements inline:
   - Minus button: circular 52×52 Pressable, border 1.5px PRIMARY, icon `remove` Ionicons size 24 PRIMARY. Disabled when X === 0 (opacity 0.4, not pressable).
-  - Water count display: 48px weight 700 TEXT — the current count repeated (redundant but good UX anchor).
+  - Water count display: 28px weight 700 TEXT — the current count repeated (redundant but good UX anchor).
   - Plus button: circular 52×52 filled PRIMARY, icon `add` Ionicons size 24 white.
 - Both buttons: `activeOpacity: 0.8`. Loading state on mutation: show `ActivityIndicator` inside button, disable both buttons.
 
 **Bottom section — today's log list:**
-- Section heading "Lịch sử hôm nay" 14px weight 700 TEXT, `marginTop: 24`, `marginBottom: 8`.
+- Section heading "Lịch sử hôm nay" 16px weight 700 TEXT, `marginTop: 24`, `marginBottom: 8`.
 - FlatList of logged glasses (reverse chronological by `loggedAt`).
 - Each item: white row, borderRadius 8, padding 12, marginBottom 8, `flexDirection: row`.
   - Left: `water-outline` Ionicons size 20 #64B5F6.
-  - Right: "Ly [N]" 14px weight 600 TEXT + time string (HH:MM) 12px TEXT_SECONDARY.
-- Empty state: "Chưa uống ly nào hôm nay. Hãy bắt đầu nhé!" 14px TEXT_SECONDARY centered, `marginTop: 24`.
+  - Right: "Ly [N]" 16px weight 700 TEXT + time string (HH:MM) 12px TEXT_SECONDARY.
+- Empty state: "Chưa uống ly nào hôm nay. Hãy bắt đầu nhé!" 16px TEXT_SECONDARY centered, `marginTop: 24`.
 
 ---
 
@@ -210,7 +214,7 @@ Additional confirmed sizes from existing components (do not deviate):
 - Centered column layout.
 - Avatar: 80×80 circular placeholder. If no avatar URL: filled circle background PRIMARY (#4CAF50) with user initials 28px weight 700 white. If avatar URL: `Image` component with borderRadius 40.
 - Name: 20px weight 700 TEXT, `marginTop: 12`.
-- Email: 14px weight 400 TEXT_SECONDARY, `marginTop: 4`.
+- Email: 16px weight 400 TEXT_SECONDARY, `marginTop: 4`.
 
 **3.2 Stats Row**
 - 3 equal-width columns in a row, `marginTop: 24`, white card borderRadius 12 padding 16 elevation 2.
@@ -222,13 +226,13 @@ Additional confirmed sizes from existing components (do not deviate):
 
 **3.3 Achievement Badges Row**
 - White card, borderRadius 12, padding 16, elevation 2, `marginTop: 16`.
-- Section heading "Thành tích" 14px weight 700 TEXT, `marginBottom: 12`.
+- Section heading "Thành tích" 16px weight 700 TEXT, `marginBottom: 12`.
 - 4 badges in a row, equal spacing (`justifyContent: 'space-around'`).
 - Each badge (column layout):
   - Circle container 56×56, borderRadius 28.
   - Unlocked (streak >= milestone): background #E8F5E9, icon `medal-outline` Ionicons size 28 color #4CAF50.
   - Locked (streak < milestone): background #F5F5F5, icon `medal-outline` Ionicons size 28 color #BDBDBD.
-  - Label below circle: milestone label (12px weight 600). Unlocked: #4CAF50. Locked: #BDBDBD.
+  - Label below circle: milestone label (12px weight 700). Unlocked: #4CAF50. Locked: #BDBDBD.
   - Milestones: "7 ngày" / "14 ngày" / "28 ngày" / "60 ngày".
 
 **3.4 Menu Items**
@@ -257,7 +261,7 @@ Additional confirmed sizes from existing components (do not deviate):
 
 **Form fields (white card, borderRadius 12, padding 16, elevation 2):**
 Each field uses a consistent field row pattern:
-- Label: 14px weight 600 TEXT, `marginBottom: 6`.
+- Label: 16px weight 700 TEXT, `marginBottom: 6`.
 - Input: height 48, borderRadius 8, borderWidth 1, border color #E0E0E0 (inactive) / PRIMARY (focused), background #FFFFFF, paddingHorizontal 12, fontSize 16 weight 400 TEXT.
 
 Fields (top to bottom):
@@ -269,7 +273,7 @@ Fields (top to bottom):
 
 **Save button:** `PrimaryButton` variant "filled", label "Lưu thay đổi", `marginTop: 24`, full width. Shows `ActivityIndicator` while PATCH /api/users/profile in-flight.
 
-**Success feedback:** Toast-style notification "Đã lưu hồ sơ" OR simply `router.back()` on success. Use `Alert.alert('Thành công', 'Hồ sơ đã được cập nhật.')` for simplicity (matches existing auth screens pattern).
+**Success feedback:** `Alert.alert('Thành công', 'Hồ sơ đã được cập nhật.')` then `router.back()` on success (matches existing auth screens pattern).
 
 ---
 
@@ -283,7 +287,7 @@ Fields (top to bottom):
 
 **Row pattern:**
 - Each row: `height: 64`, `paddingHorizontal: 16`, `flexDirection: row`, `alignItems: center`, `justifyContent: 'space-between'`.
-- Left block: label 16px weight 600 TEXT + sublabel 12px weight 400 TEXT_SECONDARY below.
+- Left block: label 16px weight 700 TEXT + sublabel 12px weight 400 TEXT_SECONDARY below.
 - Right: Switch component (React Native core). `trackColor={{ false: '#E0E0E0', true: '#4CAF50' }}`, `thumbColor: '#FFFFFF'`.
 - Separator: 1px #E0E0E0 between rows (not after last row).
 
@@ -312,12 +316,12 @@ Fields (top to bottom):
 
 **Content (top to bottom):**
 1. Illustration icon: `notifications-outline` Ionicons size 80 color PRIMARY — centered, `marginBottom: 24`.
-2. Heading: "Nhận nhắc nhở sức khỏe" — 24px weight 700 TEXT, `textAlign: 'center'`, `marginBottom: 12`.
+2. Heading: "Nhận nhắc nhở sức khỏe" — 28px weight 700 TEXT, `textAlign: 'center'`, `marginBottom: 12`.
 3. Body copy (3 bullet lines, each `flexDirection: row`, `gap: 8`, `marginBottom: 8`):
    - `water-outline` size 16 #64B5F6 + "Nhắc uống nước đúng giờ mỗi ngày"
    - `barbell-outline` size 16 PRIMARY + "Nhắc bắt đầu buổi tập của bạn"
    - `flame-outline` size 16 STREAK_BADGE + "Cảnh báo khi bạn sắp mất streak"
-   - Each line: 14px weight 400 TEXT, lineHeight 1.5.
+   - Each line: 16px weight 400 TEXT, lineHeight 1.5.
 4. `marginTop: 32` then `PrimaryButton` variant "filled", label "Bật thông báo", full width → calls `requestPermissionsAsync()` → close modal.
 5. `marginTop: 12` then `PrimaryButton` variant "outlined", label "Để sau", full width → close modal without requesting.
 
@@ -331,11 +335,11 @@ Fields (top to bottom):
 
 **Content (static, no API):**
 - Section "Câu hỏi thường gặp" (FAQ) — white card, borderRadius 12, padding 16, elevation 2.
-  - 4 FAQ items in accordion pattern (no animation — simple show/hide). Each item: question 14px weight 600 TEXT + `chevron-down`/`chevron-forward` right. Expanded: answer text 14px weight 400 TEXT_SECONDARY below, `paddingTop: 8`, `paddingBottom: 8`.
+  - 4 FAQ items in accordion pattern (no animation — simple show/hide). Each item: question 16px weight 700 TEXT + `chevron-down`/`chevron-forward` right. Expanded: answer text 16px weight 400 TEXT_SECONDARY below, `paddingTop: 8`, `paddingBottom: 8`.
   - FAQ questions: "Làm thế nào để cập nhật cân nặng?" / "Dữ liệu của tôi có được lưu an toàn không?" / "Cách tính streak là gì?" / "Tôi có thể xóa tài khoản không?"
 - Section "Liên hệ hỗ trợ" — white card, borderRadius 12, padding 16, elevation 2, `marginTop: 16`.
-  - Email row: `mail-outline` Ionicons size 20 TEXT_SECONDARY + "support@u-app.vn" 14px weight 400 TEXT + `copy-outline` right. Tap → `Clipboard.setString('support@u-app.vn')` + brief feedback.
-  - Version row: "Phiên bản ứng dụng" + version string from `expo-constants` right-aligned, 14px TEXT_SECONDARY. Non-tappable.
+  - Email row: `mail-outline` Ionicons size 20 TEXT_SECONDARY + "support@u-app.vn" 16px weight 400 TEXT + `copy-outline` right. Tap → `Clipboard.setString('support@u-app.vn')` + brief feedback.
+  - Version row: "Phiên bản ứng dụng" + version string from `expo-constants` right-aligned, 12px TEXT_SECONDARY. Non-tappable.
 
 ---
 
@@ -394,7 +398,7 @@ Fields (top to bottom):
 - Profile stats: if no data yet, show `—` as value placeholder.
 
 ### Error States
-- All `useQuery` hooks: on error → show inline error card below relevant section. Card: white, borderRadius 12, padding 16, row with `warning-outline` Ionicons size 20 #FFA726 + "Có lỗi xảy ra. Thử lại" 14px TEXT + retry `TouchableOpacity` "Thử lại" 14px weight 600 PRIMARY right.
+- All `useQuery` hooks: on error → show inline error card below relevant section. Card: white, borderRadius 12, padding 16, row with `warning-outline` Ionicons size 20 #FFA726 + "Có lỗi xảy ra. Thử lại" 16px TEXT + retry `TouchableOpacity` "Thử lại" 16px weight 700 PRIMARY right.
 - PATCH mutations (edit profile, notification settings): on error → `Alert.alert('Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại.')`.
 
 ### Empty States
@@ -441,7 +445,7 @@ Add to `mobile/tailwind.config.js` colors:
 | `NutritionProgressCard` | `components/ui/NutritionProgressCard.tsx` | Card with 4 MacroProgressBar stacked |
 | `BMIWidget` | `components/ui/BMIWidget.tsx` | Tappable card showing BMI number + category; empty state |
 | `ShopBanner` | `components/ui/ShopBanner.tsx` | Green banner card, tap → Linking.openURL |
-| `QuickActionsRow` | `components/ui/QuickActionsRow.tsx` | 3 icon+label cards in a row |
+| `QuickActionsRow` | `components/ui/QuickActionsRow.tsx` | 3 filled green icon+label buttons in a row |
 | `AchievementBadge` | `components/ui/AchievementBadge.tsx` | Single badge: icon circle + label. Props: milestone, unlocked |
 | `AchievementBadgesRow` | `components/ui/AchievementBadgesRow.tsx` | Row of 4 AchievementBadge, computes unlocked from streakDays |
 | `ProfileMenuCard` | `components/ui/ProfileMenuCard.tsx` | White card with menu rows + separators |
@@ -473,7 +477,7 @@ No third-party component registries are used. All components are hand-rolled Sty
 | Color tokens (PRIMARY, BACKGROUND, SURFACE, TEXT, TEXT_SECONDARY, ACCENT) | `mobile/src/constants/colors.ts` (codebase) |
 | Badge colors (#E8F5E9/#4CAF50 unlocked, #F5F5F5/#BDBDBD locked) | CONTEXT.md D-78 |
 | Spacing scale (16px screen padding, 8px card gap, 12px card padding) | Existing component styles (WeeklyStatCard, DailyChallengeCard, PrimaryButton) |
-| Typography sizes (12/14/16/20/24px, weights 400/600/700) | Existing component styles (NutritionSummaryCard, ScreenHeader, PrimaryButton) |
+| Typography scale consolidated to 4 sizes (12/16/20/28px), 2 weights (400/700) | Checker revision 2026-05-19 — collapsed from 7 sizes / 3 weights |
 | Card pattern (white, borderRadius 12–16, elevation 2) | WeeklyStatCard, DailyChallengeCard, GoalCard |
 | Progress bar (height 8, borderRadius 4, track #E0E0E0, fill PRIMARY) | DailyChallengeCard |
 | Icon library (Ionicons) | CLAUDE.md + existing components |
@@ -491,6 +495,7 @@ No third-party component registries are used. All components are hand-rolled Sty
 | Open shop with Linking.openURL (expo-linking, no WebView) | CONTEXT.md D-83 |
 | All copy 100% Vietnamese | CLAUDE.md |
 | Notification copy (water/workout/streak titles+bodies) | REQUIREMENTS.md NOTIF-02/03/04 + CONTEXT.md D-80 |
+| Quick Actions: filled green PrimaryButton (green bg, white icon+label) | Checker revision 2026-05-19 — resolved contradiction with Color contract |
 
 ---
 
