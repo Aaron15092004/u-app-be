@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T14:23:20.211Z"
+last_updated: "2026-05-19T15:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
@@ -16,11 +16,11 @@ progress:
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 3 in progress, Plans 01-06 complete)
+Phase 5 — Home Dashboard, Profile & Notifications — **Awaiting Device Verification** (Tasks 1+2 of Plan 07 complete; Task 3 blocking checkpoint pending)
 
 ## Status
 
-Phase 5 Plan 06 complete. Home Dashboard + Water Log screens fully implemented. Plan 07 remaining.
+Phase 5 Plan 07 Tasks 1 and 2 complete. 8 UI components + 4 Profile screens implemented. Awaiting Task 3 device verification checkpoint (blocking-human gate).
 
 ## Phase Progress
 
@@ -30,7 +30,7 @@ Phase 5 Plan 06 complete. Home Dashboard + Water Log screens fully implemented. 
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (6/7 — Plans 01-06 done) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (6/7 code done — Plan 07 awaiting device checkpoint) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -156,6 +156,17 @@ Phase 6 [          ] 0%
 - Delete in water.tsx shows Alert confirmation before deleteMutation.mutate (UX safety guard)
 - WaterControls disables minus button (opacity 0.4, disabled prop) when count===0
 
+### Key Decisions Logged (Phase 5 Plan 07 additions)
+
+- notifications.tsx form state seeded from getProfileStatsApi().notifications via useEffect+null-guard (WARNING 3 fix) — hardcoded defaults never overwrite saved user settings
+- Loading guard (waterReminder===null) prevents rendering toggle rows before server seed arrives
+- edit.tsx invalidates ['water','today'] alongside ['home','summary'] and ['users','profile','stats'] (WARNING 4 chain — waterGoal propagates to water.tsx after Profile edit)
+- Logout placed on Profile tab PrimaryButton outlined (Pitfall 9 — Plans 06+07 same wave, logout never absent)
+- NotificationRationaleModal interim tsc validation after writing (WARNING 2 mitigation) — only pre-existing router.d.ts errors
+- 8 new StyleSheet.create components — consistent with Plan 05/06 convention (NativeWind v4 migration deferred)
+- expo-clipboard wrapped in try/require with Alert fallback for Expo Go compatibility
+- MMKV getNotifAsked/setNotifAsked added to mmkv.ts mock (existing exports untouched)
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -196,9 +207,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 06 (Wave 3 — Home Dashboard + Water Log screens) complete — 2 commits (a779838 9 UI components, 4a9b6d8 screen rewrites). TypeScript compiles (pre-existing router.d.ts errors only). 9 new components + 2 screen rewrites delivered.
-**Next action**: Execute Phase 5 Plan 07 (Profile screens + notification permission rationale)
-**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md`
+**Last action**: Phase 5 Plan 07 Tasks 1+2 complete — 2 commits (90d6409: 8 UI components + MMKV helper, 53eaea1: 4 profile screens). TypeScript compiles (pre-existing router.d.ts errors only). Awaiting Task 3 device verification checkpoint.
+**Next action**: User runs device verification (Task 3 — 17-step manual checklist). After confirmation, mark Phase 5 complete.
+**Resume file**: `.planning/phases/05-home-dashboard/05-07-PLAN.md` (Task 3 checkpoint)
 
 ## Last Updated
 
