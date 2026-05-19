@@ -30,7 +30,7 @@ export default function ScanScreen() {
   async function compressImage(uri: string): Promise<string> {
     const result = await ImageManipulator.manipulateAsync(
       uri,
-      [{ resize: { width: 800 } }],
+      [{ resize: { width: 800, height: 800 } }],
       { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
     );
     return result.uri;
