@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "seed": "tsx src/scripts/seed-exercises.ts",
+    "seed:foods": "tsx src/scripts/seed-foods.ts",
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
