@@ -25,7 +25,10 @@ import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from '../../app';
 import User from '../../models/User';
+import HabitLog from '../../models/HabitLog';
+import WorkoutLog from '../../models/WorkoutLog';
 import { signAccessToken } from '../../utils/jwt';
+import { vietnamDayStart } from '../../utils/date';
 
 // ---------------------------------------------------------------------------
 // MongoMemoryServer + test user setup
@@ -50,6 +53,8 @@ after(async () => {
 beforeEach(async () => {
   // Clean DB state before each test
   await User.deleteMany({});
+  await HabitLog.deleteMany({});
+  await WorkoutLog.deleteMany({});
 
   // Create user A
   const userA = await User.create({
@@ -71,10 +76,261 @@ beforeEach(async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Wave 0 placeholder — Wave 1 plans will add real tests here
-// PRO-02, PRO-03, PRO-05 tests go in this file
+// Test 1: GET /api/users/profile/stats without auth → 401
 // ---------------------------------------------------------------------------
 
-test('placeholder: users test suite wired', () => {
-  assert.equal(1, 1);
+test('Test 1: GET /api/users/profile/stats without auth returns 401', async () => {
+  const res = await request(app).get('/api/users/profile/stats');
+  assert.equal(res.status, 401);
+});
+
+// ---------------------------------------------------------------------------
+// Test 2: GET /api/users/profile/stats with userA — empty data → defaults
+// ---------------------------------------------------------------------------
+
+test('Test 2: GET /api/users/profile/stats with no logs returns defaults', async () => {
+  const res = await request(app)
+    .get('/api/users/profile/stats')
+    .set('Authorization', `Bearer ${tokenA}`);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.streakDays, 0);
+  assert.equal(res.body.data.totalWorkouts, 0);
+  assert.equal(res.body.data.totalKcalBurned, 0);
+  // Notifications defaults from D-79
+  assert.equal(res.body.data.notifications.waterReminder, true);
+  assert.equal(res.body.data.notifications.workoutReminder, true);
+  assert.equal(res.body.data.notifications.waterReminderTime, '08:00');
+  assert.equal(res.body.data.notifications.workoutReminderTime, '07:00');
+});
+
+// ---------------------------------------------------------------------------
+// Test 3: GET stats with seeded data (3 HabitLogs + 2 WorkoutLogs)
+// ---------------------------------------------------------------------------
+
+test('Test 3: GET stats with seeded habits and workouts returns correct aggregates', async () => {
+  const todayBucket = vietnamDayStart(new Date());
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+
+  // Seed 3 HabitLogs for today (water, vegetables, exercise) — qualifies streak
+  await HabitLog.insertMany([
+    { userId: userObjId, habitId: 'water', date: todayBucket, checkedAt: new Date() },
+    { userId: userObjId, habitId: 'vegetables', date: todayBucket, checkedAt: new Date() },
+    { userId: userObjId, habitId: 'exercise', date: todayBucket, checkedAt: new Date() },
+  ]);
+
+  // Seed 2 WorkoutLogs
+  await WorkoutLog.insertMany([
+    {
+      userId: userObjId,
+      exerciseName: 'Running',
+      date: todayBucket,
+      durationMinutes: 20,
+      caloriesBurned: 150,
+      completedAt: new Date(),
+    },
+    {
+      userId: userObjId,
+      exerciseName: 'Cycling',
+      date: todayBucket,
+      durationMinutes: 30,
+      caloriesBurned: 200,
+      completedAt: new Date(),
+    },
+  ]);
+
+  const res = await request(app)
+    .get('/api/users/profile/stats')
+    .set('Authorization', `Bearer ${tokenA}`);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.streakDays, 1);
+  assert.equal(res.body.data.totalWorkouts, 2);
+  assert.equal(res.body.data.totalKcalBurned, 350);
+  assert.ok(res.body.data.notifications);
+});
+
+// ---------------------------------------------------------------------------
+// Test 4 (IDOR): userB token after userA's seed → all zeros
+// ---------------------------------------------------------------------------
+
+test('Test 4 (IDOR): userB sees only their own data (zero) after userA seed', async () => {
+  const todayBucket = vietnamDayStart(new Date());
+  const userObjId = new mongoose.Types.ObjectId(userIdA);
+
+  // Seed data for userA
+  await HabitLog.insertMany([
+    { userId: userObjId, habitId: 'water', date: todayBucket, checkedAt: new Date() },
+    { userId: userObjId, habitId: 'vegetables', date: todayBucket, checkedAt: new Date() },
+    { userId: userObjId, habitId: 'exercise', date: todayBucket, checkedAt: new Date() },
+  ]);
+  await WorkoutLog.create({
+    userId: userObjId,
+    exerciseName: 'Running',
+    date: todayBucket,
+    durationMinutes: 30,
+    caloriesBurned: 200,
+    completedAt: new Date(),
+  });
+
+  // UserB should see no data
+  const res = await request(app)
+    .get('/api/users/profile/stats')
+    .set('Authorization', `Bearer ${tokenB}`);
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.streakDays, 0);
+  assert.equal(res.body.data.totalWorkouts, 0);
+  assert.equal(res.body.data.totalKcalBurned, 0);
+});
+
+// ---------------------------------------------------------------------------
+// Test 5: PATCH /api/users/profile without auth → 401
+// ---------------------------------------------------------------------------
+
+test('Test 5: PATCH /api/users/profile without auth returns 401', async () => {
+  const res = await request(app).patch('/api/users/profile').send({ name: 'X' });
+  assert.equal(res.status, 401);
+});
+
+// ---------------------------------------------------------------------------
+// Test 6: PATCH /api/users/profile with valid data → 200, DB updated
+// ---------------------------------------------------------------------------
+
+test('Test 6: PATCH /api/users/profile with valid fields updates correctly', async () => {
+  const res = await request(app)
+    .patch('/api/users/profile')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ name: 'Aaron', heightCm: 175, weightKg: 70, goalType: 'maintain', waterGoal: 10 });
+
+  assert.equal(res.status, 200);
+
+  // Verify in DB
+  const user = await User.findById(userIdA).lean();
+  assert.equal(user?.name, 'Aaron');
+  assert.equal(user?.profile.heightCm, 175);
+  assert.equal(user?.profile.weightKg, 70);
+  assert.equal(user?.profile.goalType, 'maintain');
+  assert.equal(user?.profile.waterGoal, 10);
+});
+
+// ---------------------------------------------------------------------------
+// Test 7 (mass-assignment defence): role/email/passwordHash cannot be changed
+// ---------------------------------------------------------------------------
+
+test('Test 7 (mass-assignment): role/email/passwordHash rejected by .strict() schema', async () => {
+  const res = await request(app)
+    .patch('/api/users/profile')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ name: 'X', role: 'admin', email: 'evil@x.com', passwordHash: 'pwned' });
+
+  // .strict() schema should return 400 for unknown keys
+  assert.equal(res.status, 400);
+
+  // Verify DB is unchanged regardless
+  const user = await User.findById(userIdA).lean();
+  assert.equal(user?.role, 'user');
+  assert.equal(user?.email, 'usera@example.com');
+  assert.notEqual(user?.passwordHash, 'pwned');
+});
+
+// ---------------------------------------------------------------------------
+// Test 8 (HH:MM regex): Invalid time format → 400 with Vietnamese message
+// ---------------------------------------------------------------------------
+
+test('Test 8 (HH:MM regex): invalid time format returns 400', async () => {
+  const res = await request(app)
+    .patch('/api/users/notifications')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ waterReminderTime: '25:99' });
+
+  assert.equal(res.status, 400);
+  // Should contain Vietnamese error message
+  assert.ok(
+    res.body.error && (res.body.error as string).includes('HH:MM') ||
+    res.body.error && (res.body.error as string).includes('Giờ'),
+    `Expected Vietnamese error message, got: ${JSON.stringify(res.body)}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Test 9: PATCH /api/users/notifications with valid data → 200, DB updated
+// ---------------------------------------------------------------------------
+
+test('Test 9: PATCH /api/users/notifications with valid data updates correctly', async () => {
+  const res = await request(app)
+    .patch('/api/users/notifications')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({
+      waterReminder: false,
+      workoutReminder: true,
+      waterReminderTime: '09:30',
+      workoutReminderTime: '06:00',
+    });
+
+  assert.equal(res.status, 200);
+
+  const user = await User.findById(userIdA).lean();
+  assert.equal(user?.notifications.waterReminder, false);
+  assert.equal(user?.notifications.workoutReminder, true);
+  assert.equal(user?.notifications.waterReminderTime, '09:30');
+  assert.equal(user?.notifications.workoutReminderTime, '06:00');
+});
+
+// ---------------------------------------------------------------------------
+// Test 10 (partial update): Only waterReminderTime updated, others unchanged
+// ---------------------------------------------------------------------------
+
+test('Test 10 (partial update): PATCH notifications only updates provided fields', async () => {
+  // First set known state
+  await User.findByIdAndUpdate(userIdA, {
+    'notifications.waterReminder': false,
+    'notifications.workoutReminder': false,
+    'notifications.waterReminderTime': '09:00',
+    'notifications.workoutReminderTime': '08:00',
+  });
+
+  const res = await request(app)
+    .patch('/api/users/notifications')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ waterReminderTime: '10:15' });
+
+  assert.equal(res.status, 200);
+
+  const user = await User.findById(userIdA).lean();
+  assert.equal(user?.notifications.waterReminderTime, '10:15');
+  // Other fields must not change
+  assert.equal(user?.notifications.waterReminder, false);
+  assert.equal(user?.notifications.workoutReminder, false);
+  assert.equal(user?.notifications.workoutReminderTime, '08:00');
+});
+
+// ---------------------------------------------------------------------------
+// Test 11 (waterGoal range): waterGoal=100 → 400 (exceeds max 20)
+// ---------------------------------------------------------------------------
+
+test('Test 11 (waterGoal range): waterGoal=100 rejected (max 20)', async () => {
+  const res = await request(app)
+    .patch('/api/users/profile')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ waterGoal: 100 });
+
+  assert.equal(res.status, 400);
+});
+
+// ---------------------------------------------------------------------------
+// Test 12 (notifications round-trip): PATCH then GET stats → notifications updated
+// ---------------------------------------------------------------------------
+
+test('Test 12 (notifications round-trip): PATCH then GET stats shows updated notifications', async () => {
+  // PATCH waterReminderTime
+  const patchRes = await request(app)
+    .patch('/api/users/notifications')
+    .set('Authorization', `Bearer ${tokenA}`)
+    .send({ waterReminderTime: '11:11' });
+  assert.equal(patchRes.status, 200);
+
+  // GET stats — notifications must reflect the change (form-init for mobile Plan 07)
+  const statsRes = await request(app)
+    .get('/api/users/profile/stats')
+    .set('Authorization', `Bearer ${tokenA}`);
+  assert.equal(statsRes.status, 200);
+  assert.equal(statsRes.body.data.notifications.waterReminderTime, '11:11');
 });
