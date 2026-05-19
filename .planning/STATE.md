@@ -79,6 +79,13 @@ Phase 6 [          ] 0%
 - NutritionResult.imageUrl changed to string|null; always null in Phase 4 (D-62)
 - Response normalization: Number(field) || 0 prevents NaN; totals recalculated from foods if AI omits them
 
+### Key Decisions Logged (Phase 4 Plan 03 additions)
+
+- Namespace import (import * as aiFoodService) used in controller for CJS mock compatibility in node:test
+- String() cast on req.params.id and req.query.* to satisfy Express 5 ParamsDictionary (string | string[])
+- All food endpoints have authenticate middleware; POST /scan additionally has uploadSingle (multer 5MB)
+- IDOR protection: deleteFoodLog passes both _id AND userId to deleteOne — cross-user deletion impossible
+
 ### Key Decisions Logged (Phase 4 Plan 04 additions)
 
 - Vietnamese food seed: 150-item static JSON committed to source control; seed:foods idempotent via countDocuments >= 50 check
@@ -125,8 +132,8 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 4 Plan 04 complete — Vietnamese food database (150 items) + idempotent seed script created.
-**Next action**: Execute Phase 4 Plan 05 (mobile food scan UI)
+**Last action**: Phase 4 Plan 03 SUMMARY added — food API layer (validation, service, controller, routes, app.ts) complete. 7/7 tests pass.
+**Next action**: Execute Phase 4 Plan 05 (mobile food scan UI — Plan 04 already complete)
 **Resume file**: `.planning/phases/04-ai-food-scan/04-05-PLAN.md`
 
 ## Last Updated
