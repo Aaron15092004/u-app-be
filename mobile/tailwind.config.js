@@ -26,8 +26,11 @@ module.exports = {
         'difficulty-easy': '#4CAF50',
         'difficulty-medium': '#FFA726',
         'difficulty-hard': '#EF5350',
+        'badge-unlocked-bg': '#E8F5E9',
+        'badge-locked': '#BDBDBD',
+        'badge-locked-bg': '#F5F5F5',
       }
     }
   },
-  plugins: [require('nativewind/tailwind/native')]
+  presets: [require('nativewind/preset')]
 };

@@ -18,3 +18,7 @@ export const STREAK_BADGE = '#FF6B35';
 export const DIFFICULTY_EASY = '#4CAF50';
 export const DIFFICULTY_MEDIUM = '#FFA726';
 export const DIFFICULTY_HARD = '#EF5350';
+
+export const BADGE_UNLOCKED_BG = '#E8F5E9';
+export const BADGE_LOCKED = '#BDBDBD';
+export const BADGE_LOCKED_BG = '#F5F5F5';
