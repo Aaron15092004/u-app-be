@@ -16,7 +16,7 @@ progress:
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 0 executing)
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 1 in progress)
 
 ## Status
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (1/7) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (2/7) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [#         ] 14%
+Phase 5 [##        ] 29%
 Phase 6 [          ] 0%
 ```
 
@@ -111,6 +111,15 @@ Phase 6 [          ] 0%
 - All Wave 1 tests must extend existing scaffolds: home/water/users.integration.test.ts
 - User schema breaking change safe per RESEARCH.md A2 (no production users)
 
+### Key Decisions Logged (Phase 5 Plan 02 additions)
+
+- waterGoal embedded in GET /api/water/today response (WARNING 4 fix): mobile water screen gets waterGoal in single query — no second roundtrip to /api/home/today-summary
+- Config shop-url is public (no authenticate): URL is non-sensitive, fetchable before login
+- Promise.all for all multi-query services: water (2 parallel), home (5 parallel)
+- Strict Zod schema rejects userId from body with 400 — stronger than ignore (IDOR protection)
+- /api/users intentionally NOT mounted yet — Plan 03 Wave 2 owns that mount (checker BLOCKER 1 serialization)
+- WorkoutLog matched by exact todayStart bucket (not $gte/$lt range) — matches Phase 3 pattern
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -151,9 +160,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 01 (Wave 0 foundations) complete — 3 tasks, commits 39d6f85, 8465dbb, 73f86ca, f4377f5.
-**Next action**: Execute Phase 5 Plan 02 (Wave 1 — first backend plan)
-**Resume file**: `.planning/phases/05-home-dashboard/05-02-PLAN.md`
+**Last action**: Phase 5 Plan 02 (Wave 1 — Water/Home/Config backend APIs) complete — 4 commits (a0e6f56 RED water, f3b1300 GREEN water, 1f3378d RED home, 6d109ee GREEN home+config). 16/16 tests pass.
+**Next action**: Execute Phase 5 Plan 03 (Wave 2 — Users/Profile API)
+**Resume file**: `.planning/phases/05-home-dashboard/05-03-PLAN.md`
 
 ## Last Updated
 

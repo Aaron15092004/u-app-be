@@ -207,7 +207,7 @@ Wave 0 (foundations — blocks all other waves):
 
 Wave 1 (parallel — backend APIs):
 
-- [ ] 05-02-PLAN.md — Water + Home + Config APIs: water CRUD with IDOR-safe delete, /api/home/today-summary aggregation, /api/config/shop-url (HOME-02/04/05/06)
+- [x] 05-02-PLAN.md — Water + Home + Config APIs: water CRUD with IDOR-safe delete, /api/home/today-summary aggregation, /api/config/shop-url (HOME-02/04/05/06)
 - [ ] 05-03-PLAN.md — Users API: GET /profile/stats, PATCH /profile, PATCH /notifications with Zod whitelist + HH:MM regex (PRO-02/03/05)
 - [ ] 05-04-PLAN.md — FCM batch + cron scheduler (per-minute water/workout reminders, daily 20:00 streak alert), authenticate /register-token (NOTIF-02/03/04)
 
@@ -269,11 +269,11 @@ Wave 3 (parallel — mobile screens, blocked on Wave 2):
 | AUTH-07 | Phase 2 | Done |
 | AUTH-08 | Phase 2 | Done |
 | HOME-01 | Phase 5 | Pending |
-| HOME-02 | Phase 5 | Pending |
+| HOME-02 | Phase 5 | Done |
 | HOME-03 | Phase 5 | Pending |
-| HOME-04 | Phase 5 | Pending |
-| HOME-05 | Phase 5 | Pending |
-| HOME-06 | Phase 5 | Pending |
+| HOME-04 | Phase 5 | Done |
+| HOME-05 | Phase 5 | Done |
+| HOME-06 | Phase 5 | Done |
 | FOOD-01 | Phase 4 | Planned |
 | FOOD-02 | Phase 4 | Planned |
 | FOOD-03 | Phase 4 | Planned |
