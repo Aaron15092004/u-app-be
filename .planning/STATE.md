@@ -6,21 +6,21 @@ status: in_progress
 last_updated: "2026-05-20T00:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 34
-  completed_plans: 40
-  percent: 85
+  completed_phases: 6
+  total_plans: 39
+  completed_plans: 39
+  percent: 100
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **Code-Complete** (7/7 plans done; device verification checkpoint deferred)
+Phase 6 — Admin Web Dashboard — **Code-Complete** (4/4 plans done)
 
 ## Status
 
-Phase 5 code-complete. All 7 plans executed. Device verification checkpoint (Plan 07 Task 3) deferred — run EAS dev build and complete 17-step manual test before `/gsd:verify-work 5`.
+Phase 6 code-complete. All 4 plans executed. Backend: User.isActive + FoodItem.imageUrl schema patches, requireAdmin middleware, admin API (exercises/food-items/users CRUD + upload), 17/17 integration tests pass. Frontend: Tailwind v4 + shadcn/ui (base-nova), LoginPage, AppShell, ExercisesPage + FoodItemsPage + UsersPage with dynamic forms and image upload. `npm run typecheck` clean in both backend/ and admin/.
 
 ## Phase Progress
 
