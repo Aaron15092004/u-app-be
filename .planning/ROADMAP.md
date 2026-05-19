@@ -169,7 +169,7 @@ Wave 2 *(blocked on Wave 1 — backend model foundation)*:
 
 Wave 3 *(parallel — blocked on Wave 2; food API and seed can run in parallel)*:
 
-- [ ] 04-03-PLAN.md — Food API: food.validation/service/controller/routes + app.ts mount — all 5 endpoints (POST scan, POST/GET/DELETE logs, GET items) (FOOD-01/02/05/06/07/09)
+- [x] 04-03-PLAN.md — Food API: food.validation/service/controller/routes + app.ts mount — all 5 endpoints (POST scan, POST/GET/DELETE logs, GET items) (FOOD-01/02/05/06/07/09)
 - [x] 04-04-PLAN.md — Vietnamese food seed: vietnamese-foods.json (150+ items) + seed-foods.ts (idempotent) + seed:foods npm script (FOOD-08)
 
 Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)*:
@@ -178,7 +178,7 @@ Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)
 
 Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 
-- [ ] 04-06-PLAN.md — Camera scan screen (CameraView, dark theme, ScanFrame, CameraControls, compress flow) + AI result screen (NutritionSummaryCard, NutritionDetailRow, FoodTagPill, Xác nhận/Chụp lại) (FOOD-01/02/03/04/05/06)
+- [x] 04-06-PLAN.md — Camera scan screen (CameraView, dark theme, ScanFrame, CameraControls, compress flow) + AI result screen (NutritionSummaryCard, NutritionDetailRow, FoodTagPill, Xác nhận/Chụp lại) (FOOD-01/02/03/04/05/06)
 - [ ] 04-07-PLAN.md — Manual search screen (debounce, ServingSizeSheet, aiProvider=manual) + Food diary screen (DatePill, FoodDiaryItem, TanStack Query, swipe-delete) + D-69 home tab navigation buttons (FOOD-07/08/09)
 
 **Cross-cutting constraints:** AI calls proxy via backend only (CLAUDE.md); compress images to <500KB before upload (D-70: max 800×800, JPEG 0.7 via expo-image-manipulator); rate limit 20 AI scans/user/day server-side (D-72); GPT-4o-mini sole provider Phase 4 (D-58); no mealType in FoodLog (D-61); imageUrl=null in Phase 4 (D-62); NutritionResult passed scan→result via Zustand store not router params (D architecture); text index { default_language: 'none' } for Vietnamese search accuracy (Pitfall 8); seed-foods.ts is standalone script never called from server startup (Pitfall 4).

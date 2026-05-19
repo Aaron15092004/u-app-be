@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T06:00:00.000Z"
+last_updated: "2026-05-19T08:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 28
-  completed_plans: 26
-  percent: 93
+  completed_plans: 27
+  percent: 96
 ---
 
 # Project State — Ủ App
@@ -20,7 +20,7 @@ Phase 4 — AI Food Scan — **Executing (7 plans, 5 waves)**
 
 ## Status
 
-Phase 4 executing — Plans 01–05 complete. 2 plans remaining.
+Phase 4 executing — Plans 01–06 complete. 1 plan remaining.
 
 ## Phase Progress
 
@@ -29,7 +29,7 @@ Phase 4 executing — Plans 01–05 complete. 2 plans remaining.
 | 1 | Infrastructure | Completed (5/5 plans) |
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
-| 4 | AI Food Scan | In Progress (5/7 plans complete) |
+| 4 | AI Food Scan | In Progress (6/7 plans complete) |
 | 5 | Home Dashboard, Profile & Notifications | Not Started |
 | 6 | Admin Web Dashboard | Not Started |
 
@@ -39,7 +39,7 @@ Phase 4 executing — Plans 01–05 complete. 2 plans remaining.
 Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
-Phase 4 [######>   ] 71% (5/7)
+Phase 4 [########> ] 86% (6/7)
 Phase 5 [          ] 0%
 Phase 6 [          ] 0%
 ```
@@ -48,7 +48,7 @@ Phase 6 [          ] 0%
 
 - Requirements covered: 62/62
 - Phases completed: 3/6
-- Plans completed: 26/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 5/7)
+- Plans completed: 27/28 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 6/7)
 
 ## Accumulated Context
 
@@ -85,6 +85,12 @@ Phase 6 [          ] 0%
 - String() cast on req.params.id and req.query.* to satisfy Express 5 ParamsDictionary (string | string[])
 - All food endpoints have authenticate middleware; POST /scan additionally has uploadSingle (multer 5MB)
 - IDOR protection: deleteFoodLog passes both _id AND userId to deleteOne — cross-user deletion impossible
+
+### Key Decisions Logged (Phase 4 Plan 06 additions)
+
+- processImage() helper shared between handleCapture and handleGallery — compress+scan flow extracted to avoid duplication
+- Expo Router .expo/types/router.d.ts is gitignored; food routes must be added manually or via `expo start` regeneration
+- result.tsx guards firstFood access with null coalescing (??) — prevents crashes if AI returns empty foods array
 
 ### Key Decisions Logged (Phase 4 Plan 05 additions)
 
@@ -138,9 +144,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 4 Plan 05 complete — foodScanStore, food.api.ts, Phase 4 types, (food)/ route group + 4 screen stubs.
-**Next action**: Execute Phase 4 Plan 06 (camera scan screen + AI result screen full implementation)
-**Resume file**: `.planning/phases/04-ai-food-scan/04-06-PLAN.md`
+**Last action**: Phase 4 Plan 06 complete — scan.tsx (CameraView full), result.tsx (AI result full), 5 new UI components (ScanFrame, CameraControls, FoodTagPill, NutritionSummaryCard, NutritionDetailRow).
+**Next action**: Execute Phase 4 Plan 07 (search screen + diary screen + home tab buttons)
+**Resume file**: `.planning/phases/04-ai-food-scan/04-07-PLAN.md`
 
 ## Last Updated
 
