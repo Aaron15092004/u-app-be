@@ -179,7 +179,7 @@ Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)
 Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 
 - [x] 04-06-PLAN.md — Camera scan screen (CameraView, dark theme, ScanFrame, CameraControls, compress flow) + AI result screen (NutritionSummaryCard, NutritionDetailRow, FoodTagPill, Xác nhận/Chụp lại) (FOOD-01/02/03/04/05/06)
-- [ ] 04-07-PLAN.md — Manual search screen (debounce, ServingSizeSheet, aiProvider=manual) + Food diary screen (DatePill, FoodDiaryItem, TanStack Query, swipe-delete) + D-69 home tab navigation buttons (FOOD-07/08/09)
+- [x] 04-07-PLAN.md — Manual search screen (debounce, ServingSizeSheet, aiProvider=manual) + Food diary screen (DatePill, FoodDiaryItem, TanStack Query, swipe-delete) + D-69 home tab navigation buttons (FOOD-07/08/09)
 
 **Cross-cutting constraints:** AI calls proxy via backend only (CLAUDE.md); compress images to <500KB before upload (D-70: max 800×800, JPEG 0.7 via expo-image-manipulator); rate limit 20 AI scans/user/day server-side (D-72); GPT-4o-mini sole provider Phase 4 (D-58); no mealType in FoodLog (D-61); imageUrl=null in Phase 4 (D-62); NutritionResult passed scan→result via Zustand store not router params (D architecture); text index { default_language: 'none' } for Vietnamese search accuracy (Pitfall 8); seed-foods.ts is standalone script never called from server startup (Pitfall 4).
 
@@ -230,7 +230,7 @@ Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
 | 1 | Infrastructure | 5/5 | Done | 2026-05-17 |
 | 2 | Authentication | 7/7 | Done | 2026-05-18 |
 | 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
-| 4 | AI Food Scan | 4/7 | In Progress | - |
+| 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
 | 5 | Home Dashboard, Profile & Notifications | 0/? | Not started | - |
 | 6 | Admin Web Dashboard | 0/? | Not started | - |
 
