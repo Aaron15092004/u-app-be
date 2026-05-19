@@ -3,20 +3,20 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-05-19T14:30:00Z"
+last_updated: "2026-05-19T14:16:02.591Z"
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 37
-  completed_plans: 30
-  percent: 60
+  completed_phases: 3
+  total_plans: 30
+  completed_plans: 33
+  percent: 50
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 2 in progress, Plans 01-04 complete, Plan 03 complete)
+Phase 5 — Home Dashboard, Profile & Notifications — **In Progress** (Wave 2 complete, Plans 01-05 complete)
 
 ## Status
 
@@ -30,7 +30,7 @@ Phase 4 verified and complete. Ready for `/gsd:plan-phase 5`.
 | 2 | Authentication | Completed (7/7 plans) |
 | 3 | Core Health Tracking | Completed (9/9 plans) |
 | 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | In Progress (5/7) |
+| 5 | Home Dashboard, Profile & Notifications | In Progress (5/7 — Plans 01-05 done) |
 | 6 | Admin Web Dashboard | Not Started |
 
 ## Progress Bar
@@ -40,7 +40,7 @@ Phase 1 [##########] 100%
 Phase 2 [##########] 100%
 Phase 3 [##########] 100%
 Phase 4 [##########] 100%
-Phase 5 [#####     ] 71%
+Phase 5 [#######   ] 71%
 Phase 6 [          ] 0%
 ```
 
@@ -136,6 +136,16 @@ Phase 6 [          ] 0%
 - Promise.all for 4 parallel queries in getProfileStats: streak + count + aggregate + notifications lookup
 - app.ts edit additive single-line mount only — Wave 2 serialization ensures no conflict with Plan 02
 
+### Key Decisions Logged (Phase 5 Plan 05 additions)
+
+- ITodayWater.waterGoal enables single-query water screen — Plan 06 reads waterGoal from getTodayWaterApi, no second roundtrip to getTodaySummaryApi (WARNING 4 fix applied in types)
+- IProfileStats.notifications block enables Plan 07 to initialise notification form from server state, not hardcoded defaults (WARNING 3 fix applied in types)
+- All 4 new API modules import apiClient from './client' — single JWT-interceptor instance preserved (T-05-05-02)
+- (tabs)/profile/_layout.tsx Stack layout prevents profile sub-screens from appearing as tabs (Pitfall 5)
+- (home)/_layout.tsx Stack layout enables router.push('/(home)/water') from home tab (Pitfall 6)
+- Profile tab is 5th tab after BMI with person/person-outline icons and title 'Hồ sơ' (D-76)
+- Plan 05 requirements scope: HOME-01-06 + PRO-01/04/06/07 + NOTIF-01 contract surface; PRO-02/03/05 + NOTIF-02/03 full implementation deferred to Plan 07
+
 ### Key Decisions Logged (Phase 4 additions)
 
 - AI food scan: GPT-4o-mini sole provider for Phase 4 (LogMeal deferred — no pricing/key yet) — D-58
@@ -176,10 +186,10 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 5 Plan 03 (Wave 2 — Users profile stats + PATCH profile + PATCH notifications) complete — 2 commits (705b2dc RED tests, e9b272c GREEN implementation). TypeScript clean. 12/12 tests pass.
-**Next action**: Execute Phase 5 Plan 05 (mobile home dashboard screen)
-**Resume file**: `.planning/phases/05-home-dashboard/05-05-PLAN.md`
+**Last action**: Phase 5 Plan 05 (Wave 2 — Mobile API contracts + route scaffolding) complete — 2 commits (ca483a4 types+API modules, 40cdedd tab+stubs). TypeScript compiles (pre-existing router.d.ts errors only). 5 Phase 5 types + 9 API functions + 5 stub screens created.
+**Next action**: Execute Phase 5 Plan 06 (Home Dashboard screen)
+**Resume file**: `.planning/phases/05-home-dashboard/05-06-PLAN.md`
 
 ## Last Updated
 
-2026-05-19 (Phase 5 Plan 03 complete)
+2026-05-19 (Phase 5 Plan 05 complete)
