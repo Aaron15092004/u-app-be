@@ -144,9 +144,9 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 4 verified — both gaps closed (205 food items, height bound in compressImage). Commit 56bda52.
-**Next action**: `/gsd:plan-phase 5` — plan Home Dashboard, Profile & Notifications
-**Resume file**: `.planning/phases/05-home-dashboard/`
+**Last action**: Phase 5 discuss-phase complete — 11 decisions captured (D-73 to D-83). Commit 3e2546b.
+**Next action**: `/gsd:ui-phase 5` then `/gsd:plan-phase 5`
+**Resume file**: `.planning/phases/05-home-dashboard/05-CONTEXT.md`
 
 ## Last Updated
 
