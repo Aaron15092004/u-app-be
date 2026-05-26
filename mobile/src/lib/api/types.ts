@@ -46,6 +46,7 @@ export interface IExercise {
   durationMinutes: number;
   caloriesBurned: number;
   imageUrl: string | null;
+  imageAssetId?: string | null;
   description?: string;
   steps: IExerciseStep[];
   isActive: boolean;
@@ -212,4 +213,182 @@ export interface IProfileStats {
   totalWorkouts: number;
   totalKcalBurned: number;
   notifications: IUserNotifications; // WARNING 3 fix — added so notifications.tsx initialises form state from server, not hardcoded defaults
+}
+// ---------------------------------------------------------------------------
+// Phase 1 v2.0 Data Foundation Contracts
+// ---------------------------------------------------------------------------
+
+export type IV2RedeemSource = 'manual' | 'qr';
+export type IV2CampaignStatus = 'draft' | 'active' | 'paused' | 'ended' | 'revoked';
+export type IV2RedeemCodeStatus = 'unused' | 'redeemed' | 'revoked' | 'expired';
+export type IV2EntitlementType = 'ai_scan_high_quota';
+export type IV2EntitlementSource = 'redeem_code';
+export type IV2QuotaPolicyMode = 'high_daily_quota';
+
+export interface IV2RedeemCampaignCodeRequest {
+  code: string;
+  source?: IV2RedeemSource;
+}
+
+export interface IV2RedeemHttpsPayload {
+  redeemUrl: string;
+  codeQueryParam: 'code';
+}
+
+export interface IV2ScanQuotaPolicy {
+  mode: IV2QuotaPolicyMode;
+  dailyLimit: number;
+}
+
+export interface IV2UserScanEntitlement {
+  _id: string;
+  userId: string;
+  campaignId: string;
+  redeemCodeId: string;
+  type: IV2EntitlementType;
+  startsAt: string;
+  activeUntil: string;
+  quotaPolicy: IV2ScanQuotaPolicy;
+  source: IV2EntitlementSource;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IV2ScanEntitlementStatus {
+  hasActiveEntitlement: boolean;
+  activeUntil: string | null;
+  campaignId?: string | null;
+  redeemCodeId?: string | null;
+  quotaPolicy: IV2ScanQuotaPolicy | null;
+  entitlement?: IV2UserScanEntitlement | null;
+  message?: string;
+}
+
+export interface IV2RedeemCampaignCodeResponse {
+  status: 'success' | 'invalid' | 'already_used' | 'expired' | 'revoked' | 'unauthenticated';
+  message: string;
+  entitlement?: IV2UserScanEntitlement | null;
+}
+
+export type IV2BarcodeSource = 'local' | 'open_food_facts' | 'manual' | 'admin_import';
+
+export interface IV2BarcodeMinimumNutrition {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export interface IV2BarcodeLookupResult {
+  barcode: string;
+  found: boolean;
+  source: IV2BarcodeSource;
+  productId?: string;
+  name?: string;
+  brand?: string;
+  servingSizeG?: number;
+  packageSize?: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  vitaminC?: number;
+  isSaveReady: boolean;
+  minimumNutrition?: IV2BarcodeMinimumNutrition;
+  missingFields?: Array<keyof IV2BarcodeMinimumNutrition>;
+  provenance?: {
+    provider: IV2BarcodeSource;
+    fetchedAt?: string;
+    lastVerifiedAt?: string | null;
+  };
+  message?: string;
+}
+
+export type IV2NutMilkBmiRule = 'lt_18_5' | 'range_18_5_22_9' | 'gt_23' | 'any';
+export type IV2NutMilkResolvedBmiRule = IV2NutMilkBmiRule | 'boundary_23';
+export type IV2NutMilkNeedSignal = 'stress_sleep' | 'energy_memory';
+export type IV2NutMilkPreferenceSource = 'bmi_recommendation' | 'manual_profile';
+
+export interface IV2NutMilkFlavorRule {
+  flavorId: string;
+  nameVi: string;
+  bmiRule: IV2NutMilkBmiRule;
+  needSignal?: IV2NutMilkNeedSignal;
+  positioningVi: string;
+}
+
+export interface IV2NutMilkSignals {
+  stressOrSleep?: boolean;
+  energyOrMemory?: boolean;
+}
+
+export interface IV2NutMilkRecommendationResponse {
+  bmiRule: IV2NutMilkResolvedBmiRule | null;
+  signals: Required<IV2NutMilkSignals>;
+  flavors: IV2NutMilkFlavorRule[];
+  disclaimer: string;
+}
+
+export interface IV2SelectNutMilkFlavorRequest {
+  selectedFlavorId: string;
+  recommendedFlavorId?: string;
+  bmi?: number;
+  signals?: IV2NutMilkSignals;
+  source?: IV2NutMilkPreferenceSource;
+}
+
+export interface IV2NutMilkPreference {
+  _id: string;
+  userId: string;
+  recommendedFlavorId?: string;
+  selectedFlavorId: string;
+  bmiRecordId?: string;
+  bmi?: number;
+  bmiCategory?: IBMICategory | 'boundary_23';
+  signals?: IV2NutMilkSignals;
+  source: IV2NutMilkPreferenceSource;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type IV2RatingTrigger = 'food_scan' | 'barcode_scan' | 'workout_complete' | 'bmi_result' | 'profile';
+export type IV2RatingPlatform = 'ios' | 'android' | 'web';
+export type IV2PromptStatus = 'eligible' | 'dismissed' | 'submitted' | 'cooldown';
+
+export interface IV2SubmitAppRatingRequest {
+  stars: 1 | 2 | 3 | 4 | 5;
+  comment?: string;
+  trigger: IV2RatingTrigger;
+  appVersion?: string;
+  platform: IV2RatingPlatform;
+  deviceInfo?: Record<string, string>;
+  storeReviewPrompted?: boolean;
+}
+
+export interface IV2AppRating {
+  _id: string;
+  userId: string;
+  stars: number;
+  comment?: string;
+  trigger: IV2RatingTrigger;
+  appVersion?: string;
+  platform: IV2RatingPlatform;
+  deviceInfo?: Record<string, string>;
+  storeReviewPrompted?: boolean;
+  storeReviewEligible?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IV2FeedbackPromptStatus {
+  promptKey: 'app_rating';
+  status: IV2PromptStatus;
+  cooldownUntil: string | null;
+  triggerCounts: Record<string, number>;
+  nativeStoreReviewEligible?: boolean;
+  message?: string;
 }
