@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 
 export const SCAN_QUOTA_POLICY_MODE = 'high_daily_quota' as const;
-export const HIGH_QUOTA_DAILY_LIMIT = 1000;
+export const HIGH_QUOTA_DAILY_LIMIT = 30;
 
 export function normalizeRedeemCode(input: string): string {
   return input.trim().toUpperCase().replace(/[\s-]+/g, '');

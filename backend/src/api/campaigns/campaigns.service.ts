@@ -1,0 +1,367 @@
+import { randomBytes, randomUUID } from 'node:crypto';
+import { stringify } from 'csv-stringify/sync';
+import mongoose from 'mongoose';
+import Campaign, { CampaignStatus } from '../../models/Campaign';
+import RedeemCode, { RedeemCodeStatus } from '../../models/RedeemCode';
+import UserScanEntitlement from '../../models/UserScanEntitlement';
+import {
+  HIGH_QUOTA_DAILY_LIMIT,
+  SCAN_QUOTA_POLICY_MODE,
+  buildRedeemHttpsUrl,
+  hashRedeemCode,
+  normalizeRedeemCode,
+} from '../../services/redeem-code.service';
+import {
+  CreateCampaignInput,
+  GenerateCampaignCodesInput,
+  RedeemCampaignCodeInput,
+} from './campaigns.validation';
+
+const DEFAULT_REDEEM_BASE_URL = 'https://u-app.vn/redeem';
+
+function makeError(message: string, statusCode: number): Error & { statusCode: number } {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = statusCode;
+  return err;
+}
+
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * 86400000);
+}
+
+function generateRawCode(length: number): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = randomBytes(length);
+  let out = '';
+  for (const byte of bytes) {
+    out += alphabet[byte % alphabet.length];
+  }
+  return out;
+}
+
+function toIso(value?: Date | null): string | null {
+  return value ? value.toISOString() : null;
+}
+
+export interface CampaignListFilters {
+  status?: CampaignStatus;
+  page: number;
+  limit: number;
+}
+
+export interface CodeListFilters {
+  status?: RedeemCodeStatus;
+  page: number;
+  limit: number;
+}
+
+export async function createCampaign(input: CreateCampaignInput, adminId: string): Promise<object> {
+  const doc = await Campaign.create({
+    name: input.name,
+    description: input.description ?? null,
+    status: input.status,
+    startsAt: new Date(input.startsAt),
+    endsAt: new Date(input.endsAt),
+    entitlementDurationDays: input.entitlementDurationDays,
+    highQuotaDailyLimit: input.highQuotaDailyLimit ?? HIGH_QUOTA_DAILY_LIMIT,
+    createdBy: new mongoose.Types.ObjectId(adminId),
+  });
+
+  return doc.toObject();
+}
+
+export async function listCampaigns(filters: CampaignListFilters): Promise<object> {
+  const query: Record<string, unknown> = {};
+  if (filters.status) query.status = filters.status;
+
+  const skip = (filters.page - 1) * filters.limit;
+  const [items, total] = await Promise.all([
+    Campaign.find(query).sort({ createdAt: -1 }).skip(skip).limit(filters.limit).lean(),
+    Campaign.countDocuments(query),
+  ]);
+
+  return {
+    items,
+    total,
+    page: filters.page,
+    limit: filters.limit,
+    totalPages: Math.ceil(total / filters.limit) || 1,
+  };
+}
+
+export async function listCampaignCodes(
+  campaignId: string,
+  filters: CodeListFilters,
+): Promise<object> {
+  const query: Record<string, unknown> = { campaignId: new mongoose.Types.ObjectId(campaignId) };
+  if (filters.status) query.status = filters.status;
+
+  const skip = (filters.page - 1) * filters.limit;
+  const [items, total] = await Promise.all([
+    RedeemCode.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(filters.limit)
+      .select('-codeHash')
+      .lean(),
+    RedeemCode.countDocuments(query),
+  ]);
+
+  return {
+    items,
+    total,
+    page: filters.page,
+    limit: filters.limit,
+    totalPages: Math.ceil(total / filters.limit) || 1,
+  };
+}
+
+export async function generateCampaignCodes(
+  campaignId: string,
+  input: GenerateCampaignCodesInput,
+  adminId: string,
+): Promise<object> {
+  const campaign = await Campaign.findById(campaignId);
+  if (!campaign) {
+    throw makeError('Khong tim thay campaign', 404);
+  }
+  if (campaign.status === 'revoked' || campaign.status === 'ended') {
+    throw makeError('Campaign khong con cho phep tao ma', 409);
+  }
+
+  const batchId = input.batchLabel ?? randomUUID();
+  const redeemBaseUrl = input.redeemBaseUrl ?? process.env.REDEEM_BASE_URL ?? DEFAULT_REDEEM_BASE_URL;
+  const codeExpiresAt = input.codeExpiresAt === null
+    ? null
+    : input.codeExpiresAt
+      ? new Date(input.codeExpiresAt)
+      : campaign.endsAt;
+
+  const rows: Array<{
+    rawCode: string;
+    redeemUrl: string;
+    codePrefix: string;
+    campaignId: string;
+    campaignName: string;
+    batchId: string;
+    expiresAt: string | null;
+    entitlementDurationDays: number;
+  }> = [];
+  const docs = [];
+
+  for (let i = 0; i < input.quantity; i += 1) {
+    let rawCode = '';
+    let codeHash = '';
+    let collision = true;
+
+    for (let attempt = 0; attempt < 5 && collision; attempt += 1) {
+      rawCode = generateRawCode(input.codeLength);
+      codeHash = hashRedeemCode(rawCode);
+      collision = Boolean(await RedeemCode.exists({ codeHash }));
+    }
+
+    if (collision) {
+      throw makeError('Khong the tao ma duy nhat, vui long thu lai', 500);
+    }
+
+    docs.push({
+      campaignId: campaign._id,
+      batchId,
+      codeHash,
+      codePrefix: normalizeRedeemCode(rawCode).slice(0, 4),
+      codeLength: normalizeRedeemCode(rawCode).length,
+      status: 'unused',
+      expiresAt: codeExpiresAt,
+      createdBy: new mongoose.Types.ObjectId(adminId),
+    });
+
+    rows.push({
+      rawCode,
+      redeemUrl: buildRedeemHttpsUrl(redeemBaseUrl, rawCode),
+      codePrefix: normalizeRedeemCode(rawCode).slice(0, 4),
+      campaignId: String(campaign._id),
+      campaignName: campaign.name,
+      batchId,
+      expiresAt: toIso(codeExpiresAt),
+      entitlementDurationDays: campaign.entitlementDurationDays,
+    });
+  }
+
+  await RedeemCode.insertMany(docs, { ordered: true });
+  await Campaign.findByIdAndUpdate(campaign._id, { $inc: { codeCount: docs.length } });
+
+  const csv = stringify(rows, {
+    header: true,
+    columns: [
+      'rawCode',
+      'redeemUrl',
+      'codePrefix',
+      'campaignId',
+      'campaignName',
+      'batchId',
+      'expiresAt',
+      'entitlementDurationDays',
+    ],
+  });
+
+  return {
+    batchId,
+    quantity: rows.length,
+    rows,
+    csv,
+  };
+}
+
+export async function revokeCampaign(campaignId: string): Promise<object> {
+  const campaign = await Campaign.findByIdAndUpdate(
+    campaignId,
+    { $set: { status: 'revoked' } },
+    { new: true },
+  ).lean();
+  if (!campaign) {
+    throw makeError('Khong tim thay campaign', 404);
+  }
+  await RedeemCode.updateMany(
+    { campaignId: new mongoose.Types.ObjectId(campaignId), status: 'unused' },
+    { $set: { status: 'revoked' } },
+  );
+  return campaign;
+}
+
+export async function revokeCode(codeId: string): Promise<object> {
+  const code = await RedeemCode.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(codeId), status: 'unused' },
+    { $set: { status: 'revoked' } },
+    { new: true },
+  ).select('-codeHash').lean();
+  if (!code) {
+    throw makeError('Khong tim thay ma co the thu hoi', 404);
+  }
+  return code;
+}
+
+export async function redeemCampaignCode(
+  userId: string,
+  input: RedeemCampaignCodeInput,
+): Promise<object> {
+  const now = new Date();
+  const codeHash = hashRedeemCode(input.code);
+  const code = await RedeemCode.findOne({ codeHash });
+
+  if (!code) {
+    throw makeError('Ma kich hoat khong hop le', 404);
+  }
+  if (code.status === 'redeemed') {
+    throw makeError('Ma kich hoat da duoc su dung', 409);
+  }
+  if (code.status === 'revoked') {
+    throw makeError('Ma kich hoat da bi thu hoi', 410);
+  }
+  if (code.expiresAt && code.expiresAt.getTime() < now.getTime()) {
+    await RedeemCode.updateOne(
+      { _id: code._id, status: 'unused' },
+      { $set: { status: 'expired' } },
+    );
+    throw makeError('Ma kich hoat da het han', 410);
+  }
+
+  const campaign = await Campaign.findById(code.campaignId);
+  if (!campaign || campaign.status !== 'active') {
+    throw makeError('Campaign hien khong hoat dong', 409);
+  }
+  if (campaign.startsAt.getTime() > now.getTime() || campaign.endsAt.getTime() < now.getTime()) {
+    throw makeError('Campaign khong nam trong thoi gian kich hoat', 409);
+  }
+
+  const updatedCode = await RedeemCode.findOneAndUpdate(
+    { _id: code._id, status: 'unused' },
+    {
+      $set: {
+        status: 'redeemed',
+        redeemedBy: new mongoose.Types.ObjectId(userId),
+        redeemedAt: now,
+        redemptionSource: input.source,
+      },
+    },
+    { new: true },
+  );
+
+  if (!updatedCode) {
+    throw makeError('Ma kich hoat da duoc su dung', 409);
+  }
+
+  const activeUntil = addDays(now, campaign.entitlementDurationDays);
+
+  try {
+    const entitlement = await UserScanEntitlement.create({
+      userId: new mongoose.Types.ObjectId(userId),
+      campaignId: campaign._id,
+      redeemCodeId: updatedCode._id,
+      startsAt: now,
+      activeUntil,
+      quotaPolicy: {
+        mode: SCAN_QUOTA_POLICY_MODE,
+        dailyLimit: HIGH_QUOTA_DAILY_LIMIT,
+      },
+      source: 'redeem_code',
+    });
+    await Campaign.findByIdAndUpdate(campaign._id, { $inc: { redeemedCount: 1 } });
+
+    return {
+      status: 'success',
+      message: 'Kich hoat goi quet AI thanh cong',
+      entitlement: entitlement.toObject(),
+    };
+  } catch (err) {
+    await RedeemCode.updateOne(
+      { _id: updatedCode._id, status: 'redeemed', redeemedBy: new mongoose.Types.ObjectId(userId) },
+      {
+        $set: { status: 'unused' },
+        $unset: { redeemedBy: '', redeemedAt: '', redemptionSource: '' },
+      },
+    );
+    throw err;
+  }
+}
+
+export async function getActiveScanEntitlement(userId: string): Promise<object | null> {
+  const now = new Date();
+  return UserScanEntitlement.findOne({
+    userId: new mongoose.Types.ObjectId(userId),
+    activeUntil: { $gt: now },
+  })
+    .sort({ activeUntil: -1 })
+    .lean();
+}
+
+export async function getMyScanEntitlements(userId: string): Promise<object> {
+  const entitlement = await getActiveScanEntitlement(userId) as {
+    _id: mongoose.Types.ObjectId;
+    campaignId: mongoose.Types.ObjectId;
+    redeemCodeId: mongoose.Types.ObjectId;
+    activeUntil: Date;
+    quotaPolicy: { mode: string; dailyLimit: number };
+  } | null;
+
+  if (!entitlement) {
+    return {
+      hasActiveEntitlement: false,
+      activeUntil: null,
+      campaignId: null,
+      redeemCodeId: null,
+      quotaPolicy: null,
+      entitlement: null,
+      message: 'Ban chua co goi quet AI dang hoat dong',
+    };
+  }
+
+  return {
+    hasActiveEntitlement: true,
+    activeUntil: entitlement.activeUntil.toISOString(),
+    campaignId: String(entitlement.campaignId),
+    redeemCodeId: String(entitlement.redeemCodeId),
+    quotaPolicy: entitlement.quotaPolicy,
+    entitlement,
+    message: 'Goi quet AI dang hoat dong',
+  };
+}

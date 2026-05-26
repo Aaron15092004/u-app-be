@@ -44,6 +44,9 @@ export const scanFood = async (req: Request, res: Response): Promise<void> => {
         retryAfterSeconds: rateLimit.retryAfterSeconds,
         usedToday: rateLimit.usedToday,
         limit: rateLimit.limit,
+        quotaMode: rateLimit.quotaMode,
+        entitlementId: rateLimit.entitlementId,
+        activeUntil: rateLimit.activeUntil,
       });
       return;
     }
@@ -52,9 +55,16 @@ export const scanFood = async (req: Request, res: Response): Promise<void> => {
 
     // Only count the attempt after Gemini succeeds — failed scans (bad image, API error)
     // do not consume the user's daily quota.
-    await recordScanAttempt(userId);
+    await recordScanAttempt(userId, rateLimit);
 
-    success(res, { ...result, usedToday: rateLimit.usedToday + 1, limit: rateLimit.limit }, 200);
+    success(res, {
+      ...result,
+      usedToday: rateLimit.usedToday + 1,
+      limit: rateLimit.limit,
+      quotaMode: rateLimit.quotaMode,
+      entitlementId: rateLimit.entitlementId,
+      activeUntil: rateLimit.activeUntil,
+    }, 200);
   } catch (err: unknown) {
     const e = err as { statusCode?: number; message?: string };
     const msg = e.message ?? 'Lỗi server';

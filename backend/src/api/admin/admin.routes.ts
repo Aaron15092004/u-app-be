@@ -3,6 +3,15 @@ import { authenticate, requireAdmin } from '../../middleware/auth.middleware';
 import { uploadSingle } from '../../middleware/upload.middleware';
 import * as adminController from './admin.controller';
 import mediaAssetsRouter from '../media-assets/media-assets.routes';
+import {
+  createCampaignHandler,
+  exportCampaignCodesCsvHandler,
+  generateCampaignCodesHandler,
+  listCampaignCodesHandler,
+  listCampaignsHandler,
+  revokeCampaignHandler,
+  revokeCodeHandler,
+} from '../campaigns/campaigns.controller';
 
 const router = Router();
 
@@ -19,12 +28,14 @@ router.get('/stats', adminController.getDashboardStats);
 // Upload
 router.post('/upload', uploadSingle, adminController.uploadImage);
 
-// v2 campaign code scaffolds (Phase 2)
-router.get('/campaigns', phaseScaffold('Danh sach campaign'));
-router.post('/campaigns', phaseScaffold('Tao campaign'));
-router.post('/campaigns/:id/codes/generate', phaseScaffold('Tao ma campaign'));
-router.get('/campaigns/:id/codes', phaseScaffold('Danh sach ma campaign'));
-router.get('/campaigns/:id/codes/export.csv', phaseScaffold('Xuat CSV ma campaign'));
+// v2 campaign code MVP (Phase 2)
+router.get('/campaigns', listCampaignsHandler);
+router.post('/campaigns', createCampaignHandler);
+router.patch('/campaigns/:id/revoke', revokeCampaignHandler);
+router.post('/campaigns/:id/codes/generate', generateCampaignCodesHandler);
+router.get('/campaigns/:id/codes', listCampaignCodesHandler);
+router.get('/campaigns/:id/codes/export.csv', exportCampaignCodesCsvHandler);
+router.patch('/campaigns/codes/:codeId/revoke', revokeCodeHandler);
 
 // v2 feedback/admin rating scaffold (Phase 6)
 router.get('/ratings', phaseScaffold('Danh sach danh gia ung dung'));
