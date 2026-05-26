@@ -44,7 +44,7 @@
 
 **Goal**: Ship the fastest usable v2.0 MVP release by implementing only the minimum workflows needed for commercial milk-code activation, barcode-assisted food logging, Ủ milk preference capture, and lightweight feedback.  
 **Depends on**: Phase 1  
-**Requirements**: CODE-01, CODE-02, CODE-03, CODE-04, CODE-05, CODE-06, CODE-07, CODE-08, CODE-09, CODE-10, CODE-12, BAR-01, BAR-02, BAR-03, BAR-04, BAR-05, BAR-06, BAR-07, MILK-01, MILK-02, MILK-03, MILK-04, MILK-05, MILK-06, RATE-01, RATE-02, RATE-03, RATE-04, RATE-05
+**Requirements**: CODE-01, CODE-02, CODE-03, CODE-04, CODE-05, CODE-06, CODE-08, CODE-09, CODE-10, CODE-12, BAR-01, BAR-02, BAR-03, BAR-04, BAR-05, BAR-06, BAR-07, MILK-01, MILK-02, MILK-03, MILK-04, MILK-05, MILK-06, RATE-01, RATE-02, RATE-03, RATE-04
 
 **Success Criteria**:
 
@@ -113,7 +113,7 @@
 | CODE-04 | Phase 2 MVP, Phase 3 hardening | Pending |
 | CODE-05 | Phase 2 MVP, Phase 3 hardening | Pending |
 | CODE-06 | Phase 2 MVP, Phase 3 hardening | Pending |
-| CODE-07 | Phase 2 MVP, Phase 3 hardening | Pending |
+| CODE-07 | Phase 3 hardening | Pending |
 | CODE-08 | Phase 2 MVP, Phase 3 hardening | Pending |
 | CODE-09 | Phase 2 MVP, Phase 3 hardening | Pending |
 | CODE-10 | Phase 2 MVP, Phase 3 hardening | Pending |
@@ -142,7 +142,7 @@
 | RATE-02 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-03 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-04 | Phase 2 MVP, Phase 3 hardening | Pending |
-| RATE-05 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-05 | Phase 3 hardening | Pending |
 
 **Total mapped: 36/36**
 

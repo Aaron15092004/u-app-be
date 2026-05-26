@@ -110,7 +110,7 @@
 | CODE-04 | Phase 2 | Pending |
 | CODE-05 | Phase 2 | Pending |
 | CODE-06 | Phase 2 | Pending |
-| CODE-07 | Phase 2 | Pending |
+| CODE-07 | Phase 3 hardening | Pending |
 | CODE-08 | Phase 2 | Pending |
 | CODE-09 | Phase 2 | Pending |
 | CODE-10 | Phase 2 | Pending |
@@ -139,7 +139,7 @@
 | RATE-02 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-03 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-04 | Phase 2 MVP, Phase 3 hardening | Pending |
-| RATE-05 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-05 | Phase 3 hardening | Pending |
 
 **Coverage:**
 - v2.0 requirements: 36 total
