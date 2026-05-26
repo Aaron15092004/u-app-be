@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
-status: ready_to_plan
-last_updated: 2026-05-26T12:32:46.821Z
+status: Ready to discuss compressed MVP release scope
+last_updated: "2026-05-26T13:20:01.463Z"
 last_activity: 2026-05-26
 progress:
-  total_phases: 6
+  total_phases: 3
   completed_phases: 1
   total_plans: 5
   completed_plans: 5
-  percent: 17
-stopped_at: Phase 01 complete (5/5) — ready to discuss Phase 2
+  percent: 33
 ---
 
 # Project State — Ủ App
@@ -29,11 +28,8 @@ Phase 1 execution is complete. Plan 01-05 added automated backend verification f
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | v2 Data Foundation | Complete |
-| 2 | Campaign Codes & Unlimited Scan Entitlements | Pending |
-| 3 | Barcode Food Scan | Pending |
-| 4 | Ủ Milk Recommendation | Pending |
-| 5 | Exercise Media Operations | Pending |
-| 6 | Feedback & Ratings | Pending |
+| 2 | MVP Fast Release Pack | Pending |
+| 3 | Post-MVP Hardening | Pending |
 
 ## Progress Bar
 
@@ -41,9 +37,6 @@ Phase 1 execution is complete. Plan 01-05 added automated backend verification f
 Phase 1 [##########] 100%
 Phase 2 [----------] 0%
 Phase 3 [----------] 0%
-Phase 4 [----------] 0%
-Phase 5 [----------] 0%
-Phase 6 [----------] 0%
 ```
 
 ## Performance Metrics
@@ -54,6 +47,10 @@ Phase 6 [----------] 0%
 - Last plan metric: Phase 01 Plan 05 completed in 4320s, 2 tasks, 7 files
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 2 edited: compressed v2.0 roadmap to Option C MVP fast release: Phase 2 MVP pack, Phase 3 post-MVP hardening
 
 ### Key Decisions Logged
 
@@ -278,5 +275,5 @@ None currently.
 
 Phase: 2
 Plan: Not started
-Status: Ready to plan
+Status: Ready to discuss compressed MVP release scope
 Last activity: 2026-05-26
