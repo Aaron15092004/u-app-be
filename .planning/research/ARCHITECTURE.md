@@ -1,728 +1,761 @@
-# Architecture Research — Ủ App
+# Architecture Research: v2.0 Feature Integration
 
-**Researched:** 2026-05-17
-**Confidence:** HIGH (stack well-established; AI food flow MEDIUM — latency varies by provider)
+**Project:** Ủ App  
+**Domain:** Expo React Native health app + Express/Node API + MongoDB + React admin dashboard  
+**Researched:** 2026-05-26  
+**Overall confidence:** HIGH for repo integration, MEDIUM for final mobile scanner behavior until tested on physical Android/iOS devices.
 
----
+## Executive Summary
 
-## System Components
+v2.0 should extend the current monolith-style backend rather than introduce a new service. The existing architecture already has the right boundaries: mobile calls typed API clients, backend routes are grouped by domain, Mongoose models own persistence, admin routes are protected by `authenticate` and `requireAdmin`, Cloudinary is already the image CDN, and AI scan quota is isolated in `FoodScanAttempt`. The safest approach is to add narrow domain modules for campaign codes, recommendations, ratings, and exercise media while modifying food scan quota logic in place.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        CLIENT LAYER                                  │
-│                                                                      │
-│  ┌──────────────────────────────┐   ┌────────────────────────────┐  │
-│  │   React Native / Expo App    │   │  Admin Web Dashboard       │  │
-│  │   (iOS + Android)            │   │  (React + Vite, separate)  │  │
-│  │                              │   │                            │  │
-│  │  Expo Router (file-based)    │   │  Route: /admin             │  │
-│  │  TanStack Query (data cache) │   │  CRUD: exercises, food,    │  │
-│  │  AsyncStorage (offline)      │   │  habits, users             │  │
-│  │  expo-camera / image picker  │   │                            │  │
-│  └──────────────┬───────────────┘   └────────────┬───────────────┘  │
-└─────────────────┼────────────────────────────────┼──────────────────┘
-                  │ HTTPS/REST                      │ HTTPS/REST
-                  │ (JWT Bearer)                    │ (Admin JWT)
-┌─────────────────▼────────────────────────────────▼──────────────────┐
-│                        API LAYER                                     │
-│                                                                      │
-│              Node.js + Express (single server)                       │
-│                                                                      │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────────┐  │
-│  │ /api/auth  │  │ /api/food  │  │ /api/      │  │ /api/admin    │  │
-│  │            │  │            │  │ workouts   │  │               │  │
-│  │ JWT issue  │  │ image up   │  │ habits     │  │ admin-only    │  │
-│  │ OAuth      │  │ AI proxy   │  │ bmi        │  │ CRUD routes   │  │
-│  │ refresh    │  │ log CRUD   │  │ profile    │  │               │  │
-│  └────────────┘  └─────┬──────┘  └────────────┘  └───────────────┘  │
-│                         │                                            │
-│  Middleware stack:       │                                           │
-│  auth → validate →      │                                           │
-│  rateLimit → handler     │                                           │
-└─────────────────────────┼────────────────────────────────────────────┘
-                           │
-          ┌────────────────┼────────────────────┐
-          │                │                    │
-┌─────────▼──────┐  ┌──────▼──────┐  ┌─────────▼──────┐
-│  MongoDB Atlas │  │  Cloudinary │  │  AI Food API   │
-│                │  │             │  │                │
-│  Collections:  │  │  food photo │  │  OpenAI Vision │
-│  users         │  │  storage +  │  │  OR LogMeal    │
-│  food_logs     │  │  CDN serve  │  │  OR Clarifai   │
-│  workouts      │  │             │  │                │
-│  habits        │  │             │  │  Returns:      │
-│  bmi_history   │  │             │  │  food name +   │
-│  exercises     │  │             │  │  macros JSON   │
-│  notifications │  └─────────────┘  └────────────────┘
-└────────────────┘
-          │
-┌─────────▼──────────────────┐
-│  Firebase Cloud Messaging  │
-│  (via Expo Push Service)   │
-│                            │
-│  Node backend triggers     │
-│  FCM → Expo → iOS/Android  │
-└────────────────────────────┘
-```
+The highest-impact integration is redeem-code unlocking for AI scans. Do not bypass the existing `/api/food/scan` flow from mobile. Instead, add entitlement-aware quota resolution inside `food.service.ts`: if the user has an active scan entitlement, return unlimited scan access for the entitlement expiry window; otherwise keep the existing daily limit. This keeps AI cost control and audit behavior centralized.
 
----
+BMI milk recommendation should be rule-based and server-owned. Mobile can render the recommendation, but the backend should compute the canonical recommendation from the latest BMI plus optional user preference signals, then persist the selected flavor on the user profile or a dedicated preference record. This prevents product-rule drift across app versions and lets admin/product update copy later without an app release.
 
-## Data Flow
+Barcode scanning should supplement food search, not replace AI scan. Use `expo-camera`'s existing `CameraView` stack for QR and barcode scanning because the mobile app already depends on `expo-camera`. Add barcode fields to `FoodItem` and route scanned EAN/UPC codes through the backend. Unknown barcodes should create a light telemetry record or return a "not found, try AI scan/manual search" response rather than calling a third-party food database by default.
 
-### Food Scan Flow (primary feature, most complex)
+Exercise image management should not be modeled as "one image URL string forever." Hundreds of exercise records need reusable image assets, bulk assignment, and deletion safety. Add a first-class `MediaAsset` model for admin-uploaded exercise images and let `Exercise.imageUrl` remain as a denormalized compatibility field during migration. New admin UI should manage images in a media library and assign `imageAssetId` to exercises.
+
+## Current Architecture Fit
+
+### Existing Components to Reuse
+
+| Existing Area | Current Shape | v2.0 Integration Decision |
+|---|---|---|
+| Auth | JWT middleware with `AuthRequest`, role-based admin guard | Reuse for all user/admin v2 routes |
+| AI scan | `POST /api/food/scan`, `FoodScanAttempt`, `SCAN_DAILY_LIMIT = 20` | Modify quota check to consider active entitlements |
+| Food DB/search | `FoodItem` with text index and admin CRUD | Add barcode fields and lookup endpoint |
+| BMI | `BMIRecord`, `/api/bmi`, latest height/weight mirrored to `User.profile` | Add recommendation endpoint and persisted flavor preference |
+| Admin | Single `/api/admin` router, CRUD service/controller/validation pattern | Add admin campaign and media-library route groups |
+| Uploads | Multer memory upload + Cloudinary helper | Add multi-upload/bulk asset endpoint; keep Cloudinary as source of truth |
+| Mobile API | Typed functions in `mobile/src/lib/api/*.api.ts` | Add `campaign.api.ts`, `recommendations.api.ts`, `ratings.api.ts`; extend `food.api.ts` |
+| State/cache | TanStack Query + local zustand for food scan result | Use React Query for v2 server state; avoid long-lived local-only entitlement state |
+
+## Recommended Architecture
 
 ```
-1. USER ACTION
-   User opens camera screen → expo-camera renders viewfinder
-   User taps capture OR selects from gallery (expo-image-picker)
+Mobile Expo App
+  - Scan food image -> /api/food/scan
+  - Scan QR/redeem code -> /api/campaigns/redeem
+  - Scan barcode -> /api/food/items/barcode/:code
+  - BMI recommendation -> /api/recommendations/nut-milk
+  - App rating -> /api/ratings
 
-2. CLIENT PROCESSING
-   Image compressed locally (< 2MB recommended for API cost)
-   Encoded to base64 OR multipart FormData constructed
+Admin React Dashboard
+  - Campaign code batch generation -> /api/admin/campaigns
+  - QR export/download -> /api/admin/campaigns/:id/codes/export
+  - Exercise media library -> /api/admin/media-assets
+  - Bulk exercise image assignment -> /api/admin/exercises/bulk-image
 
-3. UPLOAD TO BACKEND
-   POST /api/food/analyze
-   Headers: Authorization: Bearer <jwt>
-   Body: multipart/form-data { image: <file> }
+Express Backend
+  - campaigns module: code generation, redemption, entitlements
+  - food module: quota resolution, barcode lookup
+  - recommendations module: BMI/flavor rules
+  - ratings module: feedback capture
+  - admin/media module: Cloudinary asset catalog
 
-4. BACKEND: IMAGE STORAGE
-   Multer receives file in memory
-   Upload to Cloudinary → receive { secure_url, public_id }
-   Store image URL in temp or immediately in food_logs doc
-
-5. BACKEND: AI ANALYSIS
-   Send image (URL or base64) to AI provider:
-
-   Option A — OpenAI Vision (gpt-4o-mini):
-     POST https://api.openai.com/v1/chat/completions
-     { model: "gpt-4o-mini",
-       messages: [{ role: "user", content: [
-         { type: "text", text: "Identify all foods... Return JSON array..." },
-         { type: "image_url", image_url: { url: cloudinary_url } }
-       ]}]
-     }
-     → Returns: [{ food, weight_g, calories, protein_g, carbs_g, fat_g }]
-     Cost: ~$0.003/image (gpt-4o-mini)
-
-   Option B — LogMeal API (food-specialized):
-     POST https://api.logmeal.com/v2/image/recognition/complete
-     → Returns structured nutrition JSON, Vietnamese food awareness
-     Cost: per-request pricing, free tier available
-
-6. BACKEND: RESPONSE
-   Parse AI JSON response
-   Normalize to app schema (NutritionResult)
-   Return to client:
-   { success: true, analysis: { foods: [...], totals: { calories, protein, carbs, fat } }, imageUrl }
-
-7. CLIENT: DISPLAY RESULT
-   Meal Analysis Result screen renders food cards
-   User edits portion sizes if needed (optional v2)
-   User taps "Xác nhận & Lưu"
-
-8. SAVE TO DATABASE
-   POST /api/food/logs
-   Body: { date, mealType, foods: [...], imageUrl, totals }
-   Creates FoodLog document in MongoDB
-   Updates daily summary cache
-
-9. HOME DASHBOARD UPDATE
-   TanStack Query invalidates ["daily-summary"] cache
-   Home screen re-fetches and shows updated kcal count
+MongoDB
+  - Campaign
+  - RedeemCode
+  - UserScanEntitlement
+  - NutMilkPreference or User.profile.nutMilkPreference
+  - AppRating
+  - MediaAsset
+  - FoodItem modified with barcodes
+  - Exercise modified with imageAssetId
 ```
 
-**Latency expectation:** 3–8 seconds total (upload + AI + DB write). Show loading state with progress indicator. This is non-negotiable for UX — inform user immediately that analysis is in progress.
+## New Models
 
----
+### Campaign
 
-### Auth Flow
+Admin-created campaign metadata. One campaign owns many redeem codes.
 
-```
-1. Email/Password:
-   POST /api/auth/register → hash password (bcrypt) → create User → issue JWT + refreshToken
-   POST /api/auth/login → verify password → issue JWT (15min) + refreshToken (30 days)
-
-2. Google OAuth:
-   Client: expo-auth-session triggers Google OAuth popup
-   Client receives: { id_token }
-   POST /api/auth/google { id_token }
-   Backend: verify id_token with Google → findOrCreate user → issue JWT
-
-3. Apple Sign In:
-   Client: expo-apple-authentication triggers Apple sheet
-   Client receives: { identityToken, user (first login only) }
-   POST /api/auth/apple { identityToken, fullName? }
-   Backend: verify identityToken with Apple → findOrCreate user → issue JWT
-
-4. Token Refresh:
-   Client stores JWT in expo-secure-store
-   On 401: POST /api/auth/refresh { refreshToken } → new JWT
-   Axios interceptor handles this transparently
-
-5. Admin Auth:
-   Admin web uses same /api/auth/login endpoint
-   Admin role checked via user.role === 'admin' middleware
-```
-
----
-
-### Workout Tracking Flow
-
-```
-1. User browses Exercise List → GET /api/exercises?category=yoga
-2. User starts exercise → client starts countdown timer (local, no network)
-3. Timer completes → POST /api/workouts/logs { exerciseId, duration, caloriesBurned, date }
-4. Completion screen shown
-5. Weekly stats updated: GET /api/workouts/stats?week=current
-```
-
----
-
-### Habit Tracking Flow
-
-```
-1. Load habits: GET /api/habits (returns user's habit list + today's completions)
-2. Mark complete: POST /api/habits/:id/check { date }
-3. Streak calculated server-side from habit_logs collection
-4. Push notification scheduled server-side (FCM) for next day reminder
-```
-
----
-
-## Mobile App Structure
-
-Recommended structure following Expo Router file-based routing with src/ wrapper:
-
-```
-mobile/
-├── app.json                    # Expo config
-├── package.json
-├── tsconfig.json
-├── babel.config.js
-└── src/
-    ├── app/                    # Expo Router pages (routing ONLY, no logic)
-    │   ├── _layout.tsx         # Root layout: providers, fonts, splash
-    │   ├── index.tsx           # Redirect → (auth) or (tabs)
-    │   ├── (onboarding)/       # Route group, no URL prefix
-    │   │   ├── _layout.tsx     # Stack navigator
-    │   │   ├── index.tsx       # Welcome screen
-    │   │   ├── features.tsx    # Feature highlights
-    │   │   └── start.tsx       # CTA / Get started
-    │   ├── (auth)/             # Route group
-    │   │   ├── _layout.tsx     # Stack navigator (no bottom tabs)
-    │   │   ├── login.tsx
-    │   │   ├── register.tsx
-    │   │   └── forgot-password.tsx
-    │   └── (tabs)/             # Protected: requires auth
-    │       ├── _layout.tsx     # Bottom tab navigator (5 tabs)
-    │       ├── index.tsx       # Trang chủ (Home Dashboard)
-    │       ├── meals/
-    │       │   ├── index.tsx   # Meal log / history
-    │       │   ├── scan.tsx    # Camera scan screen
-    │       │   └── result.tsx  # AI analysis result
-    │       ├── workouts/
-    │       │   ├── index.tsx   # Exercise list
-    │       │   ├── [id].tsx    # Exercise detail
-    │       │   └── timer.tsx   # Active workout timer
-    │       ├── habits/
-    │       │   └── index.tsx   # Habit tracking
-    │       └── profile/
-    │           ├── index.tsx   # Profile overview
-    │           └── bmi.tsx     # BMI analysis
-    │
-    ├── components/             # Reusable UI (no routing logic)
-    │   ├── ui/                 # Atoms: Button, Input, Card, Badge, Icon
-    │   ├── forms/              # LoginForm, RegisterForm, HabitForm
-    │   ├── food/               # FoodCard, MacroBar, NutritionSummary
-    │   ├── workout/            # ExerciseCard, TimerDisplay, WeeklyStats
-    │   ├── habit/              # HabitRow, StreakCounter, ProgressBar
-    │   └── charts/             # BMIChart, CalorieChart (Victory Native)
-    │
-    ├── lib/                    # Core app logic
-    │   ├── api/
-    │   │   ├── client.ts       # Axios instance, interceptors, JWT refresh
-    │   │   ├── auth.api.ts     # Auth endpoints
-    │   │   ├── food.api.ts     # Food scan + logs endpoints
-    │   │   ├── workout.api.ts  # Exercise + workout endpoints
-    │   │   ├── habit.api.ts    # Habit endpoints
-    │   │   └── profile.api.ts  # User profile + BMI
-    │   ├── query/
-    │   │   └── query-client.ts # TanStack Query client config
-    │   └── auth/
-    │       ├── auth-context.tsx # Session state + signIn/signOut
-    │       └── token-storage.ts # expo-secure-store wrapper
-    │
-    ├── hooks/                  # Custom hooks (business-logic hooks)
-    │   ├── useAuth.ts
-    │   ├── useFoodScan.ts      # Camera + upload + analyze orchestration
-    │   ├── useWorkoutTimer.ts  # Countdown timer logic
-    │   ├── useDailySummary.ts  # TanStack Query for home stats
-    │   └── useNetworkStatus.ts # @react-native-community/netinfo
-    │
-    ├── providers/              # Context providers (wrap app)
-    │   ├── AuthProvider.tsx
-    │   ├── QueryProvider.tsx   # TanStack QueryClientProvider
-    │   └── ThemeProvider.tsx   # Colors, typography tokens
-    │
-    ├── utils/                  # Pure functions, zero React dependency
-    │   ├── bmi.ts              # BMI calculation
-    │   ├── nutrition.ts        # Macro totaling, formatting
-    │   ├── date.ts             # Vietnamese date formatting
-    │   └── image.ts            # Compress, base64 encode
-    │
-    ├── constants/
-    │   ├── colors.ts           # Green primary, orange accent
-    │   ├── config.ts           # API_URL, feature flags
-    │   └── habits.ts           # Default 6 habit definitions
-    │
-    └── types/
-        ├── api.types.ts        # API response shapes
-        ├── food.types.ts       # FoodLog, NutritionData
-        ├── workout.types.ts    # Exercise, WorkoutLog
-        └── user.types.ts       # User, BMIRecord, HabitLog
-```
-
-**Key decisions:**
-- `app/` holds routing files only — no business logic, no hooks
-- `lib/api/` owns all network calls; components never call fetch directly
-- `(onboarding)` and `(auth)` are route groups — excluded from URL, no bottom tabs
-- `(tabs)` has `_layout.tsx` that checks auth session and redirects if unauthenticated
-- `expo-secure-store` for JWT storage (not AsyncStorage — secure storage for tokens)
-
----
-
-## Backend API Structure
-
-### Folder Structure
-
-```
-backend/
-├── package.json
-├── .env
-└── src/
-    ├── app.js                  # Express app setup (no listen())
-    ├── server.js               # Starts HTTP server, port binding
-    ├── loaders/
-    │   ├── express.js          # Middleware registration order
-    │   ├── mongoose.js         # MongoDB Atlas connection
-    │   └── firebase.js         # Firebase Admin SDK init
-    │
-    ├── api/
-    │   ├── auth/
-    │   │   ├── auth.routes.js  # POST /register /login /refresh /google /apple
-    │   │   ├── auth.controller.js
-    │   │   └── auth.service.js
-    │   ├── food/
-    │   │   ├── food.routes.js  # POST /analyze, GET|POST|DELETE /logs
-    │   │   ├── food.controller.js
-    │   │   └── food.service.js # Calls Cloudinary + AI API
-    │   ├── workouts/
-    │   │   ├── workout.routes.js
-    │   │   ├── workout.controller.js
-    │   │   └── workout.service.js
-    │   ├── habits/
-    │   │   ├── habit.routes.js
-    │   │   ├── habit.controller.js
-    │   │   └── habit.service.js
-    │   ├── profile/
-    │   │   ├── profile.routes.js # GET|PATCH /me, POST /bmi
-    │   │   ├── profile.controller.js
-    │   │   └── profile.service.js
-    │   ├── notifications/
-    │   │   ├── notification.routes.js # POST /register-token
-    │   │   ├── notification.controller.js
-    │   │   └── notification.service.js # FCM send logic
-    │   └── admin/
-    │       ├── admin.routes.js  # All CRUD routes, admin-only
-    │       ├── admin.controller.js
-    │       └── admin.service.js
-    │
-    ├── models/
-    │   ├── User.js
-    │   ├── FoodLog.js
-    │   ├── Exercise.js
-    │   ├── WorkoutLog.js
-    │   ├── Habit.js
-    │   ├── HabitLog.js
-    │   ├── BMIRecord.js
-    │   └── DeviceToken.js
-    │
-    ├── middleware/
-    │   ├── auth.middleware.js   # JWT verify → req.user
-    │   ├── admin.middleware.js  # req.user.role === 'admin' check
-    │   ├── upload.middleware.js # Multer config (memory storage)
-    │   ├── validate.middleware.js # express-validator chains
-    │   ├── rateLimit.middleware.js # express-rate-limit (AI endpoint: strict)
-    │   └── error.middleware.js  # Global error handler (last middleware)
-    │
-    ├── services/               # External integrations (called by route services)
-    │   ├── cloudinary.service.js # upload(), delete()
-    │   ├── ai-food.service.js   # analyzeImage() → normalized NutritionResult
-    │   ├── fcm.service.js       # sendToUser(), scheduleReminder()
-    │   └── email.service.js     # Password reset emails (Nodemailer/Resend)
-    │
-    ├── config/
-    │   ├── index.js            # Validates + exports all env vars
-    │   └── cors.js             # Allowed origins (mobile + admin URL)
-    │
-    └── utils/
-        ├── jwt.js              # sign(), verify(), refresh()
-        ├── bcrypt.js           # hash(), compare()
-        └── response.js         # Standard { success, data, error } shape
-```
-
-### Route Organization
-
-```
-/api/auth
-  POST   /register
-  POST   /login
-  POST   /refresh
-  POST   /google
-  POST   /apple
-  POST   /forgot-password
-  POST   /reset-password
-
-/api/food
-  POST   /analyze              # Upload + AI scan (rate-limited: 20/hour)
-  GET    /logs?date=YYYY-MM-DD # User's food log for a day
-  POST   /logs                 # Save confirmed meal
-  DELETE /logs/:id
-
-/api/workouts
-  GET    /exercises            # List (filter: ?category= ?difficulty=)
-  GET    /exercises/:id        # Single exercise detail
-  GET    /logs?week=current    # User's workout history
-  POST   /logs                 # Log completed workout
-  GET    /stats?week=current   # Weekly aggregate
-
-/api/habits
-  GET    /                     # User's habits + today's completions
-  POST   /:id/check            # Mark habit complete for today
-  DELETE /:id/check            # Unmark (within same day)
-  GET    /streak               # Current streak count
-
-/api/profile
-  GET    /me
-  PATCH  /me
-  POST   /bmi                  # Save new BMI measurement
-  GET    /bmi?days=30          # BMI history
-
-/api/notifications
-  POST   /register-token       # Save FCM device token
-
-/api/admin                     # Requires admin role
-  GET|POST|PATCH|DELETE /exercises
-  GET|POST|PATCH|DELETE /food-items
-  GET|POST|PATCH|DELETE /habits
-  GET    /users
-  PATCH  /users/:id/role
-```
-
-### Middleware Execution Order
-
-```
-Request → cors → helmet → json() → rateLimit (global)
-       → auth.middleware (JWT decode, attach req.user)
-       → [route-specific: validate, upload, admin check]
-       → controller (calls service)
-       → error.middleware (catches all throws)
-       → JSON response
-```
-
----
-
-## Database Schema Sketch
-
-### Users Collection
-
-```javascript
+```typescript
 {
   _id: ObjectId,
-  email: String (unique, indexed),
-  passwordHash: String (null for OAuth),
-  name: String,
-  avatar: String,              // Cloudinary URL
-  role: String,                // 'user' | 'admin'
-  authProviders: [{
-    provider: String,          // 'email' | 'google' | 'apple'
-    providerId: String
-  }],
-  profile: {
-    dateOfBirth: Date,
-    gender: String,            // 'male' | 'female' | 'other'
-    heightCm: Number,
-    weightKg: Number,
-    goalType: String           // 'lose' | 'maintain' | 'gain'
-  },
-  notifications: {
-    waterReminder: Boolean,
-    workoutReminder: Boolean,
-    reminderTime: String       // "08:00" HH:mm
+  name: string,
+  description?: string,
+  productLine?: 'bottled-milk' | 'other',
+  startsAt?: Date,
+  expiresAt: Date,
+  unlockType: 'unlimited_ai_scans',
+  codeCount: number,
+  redeemedCount: number,
+  isActive: boolean,
+  createdBy: ObjectId,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+Indexes:
+
+```typescript
+{ isActive: 1, expiresAt: 1 }
+{ createdAt: -1 }
+```
+
+### RedeemCode
+
+Store the code hash, not just plaintext, because bottled campaign codes are effectively bearer credentials. Admin can export plaintext only at generation time; after that, list views should show masked code and QR payload metadata.
+
+```typescript
+{
+  _id: ObjectId,
+  campaignId: ObjectId,
+  codeHash: string,
+  codePrefix: string,
+  qrPayload: string,
+  status: 'unused' | 'redeemed' | 'void',
+  redeemedBy?: ObjectId,
+  redeemedAt?: Date,
+  expiresAt: Date,
+  createdAt: Date
+}
+```
+
+Indexes:
+
+```typescript
+{ codeHash: 1 } unique
+{ campaignId: 1, status: 1 }
+{ redeemedBy: 1, redeemedAt: -1 }
+{ expiresAt: 1 }
+```
+
+Code format recommendation:
+
+```text
+U2-<CAMPAIGN_PREFIX>-<RANDOM_BASE32_10>-<CHECK_DIGIT>
+```
+
+Use `crypto.randomBytes`, uppercase Crockford/Base32 or hex-safe encoding, and a checksum/check digit to reduce support tickets from mistyped codes. Do not use Mongo `_id` or sequential codes.
+
+### UserScanEntitlement
+
+Represents unlocked unlimited AI scan access. Keep this separate from `User` so multiple campaigns, expiry windows, and audit history remain queryable.
+
+```typescript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  campaignId: ObjectId,
+  redeemCodeId: ObjectId,
+  type: 'unlimited_ai_scans',
+  startsAt: Date,
+  expiresAt: Date,
+  source: 'redeem_code',
+  createdAt: Date
+}
+```
+
+Indexes:
+
+```typescript
+{ userId: 1, type: 1, expiresAt: -1 }
+{ redeemCodeId: 1 } unique
+```
+
+Behavior:
+
+- If a user redeems overlapping codes, create separate entitlement records and use the latest active `expiresAt`.
+- Do not mutate the old entitlement in place; immutable entitlement records make campaign analytics and support easier.
+- A code should be redeemable only once globally unless product explicitly changes that rule.
+
+### NutMilkPreference
+
+Use a dedicated model if product wants recommendation history and analytics. Use `User.profile.nutMilkPreference` only if the app only needs the current selected flavor. Recommended: dedicated model, plus denormalized current preference on `User.profile` for profile reads.
+
+```typescript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  recommendedFlavorId: string,
+  selectedFlavorId: string,
+  bmiRecordId?: ObjectId,
+  bmi?: number,
+  signals: {
+    stressOrSleep?: boolean,
+    skippingBreakfast?: boolean
   },
   createdAt: Date,
   updatedAt: Date
 }
 ```
 
-### FoodLogs Collection
+Flavor IDs should be stable ASCII identifiers:
 
-```javascript
+| Flavor ID | Display Name | Rule |
+|---|---|---|
+| `rau_ma_sua_dua` | Rau má sữa dừa | BMI > 23 |
+| `rau_ma_hat_sen` | Rau má - Hạt sen | Any BMI, especially stress/sleep |
+| `gao_lut_me_den_hat_sen` | Gạo lứt - Mè đen - Hạt sen | BMI 18.5-22.9 |
+| `gao_lut_oc_cho_hanh_nhan` | Gạo lứt - Óc chó - Hạnh nhân | BMI < 18.5 |
+| `hat_sen_oc_cho` | Hạt sen - Óc chó | Any BMI, especially skipping breakfast/quick energy |
+
+### AppRating
+
+Capture in-app feedback separately from store reviews. This supports admin review and avoids coupling prompts to app-store APIs.
+
+```typescript
 {
   _id: ObjectId,
-  userId: ObjectId (ref: Users, indexed),
-  date: Date (indexed, YYYY-MM-DD normalized to UTC midnight),
-  mealType: String,            // 'breakfast' | 'lunch' | 'dinner' | 'snack'
-  imageUrl: String,            // Cloudinary URL
-  aiProvider: String,          // 'openai' | 'logmeal' — for debugging
-  foods: [{
-    name: String,              // Vietnamese name if detected
-    weightG: Number,
-    calories: Number,
-    protein: Number,
-    carbs: Number,
-    fat: Number,
-    fiber: Number,
-    sugar: Number
-  }],
-  totals: {                    // Denormalized for query speed
-    calories: Number,
-    protein: Number,
-    carbs: Number,
-    fat: Number
-  },
-  createdAt: Date
-}
-// Compound index: { userId: 1, date: 1 }
-```
-
-### Exercises Collection (Admin-managed content)
-
-```javascript
-{
-  _id: ObjectId,
-  name: String,                // Vietnamese name
-  nameEn: String,              // English (for search)
-  category: String,            // 'yoga' | 'cardio' | 'weights' | 'stretching'
-  difficulty: String,          // 'easy' | 'medium' | 'hard'
-  durationMinutes: Number,
-  caloriesBurned: Number,
-  imageUrl: String,
-  description: String,
-  steps: [{
-    order: Number,
-    instruction: String,
-    durationSeconds: Number
-  }],
-  isActive: Boolean,
+  userId: ObjectId,
+  stars: 1 | 2 | 3 | 4 | 5,
+  comment?: string,
+  trigger: 'food_scan' | 'bmi' | 'workout' | 'habit' | 'profile',
+  appVersion?: string,
+  platform?: 'ios' | 'android',
+  deviceInfo?: string,
   createdAt: Date
 }
 ```
 
-### WorkoutLogs Collection
+Indexes:
 
-```javascript
-{
-  _id: ObjectId,
-  userId: ObjectId (ref: Users, indexed),
-  exerciseId: ObjectId (ref: Exercises),
-  exerciseName: String,        // Denormalized (exercise may change)
-  date: Date (indexed),
-  durationMinutes: Number,
-  caloriesBurned: Number,
-  completedAt: Date
-}
-// Compound index: { userId: 1, date: 1 }
+```typescript
+{ userId: 1, createdAt: -1 }
+{ stars: 1, createdAt: -1 }
 ```
 
-### HabitLogs Collection
+Prompt throttling can start client-side with MMKV, but backend should expose rating history/status so a reinstall does not create repeated prompts.
 
-```javascript
+### MediaAsset
+
+First-class asset catalog for exercise images.
+
+```typescript
 {
   _id: ObjectId,
-  userId: ObjectId (ref: Users, indexed),
-  habitId: String,             // 'water' | 'vegetables' | 'exercise' | 'sleep' | 'reading' | 'nut-milk'
-  date: Date (UTC midnight, indexed),
-  checkedAt: Date
-}
-// Compound index: { userId: 1, date: 1, habitId: 1 } — unique
-// Streak computed in service layer by querying consecutive dates
-```
-
-### BMIHistory Collection
-
-```javascript
-{
-  _id: ObjectId,
-  userId: ObjectId (ref: Users, indexed),
-  heightCm: Number,
-  weightKg: Number,
-  bmi: Number,                 // Computed: weight / (height/100)^2
-  category: String,            // 'underweight' | 'normal' | 'overweight' | 'obese'
-  recordedAt: Date (indexed)
-}
-// Index: { userId: 1, recordedAt: -1 }
-```
-
-### DeviceTokens Collection
-
-```javascript
-{
-  _id: ObjectId,
-  userId: ObjectId (ref: Users, indexed),
-  token: String (unique),      // FCM token
-  platform: String,            // 'ios' | 'android'
+  type: 'exercise_image' | 'food_image' | 'campaign_qr',
+  url: string,
+  publicId: string,
+  folder: string,
+  filename?: string,
+  width?: number,
+  height?: number,
+  bytes?: number,
+  tags: string[],
+  altText?: string,
+  usageCount: number,
+  uploadedBy: ObjectId,
+  createdAt: Date,
   updatedAt: Date
 }
 ```
 
----
+Indexes:
 
-## Build Order Implications
-
-Dependencies flow in this order — each layer must exist before the next:
-
-```
-LAYER 0 — Infrastructure (Day 1, no code dependencies)
-  MongoDB Atlas cluster setup
-  Cloudinary account + upload preset
-  Firebase project + FCM config
-  Expo project init (npx create-expo-app)
-
-LAYER 1 — Auth (blocks everything)
-  Backend: User model + auth routes + JWT middleware
-  Mobile: AuthProvider + login/register screens
-  Must complete before any protected route or user-linked data
-
-LAYER 2 — Static Content (no AI dependency, unblocks workout/habit tabs)
-  Backend: Exercise CRUD + seed data
-  Backend: Habit defaults seeded
-  Mobile: Exercise List + Detail screens (read-only content)
-  Mobile: Habit Tracking screen
-  Note: WorkoutLogs and HabitLogs require Auth (Layer 1)
-
-LAYER 3 — AI Food Scan (depends on: Auth + Cloudinary + AI API key)
-  Backend: Multer → Cloudinary upload → AI API call → response normalize
-  Mobile: Camera screen + result display + confirm & save
-  This is the highest-risk layer — AI latency and accuracy unpredictable
-
-LAYER 4 — Tracking & History (depends on: Auth + Layer 2 + Layer 3)
-  Backend: FoodLog save + daily summary endpoint
-  Backend: WorkoutLog save + weekly stats
-  Backend: HabitLog check + streak calculation
-  Backend: BMI save + history
-  Mobile: Home Dashboard (reads from all logs)
-  Mobile: Profile + BMI screens
-
-LAYER 5 — Push Notifications (depends on: Auth + DeviceTokens)
-  Backend: FCM token registration + send logic
-  Backend: Scheduled job (node-cron) for daily reminders
-  Mobile: Request notification permission + register token
-
-LAYER 6 — Admin Dashboard (depends on: Auth with admin role + Exercise CRUD)
-  Admin web app: React + Vite, separate deploy
-  Auth: reuses same backend /api/auth + admin middleware
-  CRUD for exercises, food items, habit templates, users
+```typescript
+{ type: 1, createdAt: -1 }
+{ tags: 1 }
+{ publicId: 1 } unique
 ```
 
-**Critical path:** Auth → Food Scan → Home Dashboard (these three define the core loop)
+## Modified Models
 
----
+### FoodScanAttempt
 
-## Offline Considerations
+Keep the model, but add metadata so future analytics can distinguish limited scans from campaign-unlocked scans.
 
-The Ủ app is **connectivity-dependent** for its primary feature (AI food scan). Offline-first adds significant complexity; the recommended approach is **cache-first with graceful degradation**.
-
-### What Works Offline
-
-| Feature | Offline Behavior | Storage |
-|---------|-----------------|---------|
-| Browse exercise list | Show cached exercises | TanStack Query cache (persisted) |
-| View exercise detail | Show cached detail | TanStack Query cache |
-| Read habit list | Show today's cached habits | TanStack Query cache |
-| BMI calculator | Works fully (local math only) | No storage needed |
-| View food log history | Show cached logs | TanStack Query cache |
-| View Home Dashboard | Show last-known stats | TanStack Query cache |
-| Onboarding screens | Works fully | No storage needed |
-
-### What Requires Connectivity
-
-| Feature | Why | User Experience |
-|---------|-----|----------------|
-| Food scan (AI) | Image upload + AI API are remote | Show "No internet" toast, disable scan button |
-| Mark habit complete | Writes to server; streak is server-authoritative | Queue mutation, sync on reconnect |
-| Log workout complete | Writes to server | Queue mutation, sync on reconnect |
-| Auth (login/register) | JWT issued by server | Show offline message |
-| Push notifications | FCM is remote | Handled silently by OS |
-
-### Implementation Pattern
-
-Use TanStack Query with AsyncStorage persister for cache-first reads:
-
-```
-TanStack Query config:
-  staleTime: 5 minutes (re-fetch only after 5 min in background)
-  gcTime: 24 hours (keep cache across app restarts)
-  persister: AsyncStoragePersister (persist cache to disk)
-
-For write operations (habit check, workout log):
-  Use optimistic updates → update local cache immediately
-  If offline: mutation is queued by TanStack Query
-  On reconnect: resumePausedMutations() auto-triggers
-  On failure: rollback cache, show toast
-
-Network detection:
-  @react-native-community/netinfo
-  Set online/offline state via TanStack Query's onlineManager
+```typescript
+{
+  userId: ObjectId,
+  entitlementId?: ObjectId,
+  source: 'daily_quota' | 'redeem_entitlement',
+  createdAt: Date
+}
 ```
 
-### What NOT to Build (v1)
+Keep the existing TTL index because the current purpose is recent quota counting. If product wants long-term campaign analytics, store those on entitlement/campaign aggregates rather than extending attempt retention indefinitely.
 
-Full offline workout timer logging with local SQLite is over-engineered for v1. The workout timer is local (no network needed during countdown) — only the final POST to save requires connectivity. Queue that one call; it will succeed within seconds of reconnection.
+### FoodItem
 
----
+Add barcode fields for packaged foods and bottled milk.
 
-## Admin Dashboard Architecture
-
-**Decision: Separate React web app, shared backend.**
-
-```
-admin/
-├── package.json
-└── src/
-    ├── main.tsx
-    ├── App.tsx              # React Router setup
-    ├── pages/
-    │   ├── Login.tsx
-    │   ├── Dashboard.tsx    # Stats overview
-    │   ├── Exercises.tsx    # Exercise CRUD table
-    │   ├── FoodItems.tsx    # Food database management
-    │   ├── Habits.tsx       # Habit template management
-    │   └── Users.tsx        # User list + role management
-    ├── components/
-    │   └── ...              # Table, Form, Modal reusables
-    └── lib/
-        ├── api.ts           # Axios client → same backend /api/admin/*
-        └── auth.ts          # Admin JWT storage
+```typescript
+{
+  barcodes: string[],
+  brand?: string,
+  servingSizeG?: number,
+  packageSize?: string,
+  source: 'openfoods' | 'manual' | 'barcode_import'
+}
 ```
 
-**Why separate app, not integrated:**
-- Separate deploy → admin URL can be restricted by IP or basic auth at CDN level
-- No code shipping admin routes to mobile bundle
-- Different tech stack acceptable (can use React Query + antd/shadcn for rapid admin UI)
-- Small team: one dev can own admin, one owns mobile — no conflicts
+Indexes:
 
-**Hosting recommendation:** Vercel (admin) + Railway/Render (backend) + Expo (mobile). Free tiers sufficient for development and early beta.
+```typescript
+{ barcodes: 1 } sparse
+{ name: 'text', nameEn: 'text', brand: 'text' }
+```
 
----
+Use an array because products often have multiple package barcodes.
 
-## Sources
+### User
 
-- Expo Router authentication docs: https://docs.expo.dev/router/advanced/authentication/
-- Expo Router folder structure: https://dev.to/sachinrupani/designing-a-scalable-react-native-expo-router-folder-structure-3dnj
-- Bulletproof Node.js architecture: https://softwareontheroad.com/ideal-nodejs-project-structure
-- GPT-4 Vision food analysis: https://dev.to/albert_nahas_cdc8469a6ae8/using-gpt-4-vision-for-real-time-food-analysis-3cb1
-- Offline-first with React Query: https://www.whitespectre.com/ideas/how-to-build-offline-first-react-native-apps-with-react-query-and-typescript/
-- MongoDB fitness schema: https://www.geeksforgeeks.org/dbms/how-to-design-a-database-for-health-and-fitness-tracking-applications/
-- Expo push notifications vs FCM: https://pushbase.dev/blog/expo-notifications-vs-react-native-firebase-cloud-messaging
-- Cloudinary vs S3 for React Native: https://cloudinary.com/documentation/react_native_image_and_video_upload
+Add only small denormalized fields:
+
+```typescript
+profile: {
+  ...
+  selectedNutMilkFlavorId?: string,
+  selectedNutMilkFlavorAt?: Date
+}
+```
+
+Do not add campaign entitlements as an embedded array. It will grow over time and makes expiry/index queries worse.
+
+### Exercise
+
+Add asset reference while keeping current `imageUrl` for backwards compatibility.
+
+```typescript
+{
+  imageAssetId?: ObjectId,
+  imageUrl: string | null
+}
+```
+
+Migration path:
+
+1. Create `MediaAsset` rows for existing distinct `Exercise.imageUrl` values where possible.
+2. Backfill `Exercise.imageAssetId`.
+3. Continue returning `imageUrl` to mobile so no mobile screen breaks.
+4. Admin writes both `imageAssetId` and denormalized `imageUrl`.
+
+## New and Modified Endpoints
+
+### User Campaign Endpoints
+
+```http
+POST /api/campaigns/redeem
+Authorization: Bearer <jwt>
+Body: { "code": "U2-ABC-..." }
+Response: {
+  "entitlement": {
+    "type": "unlimited_ai_scans",
+    "startsAt": "...",
+    "expiresAt": "..."
+  }
+}
+```
+
+```http
+GET /api/campaigns/me/entitlements
+Authorization: Bearer <jwt>
+Response: {
+  "activeAiScanEntitlement": {
+    "expiresAt": "...",
+    "campaignName": "..."
+  } | null
+}
+```
+
+Implementation notes:
+
+- Normalize input by trimming, uppercasing, and removing spaces/hyphen variants before hashing.
+- Redemption must be atomic: find unused code, set `redeemedBy/redeemedAt/status`, create entitlement.
+- Prefer MongoDB transaction; if deployment lacks replica set transactions, use `findOneAndUpdate` with `status: 'unused'` as the atomic guard, then compensate on entitlement creation failure.
+
+### Admin Campaign Endpoints
+
+```http
+GET /api/admin/campaigns?page=&limit=&search=
+POST /api/admin/campaigns
+GET /api/admin/campaigns/:id
+PATCH /api/admin/campaigns/:id
+POST /api/admin/campaigns/:id/codes/generate
+GET /api/admin/campaigns/:id/codes
+GET /api/admin/campaigns/:id/codes/export.csv
+POST /api/admin/campaigns/:id/codes/:codeId/void
+```
+
+`POST /codes/generate` body:
+
+```json
+{
+  "count": 1000,
+  "expiresAt": "2026-08-31T16:59:59.999Z",
+  "qrPayloadBaseUrl": "uapp://redeem"
+}
+```
+
+QR payload recommendation:
+
+```text
+uapp://redeem?code=<CODE>
+```
+
+The QR should encode a deep link, not a raw database ID. Mobile parses the code and posts it to `/api/campaigns/redeem`.
+
+### Modified Food Scan Endpoints
+
+Keep:
+
+```http
+POST /api/food/scan
+```
+
+Change response to include quota state:
+
+```json
+{
+  "foods": [],
+  "totals": {},
+  "aiProvider": "gemini",
+  "imageUrl": null,
+  "quota": {
+    "mode": "daily_limit",
+    "usedToday": 4,
+    "limit": 20,
+    "retryAfterSeconds": 12345
+  }
+}
+```
+
+or:
+
+```json
+{
+  "quota": {
+    "mode": "unlimited",
+    "entitlementExpiresAt": "2026-08-31T16:59:59.999Z"
+  }
+}
+```
+
+Recommended internal service API:
+
+```typescript
+async function resolveScanAccess(userId: string): Promise<
+  | { allowed: true; source: 'redeem_entitlement'; entitlementId: string; expiresAt: Date }
+  | { allowed: true; source: 'daily_quota'; usedToday: number; limit: number }
+  | { allowed: false; source: 'daily_quota'; usedToday: number; limit: number; retryAfterSeconds: number }
+>
+```
+
+### Barcode Food Endpoints
+
+```http
+GET /api/food/items/barcode/:barcode
+Authorization: Bearer <jwt>
+Response: { "item": FoodItem | null }
+```
+
+Optional admin import later:
+
+```http
+PATCH /api/admin/food-items/:id/barcodes
+POST /api/admin/food-items/import-barcodes
+```
+
+Do not call AI from barcode lookup. Barcode is deterministic lookup; AI image scan remains the fallback path.
+
+### BMI Nut Milk Recommendation Endpoints
+
+```http
+GET /api/recommendations/nut-milk
+Authorization: Bearer <jwt>
+Query: ?stressOrSleep=true&skippingBreakfast=false
+Response: {
+  "latestBmi": { "value": 21.4, "category": "normal", "recordedAt": "..." },
+  "recommended": { "flavorId": "gao_lut_me_den_hat_sen", "displayName": "..." },
+  "alternatives": [...]
+}
+```
+
+```http
+POST /api/recommendations/nut-milk/selection
+Authorization: Bearer <jwt>
+Body: {
+  "selectedFlavorId": "hat_sen_oc_cho",
+  "signals": { "skippingBreakfast": true }
+}
+```
+
+Rule precedence:
+
+1. BMI > 23 -> `rau_ma_sua_dua`
+2. BMI < 18.5 -> `gao_lut_oc_cho_hanh_nhan`
+3. BMI 18.5-22.9 -> `gao_lut_me_den_hat_sen`
+4. If no BMI exists, default recommendation should be `rau_ma_hat_sen` with copy asking user to record BMI.
+5. `stressOrSleep` and `skippingBreakfast` should appear as alternatives or user-selected overrides, not silently override BMI unless product explicitly wants lifestyle signals to outrank BMI.
+
+### Rating Endpoints
+
+```http
+GET /api/ratings/status
+Authorization: Bearer <jwt>
+Response: {
+  "hasRated": false,
+  "lastPromptedAt": "...",
+  "eligibleTriggers": ["food_scan", "bmi"]
+}
+```
+
+```http
+POST /api/ratings
+Authorization: Bearer <jwt>
+Body: {
+  "stars": 5,
+  "comment": "Ứng dụng dễ dùng",
+  "trigger": "food_scan",
+  "appVersion": "2.0.0",
+  "platform": "android"
+}
+```
+
+Admin:
+
+```http
+GET /api/admin/ratings?stars=&page=&limit=
+```
+
+### Admin Media Endpoints
+
+```http
+GET /api/admin/media-assets?type=exercise_image&search=&page=&limit=&tag=
+POST /api/admin/media-assets/upload
+PATCH /api/admin/media-assets/:id
+DELETE /api/admin/media-assets/:id
+POST /api/admin/exercises/bulk-image
+```
+
+`POST /api/admin/media-assets/upload` should accept multiple images with a higher but explicit limit, for example 20 files per request and 5 MB per file. Add a new multer middleware such as `uploadMany = upload.array('images', 20)` instead of changing the current `uploadSingle` behavior.
+
+`POST /api/admin/exercises/bulk-image` body:
+
+```json
+{
+  "exerciseIds": ["..."],
+  "imageAssetId": "..."
+}
+```
+
+Deletion rule:
+
+- If `usageCount > 0`, block delete by default.
+- Offer "detach from exercises" as a separate explicit admin action.
+
+## Data Flows
+
+### 1. Campaign Code Generation and Redemption
+
+```
+Admin creates campaign
+  -> backend creates Campaign
+  -> admin requests N codes
+  -> backend generates random plaintext codes
+  -> backend stores codeHash + masked prefix
+  -> backend returns CSV/QR export immediately
+  -> admin prints QR on bottled milk campaign
+
+User scans QR or enters code
+  -> mobile parses deep link or text input
+  -> POST /api/campaigns/redeem
+  -> backend atomically marks RedeemCode redeemed
+  -> backend creates UserScanEntitlement
+  -> mobile invalidates entitlement/quota queries
+  -> subsequent /api/food/scan is unlimited until expiresAt
+```
+
+Key implementation point: do not let mobile decide unlimited scan access. Mobile only displays the entitlement returned by the backend.
+
+### 2. Entitlement-Aware AI Food Scan
+
+```
+Mobile captures/compresses image
+  -> POST /api/food/scan multipart
+  -> backend resolveScanAccess(userId)
+     -> active UserScanEntitlement exists and not expired?
+        yes: allow unlimited, source=redeem_entitlement
+        no: count FoodScanAttempt for Vietnam-local day
+  -> Gemini/OpenAI proxy analyzes image
+  -> backend records FoodScanAttempt with source + entitlementId when present
+  -> response includes result + quota metadata
+```
+
+Record attempts after successful analysis as the current code does. Failed AI/provider requests should not consume daily quota or campaign benefit.
+
+### 3. Barcode Supplement Flow
+
+```
+Mobile opens food scan mode selector
+  -> user selects Barcode
+  -> CameraView scans EAN/UPC/QR payload
+  -> mobile sends barcode to GET /api/food/items/barcode/:barcode
+  -> backend finds FoodItem by barcodes
+  -> if found: mobile opens serving-size/log confirmation
+  -> if not found: mobile offers manual search or AI image scan
+```
+
+QR campaign codes and food barcodes should share camera infrastructure but not backend endpoints. Route by payload shape:
+
+- `uapp://redeem?code=` or `U2-...` -> campaign redemption
+- numeric EAN/UPC -> food barcode lookup
+
+### 4. BMI Recommendation and Flavor Selection
+
+```
+User saves BMI
+  -> existing PATCH /api/bmi creates BMIRecord and updates User.profile
+  -> mobile invalidates recommendation query
+  -> GET /api/recommendations/nut-milk
+  -> backend fetches latest BMIRecord
+  -> backend applies product rules
+  -> mobile shows recommended flavor and alternatives
+  -> user selects flavor
+  -> POST /api/recommendations/nut-milk/selection
+  -> backend writes NutMilkPreference and denormalized User.profile fields
+```
+
+Keep nutrition/medical claims conservative in copy. The architecture should store rules and selections, not infer health treatment claims.
+
+### 5. Rating Prompt Flow
+
+```
+Mobile observes feature usage counters locally
+  -> after threshold, GET /api/ratings/status
+  -> if eligible, show modal with stars + optional comment
+  -> POST /api/ratings
+  -> backend stores AppRating
+  -> mobile records lastPromptedAt locally to avoid immediate repeat
+```
+
+Trigger recommendation:
+
+- Prompt after 2-3 meaningful successes, for example successful AI scan save, BMI recommendation selection, or completed workout.
+- Do not prompt immediately after registration or failed scans.
+- Low ratings should stay in-app with comment capture; high ratings can optionally deep-link to store review in a later phase.
+
+### 6. Exercise Image Management Flow
+
+```
+Admin uploads many exercise images
+  -> POST /api/admin/media-assets/upload
+  -> backend uploads each to Cloudinary under u-app/exercises
+  -> backend stores MediaAsset rows
+  -> admin filters/searches media library
+  -> admin selects exercises and assigns image asset
+  -> backend updates Exercise.imageAssetId and imageUrl
+  -> mobile exercise list continues reading imageUrl
+```
+
+This avoids large form churn in `ExercisesPage` and makes replacing images a bulk content operation instead of hundreds of row edits.
+
+## Component Boundaries
+
+| Component | Responsibility | Communicates With |
+|---|---|---|
+| `campaigns` API module | User redemption and entitlement reads | `RedeemCode`, `Campaign`, `UserScanEntitlement` |
+| `admin/campaigns` routes | Campaign CRUD, code generation, export, voiding | Admin dashboard, `Campaign`, `RedeemCode` |
+| `food.service` quota resolver | Decide whether `/api/food/scan` is allowed | `FoodScanAttempt`, `UserScanEntitlement` |
+| `food` barcode lookup | Deterministic lookup by EAN/UPC | `FoodItem` |
+| `recommendations` module | Server-owned nut milk rules and selection persistence | `BMIRecord`, `NutMilkPreference`, `User` |
+| `ratings` module | Prompt status and rating submission | `AppRating`, admin reports |
+| `media-assets` admin module | Bulk upload, asset catalog, usage tracking | Cloudinary, `MediaAsset`, `Exercise` |
+| Mobile scan screen | Capture image/barcode/QR and route payloads | `/api/food/*`, `/api/campaigns/redeem` |
+| Admin dashboard pages | Operator workflows only | `/api/admin/*` |
+
+## Validation and Security Requirements
+
+### Campaign Codes
+
+- Hash redeem codes at rest with SHA-256 plus server-side pepper from env.
+- Validate code format before database lookup.
+- Use atomic redemption to prevent two users claiming one code.
+- Rate-limit redemption attempts per user/IP to reduce brute force.
+- Return generic invalid/expired/redeemed messages where possible; avoid leaking which codes exist.
+- Export plaintext codes only during generation or store encrypted-at-rest export files with short retention if business requires re-download.
+
+### QR Codes
+
+- QR payload must contain only a redeem code/deep link, never admin credentials or user identifiers.
+- QR generation can be done server-side using a Node QR package or client-side in admin for preview, but the backend remains authoritative for code creation.
+- Store QR images in Cloudinary only if print/export workflows need persistent image files. Otherwise generate QR in CSV/PDF export on demand.
+
+### Barcode
+
+- Normalize barcodes as strings, not numbers, to preserve leading zeros.
+- Restrict accepted types in mobile camera settings to `ean13`, `ean8`, `upc_a`, `upc_e`, and optionally `qr`.
+- Unknown barcode submissions should be logged only if privacy-safe; do not store camera frames.
+
+### Media Assets
+
+- Validate MIME type and file size.
+- Keep existing 5 MB single-file limit for normal uploads; add a separate multi-upload limit for admin media.
+- Store Cloudinary `publicId` so assets can be deleted or replaced correctly.
+- Track usage before delete to avoid broken exercise images.
+
+## Suggested Build Order
+
+1. **Data Model and Backend Foundation**
+   - Add `Campaign`, `RedeemCode`, `UserScanEntitlement`, `AppRating`, `MediaAsset`, and optional `NutMilkPreference`.
+   - Extend `FoodItem`, `Exercise`, `FoodScanAttempt`, and `User.profile`.
+   - Rationale: models and indexes unblock all API and admin work.
+
+2. **Entitlement-Aware Food Scan**
+   - Add campaign redemption API.
+   - Add `resolveScanAccess` and modify `/api/food/scan` response quota metadata.
+   - Add integration tests for daily limit, active entitlement, expired entitlement, and duplicate redemption.
+   - Rationale: campaign unlock is the riskiest business rule and touches AI cost control.
+
+3. **Admin Campaign Management**
+   - Build campaign CRUD, code batch generation, CSV export, and basic QR export.
+   - Add admin page and React Query hooks.
+   - Rationale: campaign creation must exist before bottled campaign QA.
+
+4. **Barcode Food Lookup**
+   - Extend `FoodItem` validation/admin form for barcodes.
+   - Add `/api/food/items/barcode/:barcode`.
+   - Add mobile barcode mode using existing `expo-camera`.
+   - Rationale: deterministic supplement to food scan; minimal dependency on campaign work except scanner UI routing.
+
+5. **BMI Nut Milk Recommendation**
+   - Add recommendation service and endpoints.
+   - Add mobile recommendation UI after BMI save and in BMI tab.
+   - Persist selected flavor.
+   - Rationale: self-contained feature with low technical risk once product copy is final.
+
+6. **App Rating Prompt**
+   - Add rating model/endpoints/admin list.
+   - Add mobile prompt coordinator with local throttling plus backend status.
+   - Rationale: low coupling, should not block revenue/campaign features.
+
+7. **Exercise Media Library**
+   - Add multi-upload, asset catalog, assignment flow, and backfill script for existing image URLs.
+   - Update admin exercise UI to choose from media library.
+   - Rationale: operational improvement; can ship after user-facing v2 features unless admin data entry is blocking content rollout.
+
+## Testing Priorities
+
+| Area | Required Tests |
+|---|---|
+| Redeem code generation | uniqueness, hash lookup, count creation, expiry |
+| Redemption | invalid code, expired code, already redeemed, concurrent redemption, successful entitlement |
+| Food scan quota | daily limited user, active unlimited user, expired entitlement fallback, attempt metadata |
+| Barcode lookup | leading zeros, unknown barcode, multi-barcode product |
+| Recommendation | each BMI bracket, no BMI fallback, selected flavor persistence |
+| Rating | validation, duplicate prompt status, admin listing |
+| Media assets | upload validation, bulk assignment, delete blocked while used |
+
+## Pitfalls to Avoid
+
+1. **Putting entitlement state only on mobile.** Users can reinstall or tamper with local state. Backend must decide scan access on every scan.
+2. **Storing redeem codes as plaintext.** Campaign codes unlock paid AI usage. Hash at rest and design exports intentionally.
+3. **Replacing the scan endpoint.** Add entitlement logic inside the existing scan flow so rate limits, AI proxy behavior, and error handling stay centralized.
+4. **Making BMI recommendations client-only.** Product rules will change; server-owned rules prevent app-version drift.
+5. **Treating barcodes as numbers.** Leading zeros are valid and must survive validation and indexing.
+6. **Bulk media through the existing single upload endpoint.** Add a separate multi-upload path to avoid breaking current food/exercise upload behavior.
+7. **Deleting Cloudinary images without usage checks.** Exercise records can silently break if `publicId` deletion is not tied to `MediaAsset.usageCount`.
+8. **Prompting for ratings too early.** Ratings should follow successful value moments, not onboarding or failed AI scans.
+
+## Sources and Verification
+
+- Repo inspection: `backend/src/api/food/*`, `backend/src/models/FoodScanAttempt.ts`, `backend/src/models/FoodItem.ts`, `backend/src/api/bmi/*`, `backend/src/models/BMIRecord.ts`, `backend/src/models/User.ts`, `backend/src/api/admin/*`, `backend/src/models/Exercise.ts`, `mobile/src/lib/api/*`, `mobile/src/app/(food)/scan.tsx`.
+- Expo Camera official docs: `CameraView` supports `barcodeScannerSettings`, `onBarcodeScanned`, and barcode types including QR, EAN, UPC, Code128, and others. Confidence HIGH. https://docs.expo.dev/versions/latest/sdk/camera/
+- Cloudinary official docs: Node SDK supports stream uploads and upload parameters; current backend already uses `upload_stream`. Confidence HIGH. https://cloudinary.com/documentation/node_image_and_video_upload
+- npm package discovery for QR generation: `qrcode` and related packages are available, but package choice should be locked during implementation after dependency review. Confidence MEDIUM. https://www.npmjs.com/package/qrcode

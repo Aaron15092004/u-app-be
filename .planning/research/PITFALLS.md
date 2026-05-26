@@ -1,489 +1,392 @@
-# Pitfalls Research — Ủ App
+# Domain Pitfalls: U App v2.0 Feature Release
 
-**Domain:** React Native + Node.js health/habit mobile app
-**Researched:** 2026-05-17
-**Overall confidence:** HIGH (multiple sources corroborated; official docs verified)
+**Domain:** Expo React Native health app + Express/Node API + MongoDB + React admin dashboard  
+**Scope:** v2.0 new features only: redeem codes/QR unlocks, BMI milk recommendation, barcode scan, app rating, bulk exercise images  
+**Researched:** 2026-05-26  
+**Overall confidence:** HIGH for API abuse/cost/rating/media guidance; MEDIUM for Vietnam-specific food-claim interpretation because implementation should still be reviewed by product/legal.
 
----
+## Recommended v2.0 Phase Ownership
 
-## React Native / Expo Pitfalls
+| Roadmap Phase | Pitfalls It Must Own |
+|---------------|----------------------|
+| **Phase 1: Commercial Redeem Codes & Scan Entitlements** | Code generation, QR leakage, redemption abuse, unlimited scan cost controls, entitlement expiry, audit logs |
+| **Phase 2: Barcode Scan Supplement** | Scanner UX, barcode validation, food-data quality, fallback paths, vendor/API attribution and caching |
+| **Phase 3: BMI-Based Ủ Milk Recommendation** | Rule correctness, selected flavor persistence, health-claim wording, disclaimers, product/legal approval |
+| **Phase 4: App Rating & Feedback Prompt** | Prompt timing, platform policy compliance, anti-review-gating, internal feedback handling |
+| **Phase 5: Bulk Exercise Image Management** | Bulk upload workflow, Cloudinary folder/public_id strategy, dedupe, orphan cleanup, admin auditability |
 
-### CRITICAL — JS Thread Blocking on Health Data Calculations
+## Critical Pitfalls
 
-**What goes wrong:** Calorie totals, macro aggregations, streak calculations, and chart data preparation all run on the single JavaScript thread. If done inline during render, they freeze the UI — the user sees the app "stutter" while scrolling through food logs or loading the dashboard.
+### Pitfall 1: Treating Redeem Codes as Ordinary Coupon Strings
 
-**Why it happens:** React Native has one JS thread. Heavy synchronous computation (e.g., summing a month of meal entries, computing 7-day moving averages for weight) blocks all rendering and touch handling.
+**What goes wrong:** Codes are short, sequential, or derived from campaign names, making them guessable or enumerable. Attackers redeem codes without buying bottled milk, share them publicly, or brute-force the redemption endpoint.
 
-**Consequences:** Janky scroll, unresponsive buttons, user perception that the app is slow or broken.
+**Why it happens:** Admin bulk generation is often treated as a marketing workflow instead of an entitlement/security workflow.
 
-**Prevention:**
-- Move all aggregation to the backend and return pre-computed summaries.
-- For client-side computations, use `useMemo` and `useCallback` aggressively; never compute derived data during render.
-- For heavy tasks that must stay on device, consider `react-native-worklets-core` or `InteractionManager.runAfterInteractions`.
-
-**Detection:** Profile with Flipper's Performance Monitor. If JS thread usage spikes above 80% during scroll, you have blocking computation.
-
-**Confidence:** HIGH — React Native official docs, multiple performance guides confirm this pattern.
-
----
-
-### CRITICAL — FlatList Re-render Avalanche in Food Logs and History
-
-**What goes wrong:** The daily food log and workout history screens use large lists. Without proper memoization, every state update (e.g., toggling a habit checkbox) re-renders every list item.
-
-**Why it happens:** Inline `renderItem` arrow functions recreate on every render. List items that receive object props fail shallow equality checks even when data is identical.
-
-**Consequences:** On a $150 Android device (the Vietnamese mass-market phone), this causes 500ms+ UI freezes.
+**Consequences:** Revenue leakage, user support disputes, uncontrolled AI scan spend, and inability to prove which campaign batch leaked.
 
 **Prevention:**
-- Extract list item components, wrap with `React.memo`.
-- Wrap `renderItem` in `useCallback`.
-- Provide `getItemLayout` for fixed-height lists (meal cards, habit items) — this is the single highest-impact FlatList optimization.
-- Set `maxToRenderPerBatch={5}` and `windowSize={5}` for long food history lists.
-- Never use `ScrollView` for lists longer than ~20 items.
+- Generate codes from cryptographically random entropy; do not use sequential IDs, phone-number-like strings, SKU-derived strings, or campaign prefixes that reduce entropy.
+- Store only a server-side hash of the code, not the raw code. Show/export raw codes only once at generation time.
+- Use a fixed normalized format: uppercase, no ambiguous characters, explicit length, checksum or grouped display for manual entry.
+- Make redemption atomic in MongoDB: one request should either consume or bind the code exactly once, with a unique index on normalized code hash and redemption state.
+- Add per-user, per-device, per-IP, and per-code-attempt rate limits to redemption endpoints.
+- Add an immutable audit log: generatedBy admin, campaignId, batchId, createdAt, expiresAt, redeemedBy, redeemedAt, source (`manual`/`qr`), and failed attempts.
 
-**Detection:** Enable the React Native performance monitor. Any list scroll that shows dropped frames is a symptom.
+**Detection:**
+- Spike in invalid redemption attempts.
+- Many attempts from one IP/device across different codes.
+- Same campaign batch redeemed much faster than expected bottle distribution.
+- Codes appearing in logs, analytics, screenshots, customer support exports, or admin URLs.
 
-**Confidence:** HIGH — React Native official docs, multiple community guides.
+**Phase:** Phase 1: Commercial Redeem Codes & Scan Entitlements.
 
----
+**Confidence:** HIGH. OWASP API guidance treats unrestricted resource consumption and unbounded operations as a top API risk; redeem codes also require standard single-use token controls.
 
-### MODERATE — AsyncStorage Is Not Secure and Has Size Limits
+### Pitfall 2: QR Codes Leak the Entitlement Instead of a Redeem Intent
 
-**What goes wrong:** Developers store JWT tokens or refresh tokens in `AsyncStorage` because it is the obvious default. On Android, AsyncStorage data is stored in plain text and accessible to anyone with device access or ADB.
+**What goes wrong:** The QR encodes the raw unlock code directly. Anyone who photographs the bottle, receives a forwarded image, scrapes a campaign PDF, or scans a printed code before purchase can redeem the entitlement.
 
-**Why it happens:** AsyncStorage is the documented go-to for persistence; the security caveat is easy to miss.
+**Why it happens:** QR generation is designed for convenience without modeling the physical supply chain: printing vendors, admin downloads, campaign previews, social sharing, store shelves, and returned bottles.
 
-**Consequences:** Token theft from compromised device; user account takeover.
-
-**Prevention:**
-- Store refresh tokens in `expo-secure-store` (wraps iOS Keychain and Android Keystore).
-- Keep access tokens in memory only (React state or Zustand store).
-- Implement Axios interceptor-based refresh token rotation so the access token lifecycle is fully automatic.
-
-**Additional size pitfall:** AsyncStorage has a ~6 MB limit on iOS. Persisting large health datasets (e.g., every food photo path, full workout history) will hit this and silently fail or corrupt data.
-
-**Confidence:** HIGH — React Native security docs, official Expo docs, multiple security guides.
-
----
-
-### MODERATE — Expo Managed Workflow Native Module Gap
-
-**What goes wrong:** The team starts in managed workflow, then discovers a required library (e.g., `react-native-vision-camera` for live food detection, or a specific health SDK) requires bare workflow native modifications.
-
-**Why it happens:** Managed workflow abstracts native code, but some packages require direct Xcode/Gradle changes that config plugins do not yet support.
-
-**Consequences:** Forced mid-project "eject" (prebuild), breaking CI pipelines, requiring native expertise the team may not have.
+**Consequences:** Campaign stock is consumed before real customers redeem it. Support cannot distinguish legitimate buyers from leaked-code users.
 
 **Prevention:**
-- Audit all planned libraries against Expo's compatibility list before the project starts.
-- For the Ủ app: `expo-camera`, `expo-image-picker`, `expo-notifications`, `expo-apple-authentication` are all fully managed-compatible.
-- If `react-native-vision-camera` (live camera overlay) is required later, plan for a development build via EAS from the start — do not rely on Expo Go for camera features beyond basic capture.
-- Prefer EAS development builds over Expo Go for any production feature involving camera or notifications.
+- Prefer QR content that opens an app deep link containing a nonce/redeem token, not a human-readable reusable code.
+- If raw codes must be printed, make them single-use and batch-traceable; assume every printed code can become public.
+- Separate campaign QR previews from production code exports. Watermark preview PDFs and block preview codes from redemption.
+- Add admin export permissions, export audit logs, and short-lived download URLs for QR ZIP/PDF files.
+- Track redemption channel and batch leak signals so a compromised batch can be disabled without disabling all campaigns.
+- Never put codes in URL paths, crash reports, analytics event names, push notification payloads, or frontend logs.
 
-**Confidence:** HIGH — Expo official docs, multiple migration reports.
+**Detection:**
+- Redemption before campaign launch date.
+- Redemption geography/device pattern inconsistent with campaign distribution.
+- Multiple failed scans from social platforms/referrer URLs.
+- High redemption count from one batch immediately after admin export.
 
----
+**Phase:** Phase 1: Commercial Redeem Codes & Scan Entitlements.
 
-### MODERATE — React Native New Architecture Library Incompatibility
+**Confidence:** HIGH. This is a direct consequence of bearer-token design: possession of the QR/code grants access unless the backend adds single-use binding and audit controls.
 
-**What goes wrong:** Expo SDK 52+ enables the New Architecture (Fabric + JSI) by default. Third-party libraries that have not been updated crash silently or behave incorrectly.
+### Pitfall 3: "Unlimited AI Scan" Removes the Existing Cost Brake
 
-**Why it happens:** Bridgeless mode eliminates the legacy bridge; libraries that relied on the old bridge fail without migration.
+**What goes wrong:** The current daily AI limit is bypassed completely for unlocked users, so a leaked or legitimately redeemed code can drive unbounded OpenAI/image-processing spend.
 
-**Prevention:**
-- Check every dependency against the New Architecture compatibility list at `reactwg/react-native-new-architecture`.
-- High-risk libraries for Ủ: any Bluetooth/HealthKit SDKs, older camera libraries, CodePush (deprecated — use EAS Update instead).
-- Lock to known-compatible library versions in `package.json`.
+**Why it happens:** Product language says "unlimited", but backend budgets still need hard technical ceilings. OWASP explicitly calls out APIs whose requests map to cloud/provider costs.
 
-**Confidence:** MEDIUM — community reports from 2024, Expo official migration guide.
-
----
-
-### MINOR — Timer Drift in Workout Timer
-
-**What goes wrong:** The workout timer uses `setInterval` with a counter increment. When the app is backgrounded or the device locks, the OS pauses the JS thread, causing the timer to run slower than real time. Reported cases: a 10-second interval stretching to 89 seconds on a locked device.
-
-**Why it happens:** The JS thread is not a real-time thread. The OS can throttle or suspend it.
+**Consequences:** Unexpected AI bill, degraded service for all users, emergency disablement of a commercial campaign, and loss of trust in paid/unlocked benefits.
 
 **Prevention:**
-- Never use counter increment with `setInterval`. Instead, record `startTime = Date.now()` when the timer begins, and compute `elapsed = Date.now() - startTime` on each tick.
-- For background continuity (rest timers that need to fire even when backgrounded), use `expo-task-manager` + `expo-background-fetch`.
-- Add an `AppState` listener: on `active`, recalculate elapsed time from stored start timestamp.
+- Implement "unlimited within fair-use guardrails", not literally unlimited provider calls.
+- Keep server-side cost controls even for unlocked users: per-minute throttles, daily high-water caps, max image size, max retries, timeout budgets, and duplicate-image detection.
+- Add campaign-level and global AI budget alarms. When a campaign exceeds expected usage, degrade gracefully to manual/barcode scan before failing hard.
+- Track scan source (`daily_free`, `redeem_unlocked`, `barcode`, `manual`) and provider cost per request.
+- Cache identical scan requests where feasible and prevent client retry loops from invoking repeated AI calls.
+- Ensure entitlement checks are done only on the backend. The mobile app may display status, but must not decide whether a user gets paid-tier scan access.
 
-**Confidence:** HIGH — multiple React Native timer issue threads, official React Native timer docs.
+**Detection:**
+- AI requests per redeemed code above expected human behavior.
+- High retry count after failed scans.
+- Same user/device sending many near-identical images.
+- Provider spend increasing faster than redemption count.
 
----
+**Phase:** Phase 1: Commercial Redeem Codes & Scan Entitlements, with Phase 2 using the same scan-source telemetry.
 
-## Camera & AI Food Analysis Pitfalls
+**Confidence:** HIGH. OWASP API4:2023 highlights unrestricted resource consumption, cost alerts, payload limits, and throttling as core API protections.
 
-### CRITICAL — Uncompressed Image Upload Causing Memory Crashes and API Cost Runaway
+### Pitfall 4: Incorrect Entitlement Expiry Semantics
 
-**What goes wrong:** Camera photos on modern phones are 3–8 MB JPEG files. Sending these raw to the AI food analysis API has two consequences: (1) the upload hangs or crashes on slow Vietnamese 4G connections, and (2) API cost is a function of image size for some providers, causing unpredictable billing.
+**What goes wrong:** Expiry is interpreted inconsistently: code expires from generation date, first redemption date, campaign end date, or local device time. Users see "unlimited" active in the app while the backend rejects scans, or the backend accepts scans after the intended window.
 
-**Why it happens:** `expo-image-picker` returns the full-resolution image URI. Developers often pass this directly to `fetch`/`axios` as a FormData blob.
+**Why it happens:** Campaigns mix business dates, local Vietnam time, UTC storage, and per-code activation windows.
 
-**Consequences:**
-- iOS memory crash (`EXC_RESOURCE`) when `expo-image-manipulator` processes very large images without intermediate downscaling first.
-- Android `OutOfMemoryError` on phones with 3–4 GB RAM (common mid-range devices in Vietnam).
-- API response times of 8–15 seconds for large images, pushing past the 2-second user abandonment threshold.
-
-**Prevention:**
-- Always compress before upload. Target pipeline: capture → resize to max 1024px width → compress to 0.7 quality → convert to WebP.
-- Use `expo-image-manipulator` with an iterative strategy: compress → check file size → re-compress if above target (e.g., 500 KB for food photos).
-- Never feed a raw camera URI directly to the AI API.
-- Adjust compression target based on connection type (`NetInfo`): 300 KB on cellular, 800 KB on WiFi.
-
-**Detection:** Log image file size before and after compression. Alert in development if pre-compression size exceeds 4 MB without compression step.
-
-**Confidence:** HIGH — multiple GitHub issues in `react-native-camera`, `expo-image-manipulator`, confirmed by official Expo issue tracker.
-
----
-
-### CRITICAL — AI API Latency Causing UI Deadlock
-
-**What goes wrong:** The app calls the food recognition API synchronously before letting the user do anything. If the API takes 5+ seconds (common on Vietnamese mobile networks), the entire food logging flow is blocked.
-
-**Why it happens:** Direct API integration without a loading state design pattern treats the AI response as a required gate.
-
-**Consequences:** User stares at spinner, becomes frustrated, abandons the food logging feature — the app's core value proposition fails.
+**Consequences:** User complaints, support overrides, incorrect campaign reporting, and exploitable clock manipulation if client time is trusted.
 
 **Prevention:**
-- Set a strict 10-second client-side timeout on the AI API call via Axios `timeout` config.
-- Design the UI as optimistic: show a "Analyzing..." state that does not block navigation. Let the user add manual corrections while AI processes.
-- Implement a fallback: if AI API times out, immediately drop into manual food search mode with a toast notification ("Analysis took too long — please enter manually").
-- On the Node.js backend, implement a proxy layer that queues AI requests, returns a job ID immediately, and the mobile app polls or receives a push notification when complete.
+- Define one rule before implementation: recommended default is `redeemedAt + entitlementDurationDays`, capped by optional `campaignEndsAt`.
+- Store all timestamps in UTC; render user-facing dates in Asia/Ho_Chi_Minh.
+- Compute active entitlement only on the backend and return an explicit `activeUntil` value to the app.
+- Support multiple redeemed codes by choosing a deterministic policy: extend the active window, stack separate windows, or reject overlapping redemption. Recommended: extend from `max(now, currentActiveUntil)` for simple user value and support.
+- Add tests around boundary times: midnight Vietnam time, expired campaign, code redeemed seconds before campaign end, multiple code redemption.
 
-**Confidence:** HIGH — industry standard UX pattern; specific to mobile AI integration per TokenMix API latency research.
+**Detection:**
+- Support tickets around "code expired early".
+- Mobile entitlement badge disagrees with scan endpoint response.
+- Multiple code redemptions produce overlapping or lost entitlement periods.
 
----
+**Phase:** Phase 1: Commercial Redeem Codes & Scan Entitlements.
 
-### CRITICAL — AI API Cost Runaway Without Server-Side Rate Limiting
+**Confidence:** HIGH. Time-window bugs are common in entitlement systems and should be contract-tested.
 
-**What goes wrong:** A single user discovers they can spam the food photo button. Each tap triggers a new API call to the AI provider. At $0.01–0.10 per image analysis call, a user who takes 50 photos in a session generates significant cost that destroys unit economics.
+### Pitfall 5: Making BMI Milk Guidance Sound Like Medical or Therapeutic Advice
 
-**Why it happens:** Mobile apps that call AI APIs directly (without a backend proxy) have no server-side throttle. Even with a backend proxy, if the proxy has no per-user rate limit, a bad actor can abuse the endpoint.
+**What goes wrong:** The recommendation copy implies the milk treats stress, sleep issues, underweight, overweight, fatigue, meal skipping, or other health conditions.
 
-**Consequences:** Monthly AI costs explode. At scale (10,000 users, 30 food logs/day average), this becomes $3,000–30,000/month uncontrolled.
+**Why it happens:** Product rules include BMI and lifestyle needs, so marketing language can drift from "suggested flavor" into health claims.
 
-**Prevention:**
-- Never call AI APIs directly from the mobile client. All AI calls must go through your Node.js proxy.
-- Implement per-user rate limiting on the backend: maximum 20 AI food analyses per user per day (configurable).
-- Use `express-rate-limit` with a per-user key (user ID from JWT, not IP address — IP-based limits collapse on carrier NAT which is common in Vietnam).
-- Cache identical image hashes: if the same food photo is submitted twice (user retry), return the cached result without a second API call.
-- Add cost monitoring alerting: if daily AI spend exceeds a threshold, trigger an alert before the bill arrives.
-
-**Confidence:** HIGH — Express rate limiting official docs, AI API cost control research.
-
----
-
-### MODERATE — AI Food Recognition Accuracy Expectations for Vietnamese Food
-
-**What goes wrong:** Western food recognition AI APIs (Clarifai, LogMeal, etc.) are trained predominantly on Western cuisine. Vietnamese dishes (phở, bánh mì, bún bò Huế, cơm tấm) have poor recognition rates or return wrong nutrition data.
-
-**Why it happens:** Training data bias — most public food datasets are USDA or European-centric.
-
-**Consequences:** Users get wildly incorrect calorie counts, distrust the app, stop using the AI feature.
+**Consequences:** Regulatory risk, app-store review risk, brand trust damage, and user harm if users treat product guidance as health advice.
 
 **Prevention:**
-- Evaluate your chosen AI API against a Vietnamese food test set before committing.
-- Always show the recognized food name and let users confirm or correct it before accepting the nutrition data.
-- Build a correction flow that feeds back to improve recognition over time.
-- Consider a hybrid: AI identifies the dish → your backend looks up nutrition from a Vietnamese food database (e.g., custom database or FatSecret with Vietnamese entries).
-- Never display AI-generated calorie numbers as authoritative without user confirmation.
+- Frame the feature as "Gợi ý hương vị phù hợp với mục tiêu/lối sống" rather than diagnosis, treatment, or disease prevention.
+- Avoid wording such as "giảm cân", "chữa mất ngủ", "điều trị stress", "ngăn bệnh", "tăng cân an toàn", or any guaranteed outcome.
+- Show BMI as a simple category already calculated by the app, then explain that flavor suggestions are product preferences, not medical advice.
+- Add Vietnamese disclaimer near the recommendation and in product detail: "Gợi ý tham khảo, không thay thế tư vấn y tế/dinh dưỡng."
+- Require product/legal approval for final Vietnamese copy before release.
+- Persist selected flavor separately from BMI history so users can choose against the rule without the app repeatedly overriding their preference.
 
-**Confidence:** MEDIUM — general AI training data bias known; Vietnamese-specific accuracy data limited (LOW confidence on specific accuracy rates).
+**Detection:**
+- Copy or push notifications mention treatment, prevention, disease, guaranteed weight change, or sleep/stress cure.
+- Recommendation cannot be dismissed or changed by user.
+- Support/marketing asks engineering to encode stronger medical claims into rules.
 
----
+**Phase:** Phase 3: BMI-Based Ủ Milk Recommendation.
 
-## Authentication Pitfalls
+**Confidence:** MEDIUM-HIGH. FDA and Vietnam functional-food references require substantiation for health claims and restrict disease/treatment-style claims; local counsel/product approval is still needed for final Vietnamese wording.
 
-### CRITICAL — Apple Sign In Is Mandatory for App Store Approval
+## Moderate Pitfalls
 
-**What goes wrong:** The team implements Google OAuth and ships to the App Store without "Sign in with Apple." Apple rejects the app during review.
+### Pitfall 6: Hard-Coding BMI Rules in UI Components
 
-**Why it happens:** App Store Review Guideline 4.8 requires that any app offering third-party login must also offer Apple Sign In as an equivalent option. This is non-negotiable.
-
-**Consequences:** App Store submission rejection. Delay of 1–2 weeks to implement Apple Sign In under deadline pressure.
-
-**Prevention:**
-- Implement `expo-apple-authentication` from day one alongside Google OAuth.
-- Configure the Apple Sign In capability in your Apple Developer account before first TestFlight build.
-- Note: Apple Sign In only works on iOS and macOS. Show it only on iOS; the Android build should only show Google OAuth.
-
-**Confidence:** HIGH — Apple App Store Guidelines (official), Expo official docs for `expo-apple-authentication`.
-
----
-
-### CRITICAL — Apple Credentials Are Only Provided Once
-
-**What goes wrong:** When a user first signs in with Apple, the server receives their name and email. On all subsequent sign-ins, Apple sends only a user identifier — not the email or name. If the backend does not store these on the first sign-in, the user's display name and email are lost permanently.
-
-**Why it happens:** Apple's privacy design intentionally limits data exposure after the initial authorization.
-
-**Consequences:** Users see "Unknown User" throughout the app; emails for notifications/recovery are missing; password reset flows break for Apple sign-in users.
+**What goes wrong:** The flavor rules are duplicated in mobile screens, backend responses, admin copy, and tests. Later product edits create inconsistent recommendations.
 
 **Prevention:**
-- On first Apple Sign In, immediately persist `email`, `fullName.givenName`, and `fullName.familyName` to your MongoDB user document.
-- The user can also choose to hide their real email — Apple provides a relay address. Store the relay address as the canonical email; do not assume it is a real mailbox.
-- Test the "already signed in" flow in development by revoking Apple credentials in device Settings.
+- Put the canonical rule table in one backend service or configuration document.
+- Return both the selected recommendation and the explanation key/copy from the API.
+- Version the rules so future campaigns can explain which rule produced an existing user's stored selection.
+- Add tests for exact boundaries: BMI `< 18.5`, `18.5-22.9`, `> 23`, and the gap/edge at `23.0` if product truly means `> 23` rather than `>= 23`.
 
-**Confidence:** HIGH — Expo official `expo-apple-authentication` docs explicitly document this limitation.
+**Phase:** Phase 3: BMI-Based Ủ Milk Recommendation.
 
----
+**Confidence:** HIGH.
 
-### CRITICAL — Google OAuth redirect_uri_mismatch in Production
+### Pitfall 7: Not Resolving Ambiguity in the Product Rule Table
 
-**What goes wrong:** Google Sign In works perfectly in Expo Go and development builds, then fails in production with `Error 400: redirect_uri_mismatch`. This is the most frequently reported Google OAuth issue in the Expo ecosystem.
-
-**Why it happens:** Expo Go uses `host.exp.exponent` as the package name. Standalone builds use your actual bundle ID (e.g., `com.yourteam.uapp`). Google Cloud Console OAuth credentials are configured for one scheme but production sends another.
-
-**Consequences:** Google login broken in production; users cannot sign in.
+**What goes wrong:** BMI exactly `23.0` may match neither "18.5-22.9" nor "> 23". "Any BMI" flavors compete with BMI-specific flavors. Stress/sleep and breakfast/energy preferences may be unknown or collected later.
 
 **Prevention:**
-- Create separate OAuth 2.0 client IDs in Google Cloud Console for: Web (for Expo Go/dev), iOS (for production iOS), Android (for production Android).
-- Use `@react-native-google-signin/google-signin` (native implementation) instead of `expo-auth-session` for Google login — it is more reliable in production and handles the scheme differences automatically.
-- Test with a production build on a real device before App Store submission.
-- After Expo SDK 53, `expo-auth-session` + Google broke for some configurations — migrate to the native package.
+- Get product signoff on a deterministic priority order before implementation.
+- Recommended logic: BMI-specific rule first when clearly matched; lifestyle-specific "any BMI" alternatives shown as secondary options; "Rau má - Hạt sen" as default universal option when BMI data is missing or user selects stress/sleep.
+- Decide whether BMI `23.0` belongs to normal, overweight, or explicit fallback.
+- Store user's selected flavor and do not auto-change it after BMI updates unless the user asks for a new recommendation.
 
-**Confidence:** HIGH — multiple confirmed GitHub issues in expo/expo repository, community-verified fix.
+**Phase:** Phase 3: BMI-Based Ủ Milk Recommendation.
 
----
+**Confidence:** HIGH for the engineering risk; LOW on final business priority until product confirms.
 
-### MODERATE — JWT Access Token Expiry Not Handled Gracefully
+### Pitfall 8: Trusting Barcode Databases as Nutrition Ground Truth
 
-**What goes wrong:** The backend issues short-lived access tokens (15 min recommended). The app makes an API call after the token expires, receives a 401, and crashes or shows an unhandled error instead of silently refreshing.
+**What goes wrong:** Barcode scan returns incomplete, stale, duplicated, non-Vietnam-market, or user-entered nutrition data. The app logs wrong calories/macros with an authoritative-looking result.
 
-**Why it happens:** Token expiry handling requires Axios interceptors with refresh logic — a pattern that is non-trivial and often skipped in early development.
-
-**Consequences:** Users are randomly logged out mid-session, destroying retention.
+**Why it happens:** Open barcode databases are useful but not guaranteed complete or accurate. Open Food Facts explicitly notes its data is voluntarily provided and may have gaps; GS1 guidance emphasizes product data quality and GTIN lifecycle rules.
 
 **Prevention:**
-- Implement Axios response interceptor: on 401, call the refresh token endpoint, retry the original request, and only log out the user if the refresh token itself is expired or invalid.
-- Handle the race condition: if multiple parallel requests get 401 simultaneously, only one should trigger the refresh; the others should queue and wait.
-- Refresh tokens must be stored in `expo-secure-store`, not AsyncStorage.
+- Treat barcode lookup as a supplement to AI/manual scan, not a replacement for confirmation.
+- Show a review/edit screen before logging nutrition from barcode.
+- Store data provenance: source API, source product ID/barcode, fetchedAt, confidence/completeness flags, and whether the user edited values.
+- Cache successful lookups but allow refresh and local correction.
+- Prefer a first-party curated Vietnamese product table for Ủ products and common local foods; use external databases as fallback.
+- Validate GTIN/EAN checksum and supported barcode types before calling external APIs.
 
-**Confidence:** HIGH — React Native JWT security guide, Axios interceptor pattern well-documented.
+**Detection:**
+- High edit rate after barcode result.
+- Frequent missing calories/macros for scanned products.
+- Same barcode maps to conflicting product names across sources.
 
----
+**Phase:** Phase 2: Barcode Scan Supplement.
 
-### MINOR — OAuth Deep Link Handling on Android
+**Confidence:** HIGH. Open Food Facts API docs and GS1 data-quality guidance both support this risk.
 
-**What goes wrong:** After Google OAuth completes, the browser redirects back to the app via a custom scheme deep link. On some Android versions, the deep link fails to re-open the app, leaving the user stuck in the browser.
+### Pitfall 9: Barcode Scanner Fires Multiple Times Per Scan
 
-**Prevention:**
-- Register your custom URI scheme properly in `app.json` under `android.intentFilters`.
-- Test the full OAuth flow on physical Android devices (Samsung, Xiaomi — dominant in Vietnam market), not just emulators.
-- Prefer native Google Sign In SDK over browser-based OAuth to avoid this entirely.
-
-**Confidence:** MEDIUM — community-reported, multiple GitHub issues.
-
----
-
-## Push Notification Pitfalls
-
-### CRITICAL — iOS Permission is One-Shot and Cannot Be Re-Requested
-
-**What goes wrong:** The app requests notification permission on first launch without context. The user denies it. iOS will never show the permission dialog again for this app. The user never receives habit reminders or workout nudges.
-
-**Why it happens:** Many developers call `requestPermissionsAsync()` in the app root without a pre-permission prompt screen.
-
-**Consequences:** Permanent loss of notification capability for a significant portion of users, killing the habit tracking feature's effectiveness.
+**What goes wrong:** `onBarcodeScanned` triggers repeatedly while the camera still sees the barcode. The app sends duplicate lookup requests, navigates multiple times, or redeems the same QR code twice.
 
 **Prevention:**
-- Show a custom "permission rationale" screen before the system dialog: "Ủ will remind you to log meals and stay on track with workouts — allow notifications?"
-- Only call `requestPermissionsAsync()` at a moment of high user intent (e.g., when the user first sets a habit reminder).
-- If permission is denied, show a persistent in-app prompt guiding users to Settings → Ủ → Notifications.
-- Never block app features behind notification permission; degrade gracefully.
+- Debounce/pause scanning immediately after first successful scan.
+- Use an in-flight request guard and require explicit "Scan another" before resuming.
+- For redeem QR scans, backend idempotency must still handle duplicate submissions.
+- Restrict barcode types to what the feature needs: product EAN/UPC for food, QR for redeem codes. Do not process arbitrary QR URLs as trusted input.
 
-**Confidence:** HIGH — Expo official notification docs, iOS Human Interface Guidelines.
+**Phase:** Phase 2: Barcode Scan Supplement and Phase 1 for redeem QR scan.
 
----
+**Confidence:** HIGH. Expo Camera documents repeated barcode callbacks and barcode data as arbitrary encoded content.
 
-### CRITICAL — Android 13+ Requires Runtime Permission
+### Pitfall 10: Rating Prompt Becomes an Interruption or Review-Gating Flow
 
-**What goes wrong:** The app targets Android 13 (API 33) but does not request `POST_NOTIFICATIONS` at runtime. No notifications are delivered on Android 13+ devices, silently.
+**What goes wrong:** The app asks for stars on launch, after an error, while the user is scanning food, or before unlocking a feature. It may ask "Do you like the app?" before the store prompt, which Google disallows for in-app review flows.
 
-**Why it happens:** Pre-Android 13 apps did not need runtime notification permission. The change in API 33 is a breaking change that catches many developers off guard.
-
-**Prevention:**
-- Call `Notifications.requestPermissionsAsync()` on Android 13+ devices explicitly.
-- Create at least one notification channel before requesting permission — Android 13 will not prompt until a channel exists.
-- Test on Android 13/14 physical device (Xiaomi, Samsung are relevant Vietnam market targets).
-
-**Confidence:** HIGH — Android 13 official docs, Expo notification docs.
-
----
-
-### MODERATE — Foreground Notifications Are Silently Swallowed
-
-**What goes wrong:** The developer tests notifications while the app is open. No notification appears. The bug is assumed to be a system-level issue, but it is actually the expected default behavior: Expo notifications received in the foreground are consumed silently without any UI.
-
-**Why it happens:** This is an intentional default in `expo-notifications`. The developer is unaware of `setNotificationHandler`.
-
-**Consequences:** Habit reminder fires while the user is in the app — they never see it. Meal logging reminder at lunchtime is invisible.
+**Consequences:** Lower ratings, user frustration, and possible app-store policy problems.
 
 **Prevention:**
-- Configure `Notifications.setNotificationHandler` at app startup to control foreground notification display.
-- For habit reminders, show a foreground notification with `shouldShowAlert: true, shouldPlaySound: true`.
+- Trigger only after a successful value moment: completed food scan/log, redeemed a code and completed first unlocked scan, completed workout, or several days of habit/BMI use.
+- Never prompt during onboarding, app launch, camera flow, error recovery, paywall/redeem flow, or before granting functionality.
+- Maintain local/backend prompt cooldown state independent of platform quotas.
+- Use platform review APIs for public store ratings; route low-star internal feedback to a support/comment flow without blocking store review policy.
+- Do not incentivize ratings or require rating to unlock scans/codes.
 
-**Confidence:** HIGH — Expo official notification docs.
+**Detection:**
+- Prompt appears before user completes any meaningful action.
+- Spike in dismissals or low ratings after prompt launch.
+- User reports "I had to rate to continue."
 
----
+**Phase:** Phase 4: App Rating & Feedback Prompt.
 
-### MODERATE — Background Task Scheduling Unreliable on Android
+**Confidence:** HIGH. Google Play says to ask after enough user experience, not excessively, and not pre-question users before presenting the review card. Apple recommends asking at appropriate moments, not interrupting activity, and uses system-controlled annual limits.
 
-**What goes wrong:** Scheduled local notifications (daily meal reminders, workout prompts) fire correctly in development but miss their schedule in production on Android when the app is in the background or killed.
+### Pitfall 11: Confusing Internal Feedback With Store Reviews
 
-**Why it happens:** Android OEMs (especially Xiaomi, Oppo, Vivo — dominant in Vietnam) aggressively kill background processes to preserve battery. This breaks `expo-task-manager` background tasks.
-
-**Consequences:** Unreliable habit reminders — the core engagement mechanic of the app fails for a significant portion of users.
-
-**Prevention:**
-- Use Expo Push Notifications (server-side triggered via FCM) instead of local scheduling for time-sensitive reminders — server push is immune to OEM battery optimization.
-- For local-only scheduling, use `expo-notifications` scheduled notifications rather than background tasks — these are more reliable on Android.
-- Inform users during onboarding on Xiaomi/MIUI and similar devices to whitelist the app in battery settings. Detect the manufacturer and show device-specific instructions.
-
-**Confidence:** HIGH — community reports across multiple Expo issues, well-documented MIUI battery restriction problem.
-
----
-
-### MINOR — Expo Push Token Is Not a Stable Identifier
-
-**What goes wrong:** The backend stores the Expo push token as the user's notification address. The token changes when the user reinstalls the app, clears app data, or restores from backup. Old tokens silently fail delivery.
+**What goes wrong:** The app collects stars and comments internally but users believe they submitted an App Store/Google Play review. Or the app uses internal stars to selectively send only happy users to the store, creating policy risk and biased feedback.
 
 **Prevention:**
-- On every app start, call `getExpoPushTokenAsync()` and compare with the stored token. If changed, update the backend.
-- Treat push tokens as mutable and volatile — they are not user identifiers.
-- Store one token per device per user (a user may have multiple devices).
+- Label internal flow as "Gửi góp ý cho Ủ" and platform flow as store rating.
+- Keep a clear support path for unhappy users, but do not gate or manipulate store review prompts based on a pre-question when using Google Play's in-app review API.
+- Store internal feedback with app version, platform, feature context, and optional user ID; avoid collecting sensitive health details in comments unless privacy copy covers it.
 
-**Confidence:** HIGH — Expo push notification official docs.
+**Phase:** Phase 4: App Rating & Feedback Prompt.
 
----
+**Confidence:** HIGH for UX/compliance risk.
 
-## MongoDB Health Data Modeling Pitfalls
+### Pitfall 12: Bulk Exercise Images Are Uploaded Without Stable Asset Identity
 
-### CRITICAL — Storing Every Health Event as an Individual Document
-
-**What goes wrong:** Each meal log entry, each habit check-in, each workout set is stored as a separate MongoDB document. After 90 days, a single user has 5,000–15,000 documents. Querying "show me this week's calorie trend" requires scanning hundreds of documents per user with aggregation pipelines.
-
-**Why it happens:** Newcomers to MongoDB treat it like a SQL table with one row per event. This is the natural but wrong pattern for high-frequency health data.
-
-**Consequences:** Slow dashboard loads (200ms+ aggregation queries per user), high Atlas read operation costs, inability to scale past a few thousand users on M0/M2 tier.
+**What goes wrong:** Hundreds of exercise images are uploaded with random names. Re-running an import creates duplicates; replacing one image breaks references; deleting an exercise leaves orphaned Cloudinary assets.
 
 **Prevention:**
-- Use the **bucket pattern**: one document per user per day, containing an array of that day's events.
-  ```json
-  {
-    "userId": "...",
-    "date": "2026-05-17",
-    "meals": [...],
-    "habitCheckins": [...],
-    "workouts": [...],
-    "dailySummary": { "totalCalories": 1850, "protein": 120 }
-  }
-  ```
-- Pre-compute `dailySummary` on each write (update, not recalculate at read time).
-- For longer-term trends (weekly/monthly), maintain a separate `userWeeklyStats` collection updated via aggregation on each day-bucket write.
-- Use MongoDB 5.0+ native time-series collections for biometric data (weight, heart rate) — they compress and query this pattern natively.
+- Define deterministic `public_id` naming: `exercises/{exerciseSlug}/{variant}` or `exercises/{exerciseId}/cover`.
+- Store Cloudinary `public_id`, secure URL, dimensions, bytes, format, uploadedBy, and uploadedAt in MongoDB.
+- Make imports idempotent: same exercise row + same image path updates the existing asset instead of creating a new one.
+- Generate a dry-run report before bulk import: created, updated, skipped, failed, missing exercise match.
+- Add orphan detection: assets under `exercises/` with no DB reference.
 
-**Confidence:** HIGH — MongoDB official time-series best practices, MongoDB community forum health data thread.
+**Phase:** Phase 5: Bulk Exercise Image Management.
 
----
+**Confidence:** HIGH. Cloudinary supports authenticated Admin API asset management, upload presets, metadata, and bulk operations, but the app must define its own stable mapping.
 
-### CRITICAL — Atlas M0 Free Tier Connection Limit in Production
+### Pitfall 13: Using Client-Side Unsigned Uploads for Admin Bulk Media
 
-**What goes wrong:** The Node.js backend is deployed as a serverless function (Vercel, Railway, or similar) without connection pooling configuration. Each serverless invocation opens a new MongoDB connection. Under load, the 500-connection M0 free tier limit is hit, causing `MongoServerError: too many connections`.
-
-**Why it happens:** Serverless functions do not reuse connections between invocations by default. Each cold start creates a new `MongoClient`.
-
-**Consequences:** App becomes unavailable at moderate traffic (~100 concurrent users). The error manifests as 500 responses across all API endpoints simultaneously.
+**What goes wrong:** Admin dashboard exposes unsigned upload presets. If leaked, anyone can upload files to the Cloudinary account or inflate storage/transformation usage.
 
 **Prevention:**
-- Declare `MongoClient` outside the serverless handler function so it is cached between warm invocations.
-- Set `maxPoolSize: 10` to limit connections per instance.
-- For the university project scope (hundreds of users), upgrade from M0 to M2 ($9/mo) before any real user load — M0 is genuinely unsuitable for production.
-- Monitor active connections in Atlas Dashboard; alert at 80% of limit.
+- Use signed server-side uploads for admin bulk image management.
+- Keep Cloudinary API secret only on the backend.
+- If an unsigned preset is unavoidable, lock it down: folder, formats, max size, moderation, no overwrite unless intended, and rotate if exposed.
+- Do not let mobile users upload exercise library assets.
 
-**Confidence:** HIGH — MongoDB Atlas official free tier limits documentation.
+**Phase:** Phase 5: Bulk Exercise Image Management.
 
----
+**Confidence:** HIGH. Cloudinary docs distinguish signed/server-side upload from unsigned upload presets and note unsigned uploads are intentionally restricted for security.
 
-### MODERATE — Missing Compound Indexes for Health Query Patterns
+## Minor Pitfalls
 
-**What goes wrong:** The most common queries are `{ userId, date }` (daily dashboard) and `{ userId, date: { $gte, $lte } }` (weekly/monthly charts). Without compound indexes on `(userId, date)`, MongoDB performs full collection scans as data grows.
+### Pitfall 14: Admin Code Exports Are Not Operationally Reversible
 
-**Why it happens:** Developers create single-field indexes on `userId` and assume that is sufficient. Range queries on `date` within a user's data require a compound index.
-
-**Prevention:**
-- Create compound index: `db.meals.createIndex({ userId: 1, date: -1 })` on all health data collections.
-- Use `explain()` during development to verify index usage before shipping.
-- For habit tracking queries that filter by `userId` + `habitId` + `date`, add a three-field compound index.
-
-**Confidence:** HIGH — MongoDB index documentation, standard query optimization practice.
-
----
-
-### MODERATE — Schema Inconsistency Breaking Atlas Search and Compression
-
-**What goes wrong:** Early in development, food log documents have different field sets (some have `imageUrl`, others do not; some have `aiAnalysis`, others do not). MongoDB accepts this but it breaks compression efficiency in time-series collections and complicates aggregation queries that assume consistent shape.
+**What goes wrong:** Admin generates 10,000 codes with wrong expiry, wrong campaign label, or wrong QR template. The system has no batch disable or regeneration workflow.
 
 **Prevention:**
-- Define Mongoose schemas with explicit `default` values so all documents are structurally consistent even when fields are empty.
-- Use `null` consistently for absent optional values rather than omitting the field entirely.
-- Run a schema validation script before enabling Atlas Search indexing.
+- Every bulk generation must create a batch with status: `draft`, `active`, `disabled`, `expired`.
+- Allow disabling an unredeemed batch and marking a replacement batch.
+- Require admin confirmation showing quantity, expiry policy, campaign name, and sample code/QR before activation.
 
-**Confidence:** HIGH — MongoDB time-series best practices documentation explicitly notes this pitfall.
+**Phase:** Phase 1: Commercial Redeem Codes & Scan Entitlements.
 
----
+**Confidence:** HIGH.
 
-### MINOR — Storing User Weight/Height in Multiple Places
+### Pitfall 15: Logging Sensitive Codes and Health Inputs
 
-**What goes wrong:** Calorie calculations require height, weight, age, and activity level. These are stored both in the `user` collection and duplicated inside each workout or meal document at creation time. When the user updates their weight, only the `user` document is updated — old calculations become stale.
+**What goes wrong:** Raw redeem codes, QR payloads, BMI, comments, and user identifiers leak into server logs, crash reports, analytics, or admin screenshots.
 
 **Prevention:**
-- Store biometric profile in one place: `user.profile.currentWeight`, `user.profile.height`, etc.
-- Log historical weight entries separately in a `weightHistory` time-series collection.
-- Never denormalize biometric data into food/workout documents. Calorie calculations should always reference the user's weight at the time of the activity — store `weightAtTime` only for historical accuracy, not the entire profile.
+- Redact code values in request logs and error messages.
+- Log code hash prefix or batch ID, not raw code.
+- Treat BMI, rating comments, and food logs as user health-related data; keep analytics event payloads minimal.
+- Review mobile crash reporting and backend logging before launch.
 
-**Confidence:** MEDIUM — standard data modeling principle; specific to health apps.
+**Phase:** Cross-cutting in all v2 phases, owned first by Phase 1.
 
----
+**Confidence:** HIGH.
 
-## Phase Mapping
+### Pitfall 16: Barcode Results Do Not Fallback Gracefully
 
-| Phase | Pitfalls to Address Proactively | Consequence of Deferring |
-|---|---|---|
-| **Phase 1 — Project Setup** | Expo managed workflow library audit; AsyncStorage vs SecureStore decision; MongoDB compound index strategy; Atlas tier selection (M0 is not production) | Forced architectural changes mid-project if wrong choices are locked in |
-| **Phase 2 — Authentication** | Apple Sign In mandatory from day one; Google OAuth native package selection; JWT Axios interceptor refresh pattern; Apple credentials one-time delivery | App Store rejection; Google login broken in production |
-| **Phase 3 — Food Logging & AI** | Image compression pipeline before any AI API call; per-user server-side rate limiting on AI endpoint; AI response timeout + fallback UX; Vietnamese cuisine accuracy validation | Cost runaway; 5+ second blank screens; App Store rejection for billing abuse |
-| **Phase 4 — Habit & Workout Tracking** | Timer using `Date.now()` delta not counter increment; AppState listener for background/foreground transitions; background notification reliability on MIUI/Android OEM | Timer shows wrong elapsed time; reminders stop firing for Xiaomi users |
-| **Phase 5 — Push Notifications** | iOS one-shot permission rationale screen; Android 13 runtime permission + channel setup; foreground `setNotificationHandler`; server-side FCM for time-sensitive reminders | Permanent notification block for early users who deny; missed reminders |
-| **Phase 6 — Data & Dashboard** | Bucket pattern for health data documents; pre-computed daily summaries; connection pooling for serverless; compound indexes verified with `explain()` | Slow dashboard at scale; Atlas connection exhaustion under load |
-| **Phase 7 — Production** | EAS OTA runtime version pinning; Expo push token refresh on every app start; Android OEM battery whitelist guidance; App Store localization for Vietnamese | OTA updates go nowhere; notifications broken after reinstall; App Store rejection |
+**What goes wrong:** Unknown barcode becomes a dead end, even though the user still wants to log food.
 
----
+**Prevention:**
+- Unknown barcode should offer: manual search, AI photo scan, create local custom food, or retry with better lighting.
+- Record unknown barcode frequency to prioritize local database additions.
+
+**Phase:** Phase 2: Barcode Scan Supplement.
+
+**Confidence:** HIGH.
+
+### Pitfall 17: Exercise Image Imports Break Mobile Performance
+
+**What goes wrong:** Admin uploads large original images; mobile exercise list loads slow, consumes bandwidth, and janks scrolling.
+
+**Prevention:**
+- Enforce max source file size and dimensions on upload.
+- Generate/list only optimized thumbnails in exercise cards; reserve larger images for detail screen.
+- Store width/height/aspect ratio so mobile cards reserve stable space before image load.
+- Use consistent transformations rather than hand-uploaded resized variants.
+
+**Phase:** Phase 5: Bulk Exercise Image Management.
+
+**Confidence:** HIGH.
+
+### Pitfall 18: No Moderation or Review Step for Bulk Images
+
+**What goes wrong:** Wrong image is attached to an exercise, duplicate images appear across unrelated exercises, or low-quality images ship to users.
+
+**Prevention:**
+- Add import preview with thumbnail grid and exercise match status.
+- Require admin publish step after upload.
+- Support bulk replace, rollback by batch, and per-image notes.
+- Track visual QA status (`pending`, `approved`, `rejected`) for large batches.
+
+**Phase:** Phase 5: Bulk Exercise Image Management.
+
+**Confidence:** MEDIUM-HIGH. Operational risk depends on how image sources are produced.
+
+## Phase-Specific Warnings
+
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|----------------|------------|
+| Redeem code generation | Guessable, reusable, or leaked codes | Crypto-random codes, hashed storage, single-use atomic redemption, batch audit |
+| Redeem QR scan | QR payload treated as trusted input | Deep link validation, single-use backend redemption, no raw code in logs |
+| Unlimited scan entitlement | AI cost explosion | Backend fair-use throttles, campaign budgets, scan-source telemetry, provider cost alarms |
+| Entitlement expiry | Client/backend date mismatch | UTC storage, backend authority, explicit `activeUntil`, boundary tests |
+| Barcode scanning | Duplicate scan callbacks and arbitrary QR data | Pause after first scan, in-flight guard, barcode type allowlist |
+| Barcode nutrition | Inaccurate external database values | Provenance, edit-before-log, curated local overrides, completeness flags |
+| BMI recommendation | Medical/therapeutic copy | Preference-oriented Vietnamese wording, disclaimer, product/legal approval |
+| BMI rules | Boundary and priority ambiguity | Product-signed rule priority, backend canonical rules, exact boundary tests |
+| Rating prompt | Interruptive or policy-violating ask | Trigger after successful value moments, use platform APIs, own cooldowns |
+| Internal feedback | Users think private feedback is store review | Separate labels and flows; store context and app version |
+| Bulk exercise images | Duplicates and orphaned assets | Deterministic `public_id`, idempotent imports, orphan reports |
+| Cloudinary security | Leaked upload preset/API secret | Signed backend uploads, strict preset controls, no secrets in frontend |
+| Mobile image delivery | Large image payloads | Upload validation, Cloudinary transformations, thumbnail URLs, dimensions in DB |
 
 ## Sources
 
-- [Optimizing FlatList Configuration — React Native official docs](https://reactnative.dev/docs/optimizing-flatlist-configuration)
-- [React Native Security — official docs](https://reactnative.dev/docs/security)
-- [React Native Timers — official docs](https://reactnative.dev/docs/timers)
-- [Expo Notifications — official docs](https://docs.expo.dev/versions/latest/sdk/notifications/)
-- [expo-apple-authentication — official Expo docs](https://docs.expo.dev/versions/latest/sdk/apple-authentication/)
-- [Expo New Architecture guide](https://docs.expo.dev/guides/new-architecture/)
-- [MongoDB Atlas Free Cluster Limits — official docs](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/)
-- [MongoDB Time Series Best Practices — official docs](https://www.mongodb.com/docs/manual/core/timeseries/timeseries-best-practices/)
-- [expo-image-manipulator — official Expo docs](https://docs.expo.dev/versions/latest/sdk/imagemanipulator/)
-- [Push notifications troubleshooting — Expo official docs](https://docs.expo.dev/push-notifications/faq/)
-- [Making Expo Notifications Actually Work (Android 12+ and iOS)](https://medium.com/@gligor99/making-expo-notifications-actually-work-even-on-android-12-and-ios-206ff632a845)
-- [Avoiding Common JWT Pitfalls in React Native](https://dev.to/iamdevbox/avoiding-common-jwt-pitfalls-in-react-native-development-538a)
-- [Google OAuth redirect_uri_mismatch fix](https://shamigondal.hashnode.dev/google-signin-with-expo-react-native-solved-mismatchuri-solved-deeplinking-solved-redirect-issue-react-native)
-- [Expo EAS OTA Update realities in production](https://medium.com/@biodunbio14/the-realities-of-ota-updates-with-expo-what-i-wish-i-knew-before-i-pushed-to-production-508561d7a043)
-- [Best AI API for Mobile Apps: Latency, SDK Support, and Cost](https://tokenmix.ai/blog/best-ai-api-for-mobile-apps)
-- [Efficiently Managing Timers in React Native](https://dev.to/shivampawar/efficiently-managing-timers-in-a-react-native-app-overcoming-background-foreground-timer-state-issues-map)
-- [expo/expo GitHub issue — Google Authentication URI Mismatch on Android](https://github.com/expo/expo/issues/32468)
-- [expo/expo GitHub issue — expo-image-manipulator memory crash on iOS](https://github.com/expo/expo/issues/40158)
-- [New Architecture migration reports — reactwg](https://github.com/reactwg/react-native-new-architecture/discussions/177)
-- [Securing APIs: Express rate limit — MDN Blog](https://developer.mozilla.org/en-blog/securing-apis-express-rate-limit-and-slow-down/)
-- [How to localize your app for Vietnam — AppTweak](https://www.apptweak.com/en/aso-blog/how-to-localize-your-app-in-vietnamese)
+- OWASP API Security Top 10 2023, API4 Unrestricted Resource Consumption: https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/  
+  **Confidence:** HIGH for rate limits, payload limits, and provider-cost controls.
+- Google Play In-App Review API documentation: https://developer.android.com/guide/playcore/in-app-review  
+  **Confidence:** HIGH for Android review prompt timing, design, and quota behavior.
+- Apple Requesting App Store Reviews / Ratings and Reviews: https://developer.apple.com/documentation/storekit/requesting_app_store_reviews/ and https://developer.apple.com/app-store/ratings-and-reviews/  
+  **Confidence:** HIGH for iOS review timing, annual prompt limit, and standardized prompt expectations.
+- Expo Camera documentation: https://docs.expo.dev/versions/latest/sdk/camera/  
+  **Confidence:** HIGH for barcode callback behavior and barcode data handling.
+- Open Food Facts API documentation: https://openfoodfacts.github.io/documentation/docs/Product-Opener/api/  
+  **Confidence:** HIGH for external food database limitations and staging/production use.
+- GS1 US Product Data Quality guidance: https://www.help.gs1us.org/product-data-quality  
+  **Confidence:** HIGH for GTIN/product-data quality risks.
+- FDA Label Claims for Conventional Foods and Dietary Supplements: https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/label-claims-conventional-foods-and-dietary-supplements  
+  **Confidence:** MEDIUM for general health-claim risk framing; not Vietnam-specific legal advice.
+- Vietnam Circular No. 43/2014/TT-BYT on functional foods, English translation: https://thuviennhadat.vn/vbpl/circular-no-43-2014-tt-byt-regulating-the-management-of-functional-foods-259930.html  
+  **Confidence:** MEDIUM for local food-claim caution; final copy should be approved by product/legal.
+- Cloudinary Upload API and Admin API documentation: https://cloudinary.com/documentation/upload_images and https://cloudinary.com/documentation/admin_api  
+  **Confidence:** HIGH for signed/unsigned upload security and operational asset-management concerns.
+
+## Research Flags for Roadmap
+
+- **Phase 1 needs deeper threat modeling before implementation.** It controls money, AI spend, and campaign leakage. Require abuse cases, rate-limit numbers, and entitlement expiry rules before coding.
+- **Phase 2 needs a product decision on barcode data provider.** Open Food Facts is useful but incomplete; a curated local/Ủ product table should be the trusted source for branded products.
+- **Phase 3 needs final Vietnamese copy review.** Engineering can enforce rule logic, but product/legal must approve claims and disclaimers.
+- **Phase 4 is standard implementation if platform APIs are used.** Risk is mostly prompt timing and policy compliance, not architecture.
+- **Phase 5 needs operational design, not just upload buttons.** Idempotent import, stable asset IDs, QA state, and rollback prevent long-term content debt.

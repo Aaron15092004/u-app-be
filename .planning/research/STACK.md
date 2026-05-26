@@ -1,418 +1,408 @@
-# Stack Research — Ủ App
+# Stack Research: v2.0 Feature Additions for Ủ App
 
-**Researched:** 2026-05-17
-**Overall confidence:** MEDIUM-HIGH (verified against official docs and multiple current sources)
+**Project:** Ủ App  
+**Scope:** v2.0 new features only  
+**Researched:** 2026-05-26  
+**Overall confidence:** HIGH for Expo/Cloudinary/Mongo integration choices; MEDIUM for barcode product data coverage in Vietnam.
 
----
+## Executive Recommendation
 
-## Mobile (React Native)
+Do **not** change the core stack. The existing Expo React Native mobile app, Express/Node backend, MongoDB/Mongoose data layer, Cloudinary image storage, TanStack Query clients, and React/Vite admin dashboard are the correct base for all v2.0 features.
 
-### Expo SDK
+Add only a small set of targeted packages:
 
-**Use Expo SDK 53** (current stable as of research date).
+| Area | Add | Where | Why |
+|------|-----|-------|-----|
+| Redeem campaign QR generation | `qrcode` | Backend, optional admin preview | Generate QR SVG/PNG/data URLs without an external QR service |
+| QR/export bundles | `archiver` | Backend, optional | Stream ZIP files of QR images/CSVs for print vendors |
+| CSV import/export | `csv-parse`, `csv-stringify` | Backend | Safer than ad hoc CSV parsing for bulk code/image workflows |
+| Barcode product lookup | No package required | Backend | Use Open Food Facts HTTP API through existing `axios` |
+| Camera barcode/QR scan | No package required | Mobile | Existing `expo-camera` already supports QR, EAN, UPC, Code128, etc. |
+| Native store review prompt | `expo-store-review` | Mobile | Optional OS-native review prompt after positive in-app rating |
+| Exercise image admin UX | No new storage | Admin/backend | Reuse existing Cloudinary + Multer; improve admin batch endpoints/workflow |
 
-- SDK 53 ships with React Native 0.79
-- SDK 54 (React Native 0.81) was released September 2025 — stable, but SDK 53 has broader community examples
-- SDK 55 (React Native 0.83, released February 2026) is available but very new; ecosystem lag is real
-- Recommendation: Start with SDK 53 or 54. Do not start on SDK 55 unless you need a specific feature — third-party library compatibility lags 1-2 SDK versions behind
+Avoid adding Firebase, Firestore, RevenueCat, Shopify/e-commerce, a second image store, native barcode scanner modules, or a subscription/paywall SDK for this milestone. v2.0 is campaign-code entitlement, product recommendation, feedback, barcode lookup, and content management workflow, not a platform migration.
 
-**Push notifications note:** Starting with SDK 54, push notifications no longer work inside Expo Go. Use a Development Build from day one.
+## Current Stack Fit
 
-**Confidence:** HIGH — sourced from official Expo changelog at expo.dev/changelog
+| Layer | Current | v2.0 Decision |
+|-------|---------|---------------|
+| Mobile | Expo SDK 54, React Native, Expo Router, `expo-camera`, `expo-image-picker`, TanStack Query, Zustand | Keep. Add `expo-store-review`; use existing `expo-camera` for QR/barcodes. |
+| Backend | Express 5, Node 20+, TypeScript, Mongoose 8, Zod, JWT auth, `express-rate-limit`, Cloudinary, Multer | Keep. Add campaign/redeem models, QR generation, CSV/ZIP utilities, barcode lookup service. |
+| Admin | React/Vite, TanStack Query, TanStack Table, React Hook Form, Zod, shadcn/Base UI, lucide | Keep. Add pages/forms for campaigns, code batches, QR export, exercise image batch assignment. |
+| Database | MongoDB Atlas via Mongoose | Keep. Add collections/indexes; no relational migration needed. |
+| Images | Cloudinary through backend | Keep. Extend admin workflow; do not introduce S3 for v2.0. |
+| AI food scan | Backend vision proxy with daily usage checks | Keep. Change entitlement logic to allow unlimited scans during redeemed-code expiry windows. |
 
----
+## Recommended Additions
 
-### Navigation
+### 1. Campaign Redeem Codes and QR Codes
 
-**Use Expo Router v3/v4 (file-based routing)**
+#### Backend Packages
 
-Expo Router is the Expo-native choice and is built on top of React Navigation 7 internally. It provides:
-- File-system-based routing (folder = screen hierarchy)
-- Bottom tabs via `(tabs)/_layout.tsx`
-- Deep linking out of the box
-- Web compatibility if you ever add a web dashboard
-
-**For the Ủ app specifically:** The five main sections (Home, Food Log, Workout, Habits, Profile) map cleanly to a bottom tab layout under `app/(tabs)/`. Modal screens (camera, food detail, workout timer) go in `app/(modals)/`.
-
-**Do not use React Navigation standalone** — Expo Router wraps it and eliminates the manual stack configuration boilerplate. React Navigation 7 standalone is for non-Expo projects.
-
-**Confidence:** HIGH — official Expo docs confirm Expo Router as the recommended navigation solution for Expo projects
-
----
-
-### State Management
-
-**Two-library approach: Zustand (client state) + TanStack Query v5 (server state)**
-
-| Library | Role | Why |
-|---------|------|-----|
-| Zustand ~5.x | Client-side UI state: active workout timer, current meal session, habit streak counters in memory | Zero boilerplate, synchronous reads, <5KB bundle size |
-| TanStack Query v5 | All API data: food logs, nutrition history, user profile, BMI history | Automatic caching, background refetch, stale-while-revalidate, offline support |
-
-Redux is explicitly excluded. The overhead-to-benefit ratio is too high for a mobile health app of this scope. TanStack Query eliminates 90% of Redux's server-state use case. Zustand covers the remaining local state without Redux ceremony.
-
-**Confidence:** HIGH — multiple 2025 sources confirm Zustand + TanStack Query as the de facto modern replacement for Redux in React Native apps
-
----
-
-### Local Storage / Persistence
-
-**Use react-native-mmkv for persisted client state**
-
-MMKV is ~30x faster than AsyncStorage, fully synchronous (no async/await), and supports encryption. Wire it into Zustand's persist middleware for offline-capable state (e.g., last workout, streak data).
-
-Use `expo-secure-store` for auth tokens (access token, refresh token) — it uses the device's secure enclave (Keychain on iOS, Keystore on Android).
-
-Do NOT use @react-native-async-storage/async-storage for anything performance-sensitive. It is deprecated in Expo Go and slower by an order of magnitude.
-
-**Confidence:** HIGH — GitHub benchmarks and 2025 community consensus confirm MMKV superiority
-
----
-
-### Charts (BMI History, Calorie Trends, Workout Progress)
-
-**Use victory-native-xl (from FormidableLabs / Nearform)**
-
-- Renders via Skia (GPU-accelerated), not react-native-svg
-- Smooth 60fps animations natively
-- Full TypeScript support
-- Supports line charts (BMI over time), bar charts (weekly calories), area charts (workout streaks)
-
-Requires peer dependencies:
-```
-react-native-reanimated
-react-native-gesture-handler
-@shopify/react-native-skia
+```bash
+cd backend
+npm install qrcode archiver csv-parse csv-stringify
+npm install -D @types/qrcode @types/archiver
 ```
 
-All three are Expo-compatible and installable via `npx expo install`.
+| Package | Purpose | Confidence | Notes |
+|---------|---------|------------|-------|
+| `qrcode` | Generate SVG/PNG/data URL QR codes for campaign redeem payloads | HIGH | Official npm package supports Node and browser output formats. |
+| `archiver` | Stream downloadable ZIP files of QR images for print campaigns | MEDIUM-HIGH | Useful only if admins need one ZIP containing hundreds/thousands of QR files. |
+| `csv-parse` / `csv-stringify` | Robust CSV import/export for campaign codes and exercise image mapping | HIGH | Use instead of hand-splitting commas. |
 
-**Alternative considered:** react-native-gifted-charts — good feature set but higher CPU/memory usage, no Skia GPU rendering. Use only if Skia integration proves too complex.
+#### Code Generation
 
-**Do NOT use:** react-native-chart-kit — unmaintained, SVG-only, poor performance, last meaningful update was 2021.
-
-**Confidence:** MEDIUM-HIGH — sourced from npm trends comparison and LogRocket 2025 chart library roundup
-
----
-
-### Camera / Image Picker
-
-**Use expo-image-picker (latest: ~15.x for SDK 53/54)**
-
-- System photo library picker + camera launch in one package
-- Required for the food photo → AI nutrition analysis feature
-- No separate expo-camera needed unless you build a custom camera UI
-
-Important SDK 54+ behavior change: `allowsEditing` defaults to `false`, meaning iOS requires explicit media library permission to access the original file. Configure permissions in `app.json` explicitly.
-
-```json
-{
-  "plugins": [
-    ["expo-image-picker", {
-      "photosPermission": "Allow Ủ to access your photos for food logging.",
-      "cameraPermission": "Allow Ủ to take photos for food recognition."
-    }]
-  ]
-}
-```
-
-**Confidence:** HIGH — official Expo documentation
-
----
-
-### Push Notifications
-
-**Use expo-notifications + FCM v1 HTTP API (via Firebase service account)**
-
-- expo-notifications abstracts FCM (Android) and APNs (iOS) behind one API
-- Google deprecated the legacy FCM protocol; FCM HTTP v1 is now mandatory
-- Expo's push service can relay via FCM v1 if you provide a Firebase service account key
-- For reminders (meal logging, workout, habit streaks) — schedule local notifications with `expo-notifications` `scheduleNotificationAsync`; use server-side push for streak congratulations or inactivity nudges
-
-**SDK 54+ breaking change:** Push notifications do NOT work in Expo Go — test via Development Build from the start.
-
-**Confidence:** HIGH — official Expo push notifications documentation and FCM migration guides
-
----
-
-### Styling
-
-**Use NativeWind v4 (Tailwind CSS for React Native)**
-
-NativeWind processes Tailwind class names at build time into StyleSheet objects — no runtime overhead. Developer velocity advantage is significant: same mental model as web Tailwind.
-
-Expo officially documents NativeWind as a supported Tailwind solution (docs.expo.dev/guides/tailwind). NativeWind v4 is compatible with Expo Router and SDK 53+.
-
-**Alternative:** Plain `StyleSheet.create()` — lowest overhead, no setup, but verbose. Acceptable for a team already fluent in RN StyleSheet. NativeWind is the better choice if any team member has a web/Tailwind background.
-
-**Do NOT use:** styled-components in React Native — adds runtime cost and is largely superseded by NativeWind for utility-first styling.
-
-**Confidence:** MEDIUM — NativeWind v4 is relatively new; some edge cases with Expo Router layouts require workarounds
-
----
-
-## Backend (Node.js)
-
-### Framework
-
-**Express.js 5.1.x (now the npm default)**
-
-Express 5 became the npm latest in March 2025. Key improvements relevant to this app:
-- Native async/await error handling: rejected promises in route handlers are automatically forwarded to error middleware — no more wrapping every handler in try/catch
-- Drops Node.js < 18 support (use Node 20 LTS or 22 LTS)
-- Security improvements: no more ReDoS-vulnerable regex route patterns
-
-**Use Node.js 20 LTS** (stable, production-ready). Node 22 LTS is available and compatible.
-
-**Confidence:** HIGH — Express 5.1 release announcement at expressjs.com, confirmed npm default status
-
----
-
-### Language
-
-**TypeScript throughout — both mobile and backend**
-
-Use `ts-node` or `tsx` for local development, compile to JS for production. Use `@types/express` for Express 5 types.
-
-Zod for runtime validation of all API request bodies and query params. Zod v3.24+ has 40M+ weekly downloads and is the de facto standard.
-
----
-
-### Authentication
-
-**JWT (jsonwebtoken) + Passport.js strategies**
-
-| Package | Version | Role |
-|---------|---------|------|
-| jsonwebtoken | ^9.x | Sign and verify access/refresh tokens |
-| passport | ^0.7.x | Strategy container |
-| passport-google-oauth20 | ^2.x | Google OAuth 2.0 |
-| passport-apple | ^2.x | Apple Sign In (required for iOS App Store) |
-
-**Token strategy:**
-- Access token: 15 minutes, stored in memory (not localStorage, not AsyncStorage)
-- Refresh token: 7 days, stored in `expo-secure-store` on device, stored hashed in MongoDB on server
-- Refresh tokens are rotated on each use (reuse = invalidate entire family)
-
-**Apple Sign In is mandatory** if you plan to submit to the iOS App Store and offer any other social login. Apple's App Store policy requires it.
-
-**Confidence:** MEDIUM-HIGH — JWT patterns from official docs; Passport.js Apple strategy has some community complaints about documentation gaps
-
----
-
-### Database ODM
-
-**Mongoose 8.x (on top of MongoDB Atlas)**
-
-Mongoose provides:
-- Schema enforcement (critical for food logs with nested nutrition objects, workout schemas)
-- Middleware hooks (`pre('save')` for password hashing, calorie total calculation)
-- `populate()` for user → logs references
-- TypeScript support via `mongoose` types
-
-**Performance note:** For BMI history chart queries (time-series aggregation), drop down to the native MongoDB aggregation pipeline via `Model.aggregate()` — Mongoose passes these through without overhead.
-
-The native MongoDB driver is 2x faster in benchmarks but requires manual schema management. For this app's scale (thousands to tens of thousands of users), Mongoose's DX advantage outweighs the raw performance delta.
-
-**Confidence:** HIGH — MongoDB official documentation, multiple benchmark sources
-
----
-
-### File Upload (Food Images)
-
-**Multer (memory storage) → Cloudinary SDK**
-
-Flow:
-1. Mobile uploads image to your Express API
-2. Multer holds the buffer in memory (do not write to disk on serverless/cloud)
-3. Express sends buffer to Cloudinary via `cloudinary.uploader.upload_stream()`
-4. Cloudinary returns a URL → stored in MongoDB food log entry
-5. Optional: send Cloudinary URL to AI food recognition API (some APIs accept URLs directly, avoiding double upload)
-
-**Why Cloudinary over S3:**
-- Built-in image optimization and CDN delivery — food thumbnails served at the right size automatically
-- Free tier: 25 credits/month (~25GB storage + transformations), adequate for MVP
-- No need to configure CloudFront separately
-- React Native SDK: `cloudinary-react-native` exists (official Expo-compatible)
-- S3 is cheaper at scale (100k+ users) but requires manual CloudFront + image processing setup
-
-**Why Multer over Busboy:**
-Multer is built on Busboy internally, but provides Express middleware integration out of the box. Busboy is lower-level and offers streaming advantages for very large files — food images are small (< 5MB), so Multer is the right abstraction level.
-
-**Confidence:** MEDIUM-HIGH — Cloudinary official React Native docs, Multer official Express middleware page
-
----
-
-### Validation
-
-**Zod v3.24+**
-
-Define schemas once, reuse for TypeScript types and runtime validation:
+Prefer built-in Node `crypto.randomBytes()` over adding `nanoid`, because the backend is currently CommonJS and modern `nanoid` versions are ESM-first. Generate human-enterable codes with an alphabet that removes ambiguous characters:
 
 ```typescript
-const FoodLogSchema = z.object({
-  imageUrl: z.string().url(),
-  mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
-  loggedAt: z.coerce.date(),
-  nutrition: z.object({
-    calories: z.number().min(0),
-    protein: z.number().min(0),
-    carbs: z.number().min(0),
-    fat: z.number().min(0),
-  }).optional(),
-});
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 ```
 
-**Confidence:** HIGH — Zod is the standard; 40M+ weekly downloads confirmed
+Recommended code shape: `U-XXXX-XXXX` or `U-XXXX-XXXX-XXXX`.
 
----
+Store only a hash of the redeem code if campaign fraud matters:
 
-### API Rate Limiting & Security
+| Field | Store |
+|-------|-------|
+| Display/export code | Return once during generation/export |
+| Lookup key | `codeHash = sha256(normalizedCode + PEPPER)` |
+| QR payload | Either raw code or deep link containing code |
 
-| Package | Purpose |
-|---------|---------|
-| express-rate-limit ^7.x | Prevent AI API abuse (food recognition endpoint is expensive) |
-| helmet ^8.x | HTTP security headers |
-| cors ^2.x | CORS for mobile + admin dashboard |
-| bcryptjs ^2.x | Password hashing (if email/password auth is added later) |
+For a fast v2.0 release, storing plaintext codes is acceptable only if admin access is tightly controlled and print vendor exposure is not sensitive. The better default is hashed storage plus one-time CSV export.
 
-**Confidence:** HIGH — established packages with no meaningful alternatives
+#### MongoDB/Mongoose Additions
 
----
+Add `Campaign` and `RedeemCode` collections rather than overloading users or food logs.
 
-## AI Food Analysis
+Recommended indexes:
 
-### Option Comparison
+| Collection | Index | Why |
+|------------|-------|-----|
+| `Campaign` | `{ status: 1, startsAt: 1, expiresAt: 1 }` | Admin list/filter and active campaign checks |
+| `RedeemCode` | `{ codeHash: 1 }` unique | Fast redemption and duplicate prevention |
+| `RedeemCode` | `{ campaignId: 1, status: 1 }` | Admin batch progress |
+| `RedeemCode` | `{ redeemedBy: 1, expiresAt: 1 }` | User entitlement checks |
+| `RedeemCode` | `{ batchId: 1 }` | Export/reprint by batch |
 
-| API | Accuracy (Top-1) | Accuracy (Top-5) | Pricing | Best For |
-|-----|-----------------|-----------------|---------|---------|
-| Calorie Mama | ~63% | ~88% | Opaque — contact sales | Highest raw accuracy, specialized |
-| LogMeal | Purpose-built for food | 1300+ dishes | Free trial 30 days; tiered subscription (Analyse / Monitor / Recommend) | Best food-specialized API with nutrition built in |
-| OpenAI GPT-4o Vision | Not benchmark-tested | ~flexible | $2.50/M input tokens; ~$0.003/image with gpt-4o-mini | Most flexible, handles edge cases and descriptions |
-| OpenAI GPT-4o-mini Vision | Same as above | Same | ~$0.003/image | Best cost-for-accuracy ratio for flexible use |
-| Clarifai food-item-recognition | ~38% | ~64% | Free tier available | Lowest accuracy; not recommended for production |
+Add a derived user entitlement check instead of copying large campaign state into the user:
 
-### Recommendation
-
-**Primary: LogMeal API**
-
-LogMeal is purpose-built for food recognition and nutritional analysis. It returns:
-- Food identification (dish name, ingredients)
-- Nutritional breakdown (calories, macros) without a secondary lookup
-- 1300+ dish database with the largest food image training dataset
-
-The 30-day unlimited free trial is ideal for development and testing. The Analyse tier subscription fits MVP needs.
-
-**Fallback / Supplement: OpenAI GPT-4o-mini Vision**
-
-When LogMeal fails to recognize a food (edge cases, Vietnamese dishes not in its dataset), fall back to GPT-4o-mini with a structured prompt:
-
-```
-Analyze this food image. Return JSON: { "dish": string, "ingredients": string[], "estimated_nutrition": { "calories": number, "protein_g": number, "carbs_g": number, "fat_g": number } }. Be conservative on portion estimates.
+```text
+User scans food -> backend checks active RedeemCode where redeemedBy=userId and expiresAt>now -> bypass daily AI scan cap
 ```
 
-Cost: ~$0.003/image (gpt-4o-mini). At 10 photos/user/day, 100 users = ~$3/day = ~$90/month. Acceptable for MVP, reconsider at scale.
+If multiple codes can be redeemed, entitlement should be `max(expiresAt)` across active redeemed codes.
 
-**Do NOT use Clarifai as primary** — 38% top-1 accuracy is too low for a nutrition tracking feature where incorrect identification causes users to log wrong calories. Users will churn if food recognition is unreliable.
+#### QR Payload
 
-### Vietnamese Food Challenge
+Use a deep link that the existing Expo app can handle:
 
-LogMeal's 1300-dish database skews toward Western/Mediterranean cuisine. Vietnamese dishes (bún bò Huế, phở, bánh mì) may have lower recognition rates. Mitigation:
-1. Allow user to manually confirm/correct the AI's suggestion
-2. Use GPT-4o-mini as fallback with a prompt that names "Vietnamese cuisine" explicitly
-3. Build a community correction system to improve your own dataset over time
+```text
+uapp://redeem?code=U-ABCD-2345
+```
 
-**Confidence:** MEDIUM — LogMeal accuracy from peer-reviewed PMC study (2020, sample sizes varied); pricing from official docs (specific amounts not publicly listed, require signup); GPT-4o-mini pricing from official OpenAI pricing page as of research date
+or an HTTPS universal/app link if already configured:
 
----
+```text
+https://uapp.vn/redeem?code=U-ABCD-2345
+```
 
-## Key Library Choices
+Prefer HTTPS universal links for printed packaging if web fallback matters. Use raw code entry as the fallback for devices that do not open deep links.
 
-| Library | Version | Purpose | Confidence |
-|---------|---------|---------|-----------|
-| expo | ~53.x (or 54.x) | Core Expo SDK, development build tooling | HIGH |
-| expo-router | ~4.x | File-based navigation (tabs, stacks, modals) | HIGH |
-| react-native-reanimated | ^3.x | Animations (workout timer, streak celebration) | HIGH |
-| react-native-gesture-handler | ^2.x | Gesture interactions (swipe to delete log) | HIGH |
-| @shopify/react-native-skia | ^1.x | GPU rendering for charts | MEDIUM-HIGH |
-| victory-native-xl | ^40.x | BMI history, calorie, workout charts | MEDIUM-HIGH |
-| zustand | ^5.x | Client-side UI state management | HIGH |
-| @tanstack/react-query | ^5.x | Server state, API caching, background sync | HIGH |
-| react-native-mmkv | ^3.x | Fast local key-value storage, token persistence helper | HIGH |
-| expo-secure-store | ~14.x | Secure token storage (Keychain/Keystore) | HIGH |
-| expo-image-picker | ~15.x | Camera + photo library access for food photos | HIGH |
-| expo-notifications | ~0.29.x | Push notification scheduling and receiving | HIGH |
-| nativewind | ^4.x | Tailwind CSS styling for React Native | MEDIUM |
-| express | ^5.1.x | HTTP server framework | HIGH |
-| typescript | ^5.x | Type safety across codebase | HIGH |
-| mongoose | ^8.x | MongoDB ODM with schema validation | HIGH |
-| zod | ^3.24.x | Runtime request validation | HIGH |
-| jsonwebtoken | ^9.x | JWT sign/verify | HIGH |
-| passport | ^0.7.x | Auth strategy middleware | MEDIUM-HIGH |
-| passport-google-oauth20 | ^2.x | Google OAuth 2.0 | MEDIUM-HIGH |
-| passport-apple | ^2.x | Apple Sign In | MEDIUM |
-| multer | ^1.4.x | Multipart form upload middleware | HIGH |
-| cloudinary | ^2.x | Image upload + CDN delivery | MEDIUM-HIGH |
-| cloudinary-react-native | ^2.x | Direct mobile → Cloudinary upload | MEDIUM |
-| express-rate-limit | ^7.x | Rate limiting (protect AI endpoint) | HIGH |
-| helmet | ^8.x | HTTP security headers | HIGH |
-| bcryptjs | ^2.x | Password hashing (future email auth) | HIGH |
+#### Admin Integration
 
----
+Add admin routes:
 
-## What NOT to Use
+| Route | Purpose |
+|-------|---------|
+| `POST /api/admin/campaigns` | Create campaign with name, validity window, code expiry policy |
+| `POST /api/admin/campaigns/:id/codes` | Generate bulk codes |
+| `GET /api/admin/campaigns/:id/codes.csv` | Export codes for print/vendor |
+| `GET /api/admin/campaigns/:id/qr.zip` | Optional QR image bundle |
+| `GET /api/admin/campaigns/:id/stats` | Generated/redeemed/expired counts |
 
-| Anti-Recommendation | Reason |
-|--------------------|--------|
-| **Redux / Redux Toolkit** | Excessive boilerplate for this app scope; TanStack Query + Zustand covers all state needs more cleanly |
-| **React Navigation standalone** | Expo Router wraps it and adds file-based routing; no reason to drop down to bare React Navigation in an Expo project |
-| **react-native-chart-kit** | Unmaintained since ~2021, SVG-only, poor performance, no active community support |
-| **@react-native-async-storage/async-storage** | 30x slower than MMKV, deprecated in Expo Go, no encryption |
-| **Clarifai as primary food AI** | 38% top-1 accuracy is insufficient for a core health tracking feature; users will lose trust quickly |
-| **styled-components in React Native** | Runtime style computation overhead; NativeWind or StyleSheet are better choices |
-| **Express 4.x** | Express 5.1 is now the npm default; async error handling alone justifies the upgrade |
-| **expo-camera (standalone)** | expo-image-picker covers 95% of use cases; only use expo-camera if you need a custom live camera UI |
-| **SQLite (expo-sqlite) as primary DB** | For a cloud-synced multi-device health app, MongoDB Atlas is the right choice; SQLite is for offline-first apps with optional sync |
-| **Firebase Realtime Database / Firestore** | Adds Google vendor lock-in on top of MongoDB; pick one database layer |
-| **passport-jwt alone** | Still needs a refresh token strategy; pair with your own refresh token endpoint and rotation logic |
-| **React Native Paper** | Heavy UI component library; for a custom-designed health app, NativeWind + custom components gives better design control |
+Use existing admin auth and TanStack Query patterns.
 
----
+### 2. Mobile Redeem Code Entry and QR Scan
 
-## Confidence Levels
+#### Packages
 
-| Area | Level | Reasoning |
-|------|-------|-----------|
-| Expo SDK version (53/54) | HIGH | Official Expo changelog verified |
-| Expo Router for navigation | HIGH | Official Expo recommendation, file-based routing is the new standard |
-| Zustand + TanStack Query | HIGH | Dominant 2025 pattern, verified across multiple independent sources |
-| MMKV over AsyncStorage | HIGH | Benchmark data from library author, official React Native community endorsement |
-| victory-native-xl for charts | MEDIUM-HIGH | Performance claims verified via Skia architecture; newer library, some rough edges |
-| NativeWind v4 | MEDIUM | v4 is relatively new, some Expo Router integration edge cases reported |
-| Express 5 | HIGH | Official release confirmed, npm default since March 2025 |
-| Mongoose 8.x | HIGH | Stable, official MongoDB docs recommend for most Node.js apps |
-| Cloudinary over S3 | MEDIUM-HIGH | Pricing and DX advantage clear for MVP scale; S3 better at 100k+ users |
-| LogMeal as primary AI API | MEDIUM | Accuracy from 2020 PMC study (best available benchmark); pricing requires direct contact; Vietnamese dish coverage unverified |
-| GPT-4o-mini Vision as fallback | MEDIUM-HIGH | Pricing from official OpenAI docs; accuracy for food is qualitative (no standardized benchmark) |
-| JWT + Passport for auth | MEDIUM-HIGH | Standard pattern; Apple Sign In passport strategy has less community documentation than Google |
+No new scanner package is needed. The mobile app already depends on `expo-camera`, and current Expo Camera `CameraView` supports `barcodeScannerSettings` and `onBarcodeScanned` for QR and common retail barcode types.
 
----
+Use:
+
+```typescript
+import { CameraView, useCameraPermissions } from 'expo-camera';
+```
+
+Recommended barcode types:
+
+```typescript
+['qr']
+```
+
+for campaign redemption QR screens, and:
+
+```typescript
+['ean13', 'ean8', 'upc_a', 'upc_e', 'code128']
+```
+
+for food barcode scanning.
+
+Keep QR redemption and food barcode scanning as two modes in the same camera infrastructure, not two different libraries.
+
+#### Do Not Add
+
+| Do Not Add | Why |
+|------------|-----|
+| `expo-barcode-scanner` | Deprecated/merged path; Expo Camera is the current API surface. |
+| `react-native-vision-camera` | Better for high-performance native camera workflows, but it adds native config complexity this milestone does not need. |
+| ML Kit barcode packages | Unnecessary unless Expo Camera proves inadequate in production testing. |
+
+### 3. BMI-Based Ủ Nut Milk Recommendation
+
+#### Packages
+
+No new package is needed.
+
+Implement as backend domain rules plus a stored user selection. This is deterministic business logic, not AI.
+
+Recommended backend additions:
+
+| Add | Where | Notes |
+|-----|-------|-------|
+| `milkRecommendation.service.ts` | `backend/src/api/bmi` or new `backend/src/api/milk` | Pure function from BMI + optional needs to ranked flavors |
+| `selectedMilkFlavor` field | User profile or separate `UserMilkPreference` collection | Store flavor id, selectedAt, source |
+| Optional admin config endpoint | Backend/admin | Only if product wants to edit rules without deployment |
+
+Start with code-based constants because the rule table is small and product-owned:
+
+| Flavor | Rule |
+|--------|------|
+| `rau-ma-sua-dua` | BMI > 23 |
+| `rau-ma-hat-sen` | Any BMI; highlight for stress/sleep |
+| `gao-lut-me-den-hat-sen` | BMI 18.5-22.9 |
+| `gao-lut-oc-cho-hanh-nhan` | BMI < 18.5 |
+| `hat-sen-oc-cho` | Any BMI; highlight for skipping breakfast/quick energy |
+
+Do not add a rules engine. If rules become admin-editable later, store a simple JSON rule table in MongoDB and validate with Zod.
+
+### 4. Barcode Scan to Supplement Food Scanning
+
+#### Packages
+
+No new mobile package. No backend SDK required.
+
+Use existing `expo-camera` on mobile to scan product barcodes, then call a backend endpoint:
+
+```text
+GET /api/food/barcode/:code
+```
+
+Backend uses existing `axios` to call Open Food Facts:
+
+```text
+GET https://world.openfoodfacts.org/api/v2/product/{barcode}.json
+```
+
+Use the v2 API first. Store normalized results in the existing food item schema or a new cached `BarcodeProduct` collection.
+
+Recommended `BarcodeProduct` fields:
+
+| Field | Why |
+|-------|-----|
+| `barcode` unique | Product lookup key |
+| `name` | Display/logging |
+| `brand` | Disambiguation |
+| `servingSize` | User confirmation |
+| `nutritionPer100g` | Consistent nutrition math |
+| `imageUrl` | UI confirmation |
+| `source` = `openfoodfacts` / `manual` | Trust/debugging |
+| `lastFetchedAt` | Refresh stale data |
+| `raw` optional | Debug source mismatches |
+
+Cache misses and allow manual entry because Vietnamese packaged-product coverage may be incomplete. Barcode scanning should supplement AI/manual food logging, not replace it.
+
+#### Do Not Add
+
+| Do Not Add | Why |
+|------------|-----|
+| A paid barcode database immediately | Validate Open Food Facts coverage first with real Vietnam products. |
+| Client-side Open Food Facts calls | Backend cache gives normalization, resilience, and source control. |
+| Nutrition scraping | Use official API fields only; scraping creates fragile data quality problems. |
+
+### 5. App Rating Prompt With Stars and Comment
+
+#### Mobile Package
+
+```bash
+cd mobile
+npx expo install expo-store-review
+```
+
+Use two layers:
+
+1. Custom in-app feedback modal for stars and comment.
+2. Optional `expo-store-review` native prompt only after positive feedback, e.g. 4-5 stars.
+
+`expo-store-review` cannot collect a custom comment for your backend; it triggers OS/app-store review UI. Therefore the custom rating/comment feature needs a backend model.
+
+#### Backend/Admin Additions
+
+Add `AppFeedback` collection:
+
+| Field | Notes |
+|-------|-------|
+| `userId` | Authenticated user |
+| `rating` | 1-5 |
+| `comment` | Optional, max length via Zod |
+| `trigger` | `food_scan`, `barcode_scan`, `workout_complete`, `bmi_recommendation`, etc. |
+| `appVersion` | From Expo constants/client config |
+| `platform` | iOS/Android |
+| `createdAt` | Admin sorting |
+
+Add:
+
+```text
+POST /api/feedback
+GET /api/admin/feedback
+```
+
+Use MMKV/Zustand or existing local state to suppress prompts after submission/dismissal. Do not prompt on first launch; trigger after meaningful completed actions.
+
+#### Do Not Add
+
+| Do Not Add | Why |
+|------------|-----|
+| A third-party star rating component | Five tappable icons are trivial and keep design consistent. |
+| A survey platform SDK | Too much integration surface for one modal and admin table. |
+| Store-review prompt as the only feature | It does not satisfy the requirement for stars + comment. |
+
+### 6. Easier Image Management for Hundreds of Exercise Records
+
+#### Packages
+
+No new storage service is needed. Reuse Cloudinary and the existing backend upload path.
+
+Add CSV parsing/stringifying on backend if exercise image mapping is imported/exported:
+
+```bash
+cd backend
+npm install csv-parse csv-stringify
+```
+
+Recommended workflow:
+
+1. Admin bulk uploads images to Cloudinary under a deterministic folder, e.g. `exercises/{exerciseId}` or `exercises/{slug}`.
+2. Backend stores both `imageUrl` and `imagePublicId`.
+3. Admin can export exercise IDs/slugs to CSV.
+4. Admin can import a CSV mapping `exerciseId, imageUrl, imagePublicId` or `slug, imageUrl`.
+5. Backend validates all rows with Zod and reports row-level errors.
+
+For browser-side upload UX, Cloudinary Upload Widget is acceptable for admin only, but signed backend upload is more consistent with current security. If using unsigned upload presets, lock them down by folder, file type, and max size because preset names are visible in client code.
+
+Recommended Cloudinary conventions:
+
+| Convention | Why |
+|------------|-----|
+| Store `publicId` in MongoDB | Enables replacement/deletion without URL parsing |
+| Use folders by content type | `exercises/`, `food-items/`, `campaign-qr/` |
+| Use upload transformations | Normalize thumbnails and reduce mobile payload |
+| Add admin batch validation | Prevent hundreds of broken image references |
+
+#### Do Not Add
+
+| Do Not Add | Why |
+|------------|-----|
+| S3/CloudFront for v2.0 | Cloudinary is already integrated and better for image transformations. |
+| A full DAM/CMS | Too heavy for exercise image assignment. |
+| Base64 image storage in MongoDB | Bloats documents and breaks CDN/image optimization. |
+| Manual per-record upload only | Does not solve the "hundreds of records" requirement. |
+
+## Updated Recommended Stack Table
+
+### Mobile
+
+| Technology | Version | Purpose | Decision |
+|------------|---------|---------|----------|
+| Expo SDK | Current repo `~54.0.0` | Mobile runtime | Keep |
+| `expo-camera` | Current repo `~17.0.10` | QR and barcode scanning | Keep; use `CameraView` |
+| `expo-store-review` | Expo-compatible install | Native app-store review prompt | Add |
+| TanStack Query | Current repo v5 | API state | Keep |
+| Zustand/MMKV | Current repo | Local prompt suppression and UI state | Keep |
+
+### Backend
+
+| Technology | Version | Purpose | Decision |
+|------------|---------|---------|----------|
+| Express | Current repo `^5.1.0` | API routes | Keep |
+| Mongoose | Current repo `^8.0.0` | Campaign/code/feedback/barcode schemas | Keep |
+| Zod | Current repo `^3.24.0` | API validation | Keep |
+| Cloudinary | Current repo `^2.0.0` | Exercise images and optional QR image hosting | Keep |
+| `qrcode` | Latest 1.x | QR generation | Add |
+| `archiver` | Latest | ZIP export for QR bundles | Add only if ZIP export is required |
+| `csv-parse` / `csv-stringify` | Latest | CSV import/export | Add |
+| Node `crypto` | Built-in | Secure code generation/hashing | Use instead of adding ID library |
+
+### Admin
+
+| Technology | Version | Purpose | Decision |
+|------------|---------|---------|----------|
+| React/Vite | Current repo | Admin UI | Keep |
+| TanStack Query/Table | Current repo | Campaign/code/feedback tables | Keep |
+| React Hook Form + Zod | Current repo | Campaign forms and imports | Keep |
+| Cloudinary Upload Widget | Hosted script, optional | Admin bulk image upload | Optional; prefer backend-signed flow if possible |
+| `qrcode` or backend-rendered QR | Latest 1.x or API output | Preview QR codes | Use backend output for consistency |
+
+## Implementation Integration Points
+
+| Feature | Mobile | Backend | Admin | Database |
+|---------|--------|---------|-------|----------|
+| Redeem codes | Code entry screen; QR scan mode; entitlement status in profile/scan UI | Campaign/code generation, redemption endpoint, AI scan entitlement check | Campaign CRUD, bulk generate, export CSV/ZIP, stats | `Campaign`, `RedeemCode` |
+| BMI milk recommendation | Display recommendation and selected flavor | Deterministic recommendation service; save selection endpoint | Optional read-only analytics later | User profile field or `UserMilkPreference` |
+| Barcode food scan | Barcode scan mode using `expo-camera` | Open Food Facts lookup, normalization, cache, log conversion | Optional barcode cache admin later | `BarcodeProduct` cache |
+| Rating prompt | Custom stars/comment modal; optional `expo-store-review` | Save feedback endpoint | Feedback table/filter/export | `AppFeedback` |
+| Exercise image management | Consume optimized image URLs | Batch image mapping import; Cloudinary public ID handling | Bulk upload/mapping UI, row-level errors | Exercise `imageUrl`, `imagePublicId` |
+
+## What Not To Add
+
+| Avoid | Reason |
+|-------|--------|
+| New database or Firebase/Firestore | MongoDB already fits campaign, feedback, cache, and preference documents. |
+| Subscription/paywall SDK | Campaign codes are not in-app subscriptions. Avoid App Store/Play billing complexity. |
+| E-commerce/checkout stack | Bottled milk campaign redemption is entitlement unlock, not purchase flow. |
+| Separate QR SaaS | `qrcode` is enough; generated assets can be exported or hosted in Cloudinary. |
+| `react-native-vision-camera` | Adds native complexity; Expo Camera is already installed and supports target scan types. |
+| Paid barcode database before validation | Open Food Facts may be enough; test Vietnam product coverage first. |
+| Rules engine for milk recommendation | Five product rules do not justify rules-engine complexity. |
+| New image storage provider | Cloudinary is already integrated and purpose-built for transformations/CDN. |
+| Third-party survey SDK | A simple feedback model and admin table are faster and own the data. |
+| AI for BMI flavor recommendation | Product gave deterministic rules; AI would reduce predictability and testability. |
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Keep core Expo/Express/Mongo stack | HIGH | Existing app already has required foundations. |
+| Expo Camera for QR/barcodes | HIGH | Official Expo Camera docs list QR, EAN, UPC, Code128, and related barcode types. |
+| `qrcode` for QR generation | HIGH | Mature Node/browser package, no external service needed. |
+| Open Food Facts lookup | MEDIUM | Official API is available, but Vietnam product coverage must be tested with real packages. |
+| `expo-store-review` | HIGH | Official Expo package; only covers native store prompt, not custom comment capture. |
+| Cloudinary for exercise image workflow | HIGH | Existing integration and official upload/widget support fit the use case. |
+| CSV/ZIP export libraries | MEDIUM-HIGH | Standard implementation path; exact need depends on print/vendor workflow. |
 
 ## Sources
 
-- Expo SDK changelog: https://expo.dev/changelog/sdk-54 and https://expo.dev/changelog
-- Expo Router navigation docs: https://docs.expo.dev/develop/app-navigation/
-- Expo push notifications setup: https://docs.expo.dev/push-notifications/push-notifications-setup/
-- Express 5 release: https://expressjs.com/2025/03/31/v5-1-latest-release.html
-- LogMeal API: https://logmeal.com/api/ and https://docs.logmeal.com/docs/guides-essential-concepts-plans-limits
-- Calorie Mama API accuracy study (PMC): https://pmc.ncbi.nlm.nih.gov/articles/PMC7752530/
-- OpenAI GPT-4o vision food tracker: https://dev.to/frosnerd/build-your-own-food-tracker-with-openai-platform-55n8
-- OpenAI pricing: https://openai.com/api/pricing/
-- victory-native-xl GitHub: https://github.com/FormidableLabs/victory-native-xl
-- React Native chart comparison 2025: https://blog.logrocket.com/top-react-native-chart-libraries/
-- MMKV benchmark: https://github.com/mrousavy/StorageBenchmark
-- Mongoose vs native driver: https://www.mongodb.com/developer/languages/javascript/mongoose-versus-nodejs-driver
-- Zustand + TanStack Query 2025: https://www.bugragulculer.com/blog/good-bye-redux-how-react-query-and-zustand-re-wired-state-management-in-25
-- Cloudinary React Native SDK: https://cloudinary.com/documentation/react_native_image_and_video_upload
-- NativeWind v5 docs: https://www.nativewind.dev/v5
-- Expo Tailwind CSS guide: https://docs.expo.dev/guides/tailwind/
+- Expo Camera SDK 54 docs: https://docs.expo.dev/versions/v54.0.0/sdk/camera
+- Expo StoreReview docs: https://docs.expo.dev/versions/latest/sdk/storereview
+- Expo SDK reference: https://docs.expo.dev/versions/v54.0.0
+- Open Food Facts API docs: https://openfoodfacts.github.io/documentation/docs/Product-Opener/api/
+- Open Food Facts product endpoint docs: https://openfoodfacts.github.io/documentation/docs/Product-Opener/v3/products/get-api-v3-product-code/
+- `qrcode` npm package: https://www.npmjs.com/package/qrcode
+- `csv-parse` npm package: https://www.npmjs.com/package/csv-parse
+- Cloudinary Upload Widget docs: https://cloudinary.com/documentation/upload_widget
+- Cloudinary Node SDK docs: https://cloudinary.com/documentation/node_integration
+- Cloudinary Node upload docs: https://cloudinary.com/documentation/node_image_and_video_upload
+- Cloudinary unsigned upload limitations: https://support.cloudinary.com/hc/en-us/articles/204046472-Which-upload-parameters-are-allowed-when-using-unsigned-upload
+
