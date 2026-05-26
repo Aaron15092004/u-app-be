@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
-status: planning
-last_updated: "2026-05-26T06:39:28.145Z"
-last_activity: 2026-05-26
+status: Defining requirements
+last_updated: "2026-05-26T07:36:28.584Z"
+last_activity: 2026-05-26 — Milestone v2.0 started
 progress:
   total_phases: 6
   completed_phases: 0
