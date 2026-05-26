@@ -1,18 +1,27 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../../middleware/auth.middleware';
 import { success, error } from '../../utils/response';
-import { submitAppRatingSchema } from './ratings.validation';
+import { listRatingsSchema, submitAppRatingSchema } from './ratings.validation';
+import {
+  getPromptStatus,
+  listRatings,
+  submitRating,
+} from './ratings.service';
 
-export const getRatingPromptStatus = async (_req: Request, res: Response): Promise<void> => {
-  success(res, {
-    promptKey: 'app_rating',
-    status: 'eligible',
-    cooldownUntil: null,
-    triggerCounts: {},
-    message: 'Luon prompt se duoc trien khai o Phase 6',
-  });
+export const getRatingPromptStatus = async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as AuthRequest).user.id;
+
+  try {
+    const result = await getPromptStatus(userId);
+    success(res, result);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Loi lay trang thai danh gia', e.statusCode ?? 500);
+  }
 };
 
 export const submitAppRating = async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as AuthRequest).user.id;
   const parseResult = submitAppRatingSchema.safeParse(req.body);
   if (!parseResult.success) {
     const firstError = parseResult.error.errors[0]?.message ?? 'Du lieu khong hop le';
@@ -20,5 +29,28 @@ export const submitAppRating = async (req: Request, res: Response): Promise<void
     return;
   }
 
-  error(res, 'Tinh nang gui danh gia se duoc trien khai o Phase 6', 501);
+  try {
+    const result = await submitRating(userId, parseResult.data);
+    success(res, result, 201);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Loi gui danh gia', e.statusCode ?? 500);
+  }
+};
+
+export const listAppRatings = async (req: Request, res: Response): Promise<void> => {
+  const parseResult = listRatingsSchema.safeParse(req.query);
+  if (!parseResult.success) {
+    const firstError = parseResult.error.errors[0]?.message ?? 'Du lieu khong hop le';
+    error(res, firstError, 400);
+    return;
+  }
+
+  try {
+    const result = await listRatings(parseResult.data);
+    success(res, result);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Loi lay danh sach danh gia', e.statusCode ?? 500);
+  }
 };

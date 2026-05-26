@@ -12,6 +12,7 @@ import {
   revokeCampaignHandler,
   revokeCodeHandler,
 } from '../campaigns/campaigns.controller';
+import { listAppRatings } from '../ratings/ratings.controller';
 
 const router = Router();
 
@@ -37,8 +38,8 @@ router.get('/campaigns/:id/codes', listCampaignCodesHandler);
 router.get('/campaigns/:id/codes/export.csv', exportCampaignCodesCsvHandler);
 router.patch('/campaigns/codes/:codeId/revoke', revokeCodeHandler);
 
-// v2 feedback/admin rating scaffold (Phase 6)
-router.get('/ratings', phaseScaffold('Danh sach danh gia ung dung'));
+// v2 internal feedback ratings (Phase 2 MVP)
+router.get('/ratings', listAppRatings);
 
 // v2 media asset scaffolds (Phase 5)
 router.use('/media-assets', mediaAssetsRouter);

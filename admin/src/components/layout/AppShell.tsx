@@ -1,11 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Dumbbell, Apple, Users, LogOut, LayoutDashboard } from 'lucide-react';
+import { Dumbbell, Apple, Users, LogOut, LayoutDashboard, Ticket, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/lib/auth-api';
 
 const NAV_ITEMS = [
   { to: '/exercises', icon: Dumbbell, label: 'Bài tập' },
   { to: '/food-items', icon: Apple, label: 'Thực phẩm' },
+  { to: '/campaigns', icon: Ticket, label: 'Mã scan AI' },
+  { to: '/ratings', icon: Star, label: 'Đánh giá' },
   { to: '/users', icon: Users, label: 'Người dùng' },
 ];
 

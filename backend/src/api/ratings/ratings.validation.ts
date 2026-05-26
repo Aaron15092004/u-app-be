@@ -26,4 +26,10 @@ export const feedbackPromptStatusSchema = z.object({
   triggerCounts: z.record(z.string(), z.number().int().min(0)).default({}),
 });
 
+export const listRatingsSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type SubmitAppRatingInput = z.infer<typeof submitAppRatingSchema>;
+export type ListRatingsInput = z.infer<typeof listRatingsSchema>;

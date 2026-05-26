@@ -38,9 +38,15 @@ export interface AdminV2RedeemCodeMetadata {
   updatedAt: string;
 }
 
-export interface AdminV2GeneratedRedeemCodeExportRow extends AdminV2RedeemCodeMetadata {
+export interface AdminV2GeneratedRedeemCodeExportRow {
   rawCode: string;
   redeemUrl: string;
+  codePrefix: string;
+  campaignId: string;
+  campaignName: string;
+  batchId: string;
+  expiresAt: string | null;
+  entitlementDurationDays: number;
 }
 
 export interface AdminV2ScanQuotaPolicy {
@@ -94,7 +100,7 @@ export type AdminV2PromptStatus = 'eligible' | 'dismissed' | 'submitted' | 'cool
 
 export interface AdminV2AppRating {
   _id: string;
-  userId: string;
+  userId: string | { _id: string; email?: string; name?: string };
   stars: number;
   comment?: string;
   trigger: AdminV2RatingTrigger;
