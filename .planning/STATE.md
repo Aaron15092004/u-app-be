@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
 status: executing
-last_updated: "2026-05-26T08:38:03.414Z"
+last_updated: "2026-05-26T11:28:34.214Z"
 last_activity: 2026-05-26
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — v2 Data Foundation — **In progress** (Plan 3 of 5 complete)
+Phase 1 — v2 Data Foundation — **In progress** (Plan 4 of 5 complete)
 
 ## Status
 
-Phase 1 execution is underway. Plan 01-03 added v2 API route scaffolds; next action is Plan 01-04.
+Phase 1 execution is underway. Plan 01-04 added mobile/admin v2 DTO contracts; next action is Plan 01-05.
 
 ## Phase Progress
 
@@ -37,7 +37,7 @@ Phase 1 execution is underway. Plan 01-03 added v2 API route scaffolds; next act
 ## Progress Bar
 
 ```
-Phase 1 [######----] 60%
+Phase 1 [########--] 80%
 Phase 2 [----------] 0%
 Phase 3 [----------] 0%
 Phase 4 [----------] 0%
@@ -49,8 +49,8 @@ Phase 6 [----------] 0%
 
 - Requirements covered: 36/36
 - Phases completed: 0/6
-- Plans completed: 3/5
-- Last plan metric: Phase 01 Plan 03 completed in 407s, 2 tasks, 18 files
+- Plans completed: 4/5
+- Last plan metric: Phase 01 Plan 04 completed in 408s, 2 tasks, 4 files
 
 ## Accumulated Context
 
@@ -67,6 +67,10 @@ Phase 6 [----------] 0%
 - Phase 01 Plan 03: GET /api/recommendations/nut-milk returns static backend nut-milk rules from Plan 01-02.
 - Phase 01 Plan 03: Barcode route validates 6-18 digit strings and never coerces barcode values to numbers.
 - Phase 01 Plan 03: Admin campaign, rating, and media asset scaffolds are mounted only below the existing router-level admin guard.
+- Phase 01 Plan 04: Persisted client/admin redeem-code DTOs expose `codeHash`, `codePrefix`, status, and metadata only; `rawCode` is limited to explicit response-only export rows.
+- Phase 01 Plan 04: Scan entitlement DTOs carry `activeUntil`, `campaignId`, `redeemCodeId`, and finite `high_daily_quota` policy metadata.
+- Phase 01 Plan 04: Barcode contract DTOs keep barcode values as strings and expose `isSaveReady` plus required macro fields for minimum nutrition readiness.
+- Phase 01 Plan 04: Exercise `imageUrl` remains unchanged while optional `imageAssetId` prepares future media asset workflows.
 - Stack: Expo SDK 54 + React 19 + Express 5.1 + MongoDB Atlas M2 + LogMeal/GPT-4o-mini + Cloudinary + Firebase FCM
 - AI food scan proxied through backend — never called directly from client
 - Apple Sign In is required (App Store Guideline 4.8) when any OAuth is present
@@ -257,17 +261,17 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 01 Plan 03 complete (commits 49427d2, f1cb52d). Added authenticated user/admin API scaffolds and barcode validation contracts.
-**Next action**: Execute Phase 01 Plan 04.
+**Last action**: Phase 01 Plan 04 complete (commits e7344f5, d9f8105). Added mobile/admin v2 DTO contracts and typed mobile scaffold helpers.
+**Next action**: Execute Phase 01 Plan 05.
 **Resume file**: None
 
 ## Last Updated
 
-2026-05-26 (Phase 01 Plan 03 complete)
+2026-05-26 (Phase 01 Plan 04 complete)
 
 ## Current Position
 
 Phase: 01 (v2 Data Foundation) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-05-26
