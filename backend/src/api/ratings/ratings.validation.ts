@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
-export const ratingTriggerSchema = z.enum(['food_scan', 'barcode_scan', 'workout_complete', 'bmi_result', 'profile']);
-export const ratingPlatformSchema = z.enum(['ios', 'android', 'web']);
+export const ratingTriggerSchema = z.enum([
+  'food_scan_saved',
+  'workout_completed',
+  'habit_streak',
+  'profile_prompt',
+  'manual',
+]);
+export const ratingPlatformSchema = z.enum(['ios', 'android', 'web', 'unknown']);
 
 export const submitAppRatingSchema = z.object({
   stars: z.number().int().min(1).max(5),
@@ -9,8 +15,8 @@ export const submitAppRatingSchema = z.object({
   trigger: ratingTriggerSchema,
   appVersion: z.string().trim().max(50).optional(),
   platform: ratingPlatformSchema,
-  deviceInfo: z.record(z.string(), z.string()).optional(),
-  storeReviewPrompted: z.boolean().optional(),
+  deviceInfo: z.record(z.string(), z.unknown()).optional(),
+  storeReviewRequested: z.boolean().optional(),
 });
 
 export const feedbackPromptStatusSchema = z.object({

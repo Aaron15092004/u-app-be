@@ -355,8 +355,13 @@ export interface IV2NutMilkPreference {
   updatedAt: string;
 }
 
-export type IV2RatingTrigger = 'food_scan' | 'barcode_scan' | 'workout_complete' | 'bmi_result' | 'profile';
-export type IV2RatingPlatform = 'ios' | 'android' | 'web';
+export type IV2RatingTrigger =
+  | 'food_scan_saved'
+  | 'workout_completed'
+  | 'habit_streak'
+  | 'profile_prompt'
+  | 'manual';
+export type IV2RatingPlatform = 'ios' | 'android' | 'web' | 'unknown';
 export type IV2PromptStatus = 'eligible' | 'dismissed' | 'submitted' | 'cooldown';
 
 export interface IV2SubmitAppRatingRequest {
@@ -365,8 +370,8 @@ export interface IV2SubmitAppRatingRequest {
   trigger: IV2RatingTrigger;
   appVersion?: string;
   platform: IV2RatingPlatform;
-  deviceInfo?: Record<string, string>;
-  storeReviewPrompted?: boolean;
+  deviceInfo?: Record<string, unknown>;
+  storeReviewRequested?: boolean;
 }
 
 export interface IV2AppRating {
@@ -377,8 +382,8 @@ export interface IV2AppRating {
   trigger: IV2RatingTrigger;
   appVersion?: string;
   platform: IV2RatingPlatform;
-  deviceInfo?: Record<string, string>;
-  storeReviewPrompted?: boolean;
+  deviceInfo?: Record<string, unknown>;
+  storeReviewRequested?: boolean;
   storeReviewEligible?: boolean;
   createdAt: string;
   updatedAt: string;

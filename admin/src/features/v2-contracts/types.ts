@@ -62,35 +62,34 @@ export interface AdminV2UserScanEntitlement {
   updatedAt: string;
 }
 
-export type AdminV2MediaAssetStatus = 'uploaded' | 'assigned' | 'orphaned' | 'deleted';
-export type AdminV2MediaAssetSource = 'admin_upload' | 'bulk_import' | 'cloudinary_existing';
+export type AdminV2MediaAssetStatus = 'uploaded' | 'assigned' | 'failed' | 'archived';
+export type AdminV2MediaAssetSource = 'admin_upload' | 'bulk_import' | 'external_url';
 
 export interface AdminV2MediaAsset {
   _id: string;
   source: AdminV2MediaAssetSource;
   status: AdminV2MediaAssetStatus;
   batchId?: string;
-  originalFilename: string;
-  mimeType: string;
-  sizeBytes: number;
+  publicId: string;
+  url: string;
   width?: number;
   height?: number;
-  cloudinaryPublicId?: string;
-  url?: string;
+  bytes?: number;
+  mimeType?: string;
   assignedExerciseId?: string;
-  altText?: string;
-  createdBy?: string;
+  uploadedBy?: string;
+  metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
 
 export type AdminV2RatingTrigger =
-  | 'food_scan'
-  | 'barcode_scan'
-  | 'workout_complete'
-  | 'bmi_result'
-  | 'profile';
-export type AdminV2RatingPlatform = 'ios' | 'android' | 'web';
+  | 'food_scan_saved'
+  | 'workout_completed'
+  | 'habit_streak'
+  | 'profile_prompt'
+  | 'manual';
+export type AdminV2RatingPlatform = 'ios' | 'android' | 'web' | 'unknown';
 export type AdminV2PromptStatus = 'eligible' | 'dismissed' | 'submitted' | 'cooldown';
 
 export interface AdminV2AppRating {
@@ -101,8 +100,8 @@ export interface AdminV2AppRating {
   trigger: AdminV2RatingTrigger;
   appVersion?: string;
   platform: AdminV2RatingPlatform;
-  deviceInfo?: Record<string, string>;
-  storeReviewPrompted?: boolean;
+  deviceInfo?: Record<string, unknown>;
+  storeReviewRequested?: boolean;
   storeReviewEligible?: boolean;
   createdAt: string;
   updatedAt: string;

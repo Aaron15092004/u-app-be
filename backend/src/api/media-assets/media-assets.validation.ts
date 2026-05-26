@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-export const mediaAssetStatusSchema = z.enum(['uploaded', 'assigned', 'orphaned', 'deleted']);
-export const mediaAssetSourceSchema = z.enum(['admin_upload', 'bulk_import', 'cloudinary_existing']);
+export const mediaAssetStatusSchema = z.enum(['uploaded', 'assigned', 'failed', 'archived']);
+export const mediaAssetSourceSchema = z.enum(['admin_upload', 'bulk_import', 'external_url']);
 
 export const listMediaAssetsSchema = z.object({
   status: mediaAssetStatusSchema.optional(),
@@ -14,19 +14,19 @@ export const listMediaAssetsSchema = z.object({
 export const createMediaAssetUploadSchema = z.object({
   source: mediaAssetSourceSchema.default('admin_upload'),
   batchId: z.string().trim().min(1).max(120).optional(),
-  originalFilename: z.string().trim().min(1).max(255),
+  publicId: z.string().trim().min(1).max(255),
+  url: z.string().url(),
   mimeType: z.string().trim().min(1).max(100),
-  sizeBytes: z.number().int().nonnegative(),
+  bytes: z.number().int().nonnegative().optional(),
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
-  cloudinaryPublicId: z.string().trim().min(1).max(255).optional(),
-  url: z.string().url().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const updateMediaAssetSchema = z.object({
   status: mediaAssetStatusSchema.optional(),
   assignedExerciseId: z.string().trim().min(1).optional(),
-  altText: z.string().trim().max(255).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ListMediaAssetsInput = z.infer<typeof listMediaAssetsSchema>;

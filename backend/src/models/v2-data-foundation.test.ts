@@ -12,6 +12,16 @@ import NutMilkPreference from './NutMilkPreference';
 import FeedbackPromptState from './FeedbackPromptState';
 import AppRating from './AppRating';
 import { NUT_MILK_FLAVORS, getNutMilkBmiRule } from '../api/recommendations/nut-milk.rules';
+import {
+  createMediaAssetUploadSchema,
+  mediaAssetSourceSchema,
+  mediaAssetStatusSchema,
+} from '../api/media-assets/media-assets.validation';
+import {
+  ratingPlatformSchema,
+  ratingTriggerSchema,
+  submitAppRatingSchema,
+} from '../api/ratings/ratings.validation';
 
 interface SchemaBackedModel {
   schema: {
@@ -99,6 +109,26 @@ test('MediaAsset stores source, batchId, status, assignment, and asset metadata 
   assert.ok(indexExists(MediaAsset, { batchId: 1, createdAt: -1 }, { sparse: true }));
 });
 
+test('MediaAsset validation enums and payload fields match the persisted model contract', () => {
+  assert.deepEqual(mediaAssetSourceSchema.options, ['admin_upload', 'bulk_import', 'external_url']);
+  assert.deepEqual(mediaAssetStatusSchema.options, ['uploaded', 'assigned', 'failed', 'archived']);
+
+  const parsed = createMediaAssetUploadSchema.parse({
+    source: 'external_url',
+    publicId: 'u-app/exercises/example',
+    url: 'https://res.cloudinary.com/demo/image/upload/example.jpg',
+    mimeType: 'image/jpeg',
+    bytes: 12345,
+    metadata: { importedBy: 'test' },
+  });
+
+  assert.equal(parsed.publicId, 'u-app/exercises/example');
+  assert.equal(parsed.bytes, 12345);
+  assert.equal('cloudinaryPublicId' in parsed, false);
+  assert.equal('sizeBytes' in parsed, false);
+  assert.equal('originalFilename' in parsed, false);
+});
+
 test('NutMilkPreference is separate from User and static recommendation rules are code constants', () => {
   assert.equal(NutMilkPreference.modelName, 'NutMilkPreference');
   assert.ok(NutMilkPreference.schema.path('selectedFlavorId'));
@@ -122,4 +152,26 @@ test('FeedbackPromptState and AppRating are separate internal feedback contracts
   assert.ok(AppRating.schema.path('trigger'));
   assert.ok(AppRating.schema.path('storeReviewRequested'));
   assert.equal(pathDefault(AppRating, 'storeReviewRequested'), false);
+});
+
+test('AppRating validation enums and payload fields match the persisted model contract', () => {
+  assert.deepEqual(ratingTriggerSchema.options, [
+    'food_scan_saved',
+    'workout_completed',
+    'habit_streak',
+    'profile_prompt',
+    'manual',
+  ]);
+  assert.deepEqual(ratingPlatformSchema.options, ['ios', 'android', 'web', 'unknown']);
+
+  const parsed = submitAppRatingSchema.parse({
+    stars: 5,
+    trigger: 'food_scan_saved',
+    platform: 'unknown',
+    deviceInfo: { build: 42 },
+    storeReviewRequested: true,
+  });
+
+  assert.equal(parsed.storeReviewRequested, true);
+  assert.equal('storeReviewPrompted' in parsed, false);
 });
