@@ -18,11 +18,62 @@ import {
 } from './campaigns.validation';
 
 const DEFAULT_REDEEM_BASE_URL = 'https://u-app.vn/redeem';
+const REDEEM_ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
+const REDEEM_ATTEMPT_LIMIT = 8;
 
-function makeError(message: string, statusCode: number): Error & { statusCode: number } {
-  const err = new Error(message) as Error & { statusCode: number };
+type RedeemErrorCode =
+  | 'INVALID_CODE'
+  | 'ALREADY_USED'
+  | 'EXPIRED'
+  | 'REVOKED'
+  | 'INACTIVE_CAMPAIGN'
+  | 'RATE_LIMITED'
+  | 'SERVER_ERROR';
+
+interface RedeemAttemptBucket {
+  count: number;
+  resetAt: number;
+}
+
+const redeemAttemptBuckets = new Map<string, RedeemAttemptBucket>();
+
+function makeError(
+  message: string,
+  statusCode: number,
+  code: RedeemErrorCode = 'SERVER_ERROR',
+): Error & { statusCode: number; errorCode: RedeemErrorCode } {
+  const err = new Error(message) as Error & { statusCode: number; errorCode: RedeemErrorCode };
   err.statusCode = statusCode;
+  err.errorCode = code;
   return err;
+}
+
+function redeemAttemptKey(userId: string, ip?: string): string {
+  return `${userId}:${ip ?? 'unknown'}`;
+}
+
+export function clearRedeemAttemptLimitForTests(): void {
+  redeemAttemptBuckets.clear();
+}
+
+function assertRedeemAttemptAllowed(userId: string, ip?: string): void {
+  const now = Date.now();
+  const key = redeemAttemptKey(userId, ip);
+  const bucket = redeemAttemptBuckets.get(key);
+
+  if (!bucket || bucket.resetAt <= now) {
+    redeemAttemptBuckets.set(key, { count: 1, resetAt: now + REDEEM_ATTEMPT_WINDOW_MS });
+    return;
+  }
+
+  bucket.count += 1;
+  if (bucket.count > REDEEM_ATTEMPT_LIMIT) {
+    throw makeError(
+      'Ban thu kich hoat qua nhieu lan. Vui long doi it phut roi thu lai.',
+      429,
+      'RATE_LIMITED',
+    );
+  }
 }
 
 function addDays(date: Date, days: number): Date {
@@ -243,34 +294,37 @@ export async function revokeCode(codeId: string): Promise<object> {
 export async function redeemCampaignCode(
   userId: string,
   input: RedeemCampaignCodeInput,
+  context?: { ip?: string },
 ): Promise<object> {
+  assertRedeemAttemptAllowed(userId, context?.ip);
+
   const now = new Date();
   const codeHash = hashRedeemCode(input.code);
   const code = await RedeemCode.findOne({ codeHash });
 
   if (!code) {
-    throw makeError('Ma kich hoat khong hop le', 404);
+    throw makeError('Ma kich hoat khong hop le', 404, 'INVALID_CODE');
   }
   if (code.status === 'redeemed') {
-    throw makeError('Ma kich hoat da duoc su dung', 409);
+    throw makeError('Ma kich hoat da duoc su dung', 409, 'ALREADY_USED');
   }
   if (code.status === 'revoked') {
-    throw makeError('Ma kich hoat da bi thu hoi', 410);
+    throw makeError('Ma kich hoat da bi thu hoi', 410, 'REVOKED');
   }
   if (code.expiresAt && code.expiresAt.getTime() < now.getTime()) {
     await RedeemCode.updateOne(
       { _id: code._id, status: 'unused' },
       { $set: { status: 'expired' } },
     );
-    throw makeError('Ma kich hoat da het han', 410);
+    throw makeError('Ma kich hoat da het han', 410, 'EXPIRED');
   }
 
   const campaign = await Campaign.findById(code.campaignId);
   if (!campaign || campaign.status !== 'active') {
-    throw makeError('Campaign hien khong hoat dong', 409);
+    throw makeError('Campaign hien khong hoat dong', 409, 'INACTIVE_CAMPAIGN');
   }
   if (campaign.startsAt.getTime() > now.getTime() || campaign.endsAt.getTime() < now.getTime()) {
-    throw makeError('Campaign khong nam trong thoi gian kich hoat', 409);
+    throw makeError('Campaign khong nam trong thoi gian kich hoat', 409, 'INACTIVE_CAMPAIGN');
   }
 
   const updatedCode = await RedeemCode.findOneAndUpdate(
@@ -287,7 +341,7 @@ export async function redeemCampaignCode(
   );
 
   if (!updatedCode) {
-    throw makeError('Ma kich hoat da duoc su dung', 409);
+    throw makeError('Ma kich hoat da duoc su dung', 409, 'ALREADY_USED');
   }
 
   const activeUntil = addDays(now, campaign.entitlementDurationDays);

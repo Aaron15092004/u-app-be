@@ -337,6 +337,48 @@ test('GET /api/food/items/barcode/:barcode accepts leading-zero string route con
   assert.equal(res.body.data.source, 'open_food_facts');
   assert.equal(res.body.data.isSaveReady, true);
   assert.equal(res.body.data.minimumNutrition.calories, 120);
+
+  const cached = await FoodItem.findOne({ barcodes: '0123456789012' }).lean();
+  assert.ok(cached);
+  assert.equal(cached.barcodeSource, 'open_food_facts');
+  assert.ok(cached.barcodeLastVerifiedAt);
+});
+
+test('GET /api/food/items/barcode/:barcode uses local cache before external provider', async () => {
+  await FoodItem.create({
+    name: 'Sua hat cache',
+    barcodes: ['0011223344556'],
+    brand: 'U',
+    kcalPer100g: 88,
+    protein: 3,
+    carbs: 12,
+    fat: 2,
+    fiber: 1,
+    sugar: 4,
+    sodium: 20,
+    vitaminC: 0,
+    source: 'manual',
+    barcodeSource: 'manual',
+    barcodeLastVerifiedAt: new Date('2026-05-01T00:00:00.000Z'),
+  });
+
+  const originalFetch = global.fetch;
+  let fetchCalled = false;
+  global.fetch = (async () => {
+    fetchCalled = true;
+    throw new Error('external should not be called');
+  }) as unknown as typeof fetch;
+
+  const res = await request(app)
+    .get('/api/food/items/barcode/0011223344556')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  global.fetch = originalFetch;
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.data.source, 'local');
+  assert.equal(res.body.data.minimumNutrition.calories, 88);
+  assert.equal(fetchCalled, false);
 });
 
 test('GET /api/food/items/barcode/:barcode rejects invalid barcode params', async () => {

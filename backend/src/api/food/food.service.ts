@@ -6,6 +6,7 @@ import UserScanEntitlement from '../../models/UserScanEntitlement';
 import { vietnamDayStart } from '../../utils/date';
 import { saveFoodLogSchema } from './food.validation';
 import { z } from 'zod';
+import { lookupBarcodeProduct, BarcodeLookupResult } from './barcode-provider.service';
 
 const SCAN_DAILY_LIMIT = 20;
 const ENTITLEMENT_SCAN_DAILY_LIMIT = 30;
@@ -219,4 +220,103 @@ export async function searchFoodItems(query: string): Promise<object[]> {
     .sort({ score: { $meta: 'textScore' } })
     .limit(10)
     .lean();
+}
+
+function localBarcodeResult(barcode: string, item: {
+  _id: unknown;
+  name: string;
+  brand?: string;
+  servingSizeG?: number;
+  packageSize?: string;
+  kcalPer100g: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
+  vitaminC?: number;
+  barcodeSource?: 'manual' | 'open_food_facts' | 'admin_import';
+  barcodeLastVerifiedAt?: Date;
+}): BarcodeLookupResult {
+  return {
+    barcode,
+    found: true,
+    source: item.barcodeSource === 'open_food_facts' ? 'open_food_facts' : 'local',
+    productId: String(item._id),
+    name: item.name,
+    brand: item.brand,
+    servingSizeG: item.servingSizeG,
+    packageSize: item.packageSize,
+    calories: item.kcalPer100g,
+    protein: item.protein,
+    carbs: item.carbs,
+    fat: item.fat,
+    fiber: item.fiber,
+    sugar: item.sugar,
+    sodium: item.sodium,
+    vitaminC: item.vitaminC,
+    isSaveReady: true,
+    minimumNutrition: {
+      name: item.name,
+      calories: item.kcalPer100g,
+      protein: item.protein,
+      carbs: item.carbs,
+      fat: item.fat,
+    },
+    missingFields: [],
+    provenance: {
+      provider: item.barcodeSource === 'open_food_facts' ? 'open_food_facts' : 'local',
+      fetchedAt: new Date().toISOString(),
+      lastVerifiedAt: item.barcodeLastVerifiedAt?.toISOString() ?? null,
+    },
+    message: 'Da tim thay san pham trong du lieu noi bo',
+  };
+}
+
+export async function lookupFoodItemByBarcode(barcode: string): Promise<BarcodeLookupResult> {
+  const local = await FoodItem.findOne({ barcodes: barcode }).lean();
+  if (local) {
+    return localBarcodeResult(barcode, local);
+  }
+
+  const external = await lookupBarcodeProduct(barcode);
+  if (external.found && external.isSaveReady && external.minimumNutrition) {
+    const now = new Date();
+    await FoodItem.updateOne(
+      { barcodes: barcode },
+      {
+        $setOnInsert: {
+          name: external.minimumNutrition.name,
+          nameEn: external.name,
+          barcodes: [barcode],
+          brand: external.brand,
+          packageSize: external.packageSize,
+          servingSizeG: external.servingSizeG,
+          kcalPer100g: external.minimumNutrition.calories,
+          protein: external.minimumNutrition.protein,
+          carbs: external.minimumNutrition.carbs,
+          fat: external.minimumNutrition.fat,
+          fiber: external.fiber ?? 0,
+          sugar: external.sugar ?? 0,
+          sodium: external.sodium ?? 0,
+          vitaminC: external.vitaminC ?? 0,
+          barcodeSource: 'open_food_facts',
+          barcodeLastVerifiedAt: now,
+          source: 'openfoods',
+          imageUrl: null,
+        },
+      },
+      { upsert: true },
+    );
+    return {
+      ...external,
+      provenance: {
+        ...external.provenance,
+        lastVerifiedAt: now.toISOString(),
+      },
+    };
+  }
+
+  return external;
 }

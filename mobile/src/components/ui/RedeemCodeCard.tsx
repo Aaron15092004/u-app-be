@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { redeemCampaignCodeApi } from "../../lib/api/v2-contracts.api";
@@ -21,9 +21,10 @@ export default function RedeemCodeCard({
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const normalizedCode = useMemo(() => normalizeRedeemInput(code), [code]);
 
   const mutation = useMutation({
-    mutationFn: () => redeemCampaignCodeApi({ code, source: "manual" }),
+    mutationFn: () => redeemCampaignCodeApi({ code: normalizedCode, source: "manual" }),
     onSuccess: async (result) => {
       setIsSuccess(true);
       setMessage(result.message || "Kích hoạt thành công.");
@@ -32,14 +33,16 @@ export default function RedeemCodeCard({
       onRedeemed?.(result);
     },
     onError: (err: unknown) => {
-      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      const e = err as { response?: { data?: { error?: string; code?: string } }; message?: string };
       setIsSuccess(false);
-      setMessage(e.response?.data?.error ?? e.message ?? "Không thể kích hoạt mã. Vui lòng thử lại.");
+      setMessage(
+        redeemErrorMessage(e.response?.data?.code, e.response?.data?.error ?? e.message),
+      );
     },
   });
 
   function submit() {
-    const trimmed = code.trim();
+    const trimmed = normalizedCode.trim();
     if (!trimmed) {
       setIsSuccess(false);
       setMessage("Vui lòng nhập mã trên chai sữa.");
@@ -56,10 +59,14 @@ export default function RedeemCodeCard({
       <View style={styles.row}>
         <TextInput
           value={code}
-          onChangeText={setCode}
-          placeholder="VD: U-ABCD-1234"
+          onChangeText={(value) => {
+            setCode(formatRedeemInput(value));
+            if (message) setMessage(null);
+          }}
+          placeholder="VD: ABCD 1234 EFGH"
           autoCapitalize="characters"
           autoCorrect={false}
+          keyboardType="ascii-capable"
           style={styles.input}
           editable={!mutation.isPending}
         />
@@ -71,7 +78,7 @@ export default function RedeemCodeCard({
         label={mutation.isPending ? "Đang kích hoạt..." : "Kích hoạt"}
         onPress={submit}
         loading={mutation.isPending}
-        disabled={!code.trim()}
+        disabled={!normalizedCode.trim()}
       />
       {mutation.isPending && <ActivityIndicator color={PRIMARY_DARK} style={styles.inlineLoading} />}
     </View>
@@ -111,3 +118,31 @@ const styles = StyleSheet.create({
   error: { color: "#D32F2F" },
   inlineLoading: { marginTop: -4 },
 });
+
+function normalizeRedeemInput(value: string): string {
+  return value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+}
+
+function formatRedeemInput(value: string): string {
+  const normalized = normalizeRedeemInput(value).slice(0, 64);
+  return normalized.replace(/(.{4})/g, "$1 ").trim();
+}
+
+function redeemErrorMessage(code?: string, fallback?: string): string {
+  switch (code) {
+    case "INVALID_CODE":
+      return "Mã không hợp lệ. Vui lòng kiểm tra lại ký tự trên chai.";
+    case "ALREADY_USED":
+      return "Mã này đã được sử dụng.";
+    case "EXPIRED":
+      return "Mã này đã hết hạn.";
+    case "REVOKED":
+      return "Mã này đã bị thu hồi.";
+    case "INACTIVE_CAMPAIGN":
+      return "Chương trình mã này hiện chưa hoạt động.";
+    case "RATE_LIMITED":
+      return "Bạn nhập sai quá nhiều lần. Vui lòng đợi ít phút rồi thử lại.";
+    default:
+      return fallback ?? "Không thể kích hoạt mã. Vui lòng thử lại.";
+  }
+}

@@ -23,6 +23,8 @@ import RedeemCode from '../../models/RedeemCode';
 import User from '../../models/User';
 import UserScanEntitlement from '../../models/UserScanEntitlement';
 import { signAccessToken } from '../../utils/jwt';
+import { hashRedeemCode } from '../../services/redeem-code.service';
+import { clearRedeemAttemptLimitForTests } from './campaigns.service';
 
 let mongoServer: MongoMemoryServer;
 let userToken: string;
@@ -43,6 +45,7 @@ beforeEach(async () => {
   await Campaign.deleteMany({});
   await RedeemCode.deleteMany({});
   await UserScanEntitlement.deleteMany({});
+  clearRedeemAttemptLimitForTests();
 
   const user = await User.create({
     email: 'campaign-user@example.com',
@@ -131,7 +134,68 @@ test('manual redeem creates a 30/day entitlement and rejects duplicate use', asy
     .set('Authorization', `Bearer ${userToken}`)
     .send({ code: rawCode, source: 'manual' });
   assert.equal(duplicate.status, 409);
+  assert.equal(duplicate.body.code, 'ALREADY_USED');
   assert.match(duplicate.body.error, /da duoc su dung/);
+});
+
+test('manual redeem returns status-specific invalid, revoked, and expired errors', async () => {
+  const campaign = await createActiveCampaign();
+  const generate = await request(app)
+    .post(`/api/admin/campaigns/${campaign._id}/codes/generate`)
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ quantity: 2, codeLength: 12 });
+  const revokedCode = generate.body.data.rows[0].rawCode;
+  const expiredCode = generate.body.data.rows[1].rawCode;
+
+  const invalid = await request(app)
+    .post('/api/campaigns/redeem')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ code: 'NOTAREALCODE', source: 'manual' });
+  assert.equal(invalid.status, 404);
+  assert.equal(invalid.body.code, 'INVALID_CODE');
+
+  const persistedRevoked = await RedeemCode.findOne({ codeHash: hashRedeemCode(revokedCode) });
+  assert.ok(persistedRevoked);
+  await RedeemCode.updateOne({ _id: persistedRevoked._id }, { $set: { status: 'revoked' } });
+
+  const revoked = await request(app)
+    .post('/api/campaigns/redeem')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ code: revokedCode, source: 'manual' });
+  assert.equal(revoked.status, 410);
+  assert.equal(revoked.body.code, 'REVOKED');
+
+  const persistedExpired = await RedeemCode.findOne({ codeHash: hashRedeemCode(expiredCode) });
+  assert.ok(persistedExpired);
+  await RedeemCode.updateOne(
+    { _id: persistedExpired._id },
+    { $set: { expiresAt: new Date(Date.now() - 1000) } },
+  );
+
+  const expired = await request(app)
+    .post('/api/campaigns/redeem')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ code: expiredCode, source: 'manual' });
+  assert.equal(expired.status, 410);
+  assert.equal(expired.body.code, 'EXPIRED');
+});
+
+test('manual redeem attempts are rate-limited by user and IP', async () => {
+  for (let i = 0; i < 8; i += 1) {
+    const res = await request(app)
+      .post('/api/campaigns/redeem')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ code: `BADCODE${i}`, source: 'manual' });
+    assert.equal(res.status, 404);
+  }
+
+  const limited = await request(app)
+    .post('/api/campaigns/redeem')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ code: 'BADCODE9', source: 'manual' });
+
+  assert.equal(limited.status, 429);
+  assert.equal(limited.body.code, 'RATE_LIMITED');
 });
 
 test('campaign APIs stay admin-only', async () => {

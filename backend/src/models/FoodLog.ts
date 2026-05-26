@@ -4,7 +4,7 @@ export interface IFoodLog extends Document {
   userId: mongoose.Types.ObjectId;
   date: Date;
   imageUrl: string | null;
-  aiProvider: 'openai' | 'logmeal' | 'manual';
+  aiProvider: 'gemini' | 'logmeal' | 'manual';
   foods: Array<{
     name: string;
     weightG?: number;
@@ -16,6 +16,11 @@ export interface IFoodLog extends Document {
     sugar: number;
     sodium?: number;
     vitaminC?: number;
+    vitamins?: Record<string, number>;
+    minerals?: Record<string, number>;
+    source?: 'ai_scan' | 'barcode' | 'manual';
+    barcode?: string;
+    provenance?: Record<string, unknown>;
   }>;
   totals: {
     calories: number;
@@ -32,7 +37,7 @@ const FoodLogSchema = new Schema<IFoodLog>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     date: { type: Date, required: true },
     imageUrl: { type: String, default: null },
-    aiProvider: { type: String, enum: ['openai', 'logmeal', 'manual'], default: 'manual' },
+    aiProvider: { type: String, enum: ['gemini', 'logmeal', 'manual'], default: 'manual' },
     foods: [
       {
         name: { type: String, required: true },
@@ -45,6 +50,11 @@ const FoodLogSchema = new Schema<IFoodLog>(
         sugar: { type: Number, default: 0 },
         sodium: { type: Number, default: 0 },
         vitaminC: { type: Number, default: 0 },
+        vitamins: { type: Schema.Types.Mixed, default: {} },
+        minerals: { type: Schema.Types.Mixed, default: {} },
+        source: { type: String, enum: ['ai_scan', 'barcode', 'manual'], default: 'manual' },
+        barcode: String,
+        provenance: { type: Schema.Types.Mixed, default: {} },
       },
     ],
     totals: {

@@ -9,6 +9,7 @@ import {
   getFoodLogsForRange,
   deleteFoodLog,
   searchFoodItems,
+  lookupFoodItemByBarcode,
 } from './food.service';
 import {
   saveFoodLogSchema,
@@ -19,7 +20,6 @@ import {
 } from './food.validation';
 import * as aiFoodService from '../../services/ai-food.service';
 import { uploadImageBuffer } from '../../utils/cloudinary';
-import { lookupBarcodeProduct } from './barcode-provider.service';
 
 // ---------------------------------------------------------------------------
 // POST /api/food/scan — AI image analysis with rate limit (D-72, T-04-03-01/02)
@@ -248,7 +248,7 @@ export const getFoodItemByBarcode = async (req: Request, res: Response): Promise
   }
 
   try {
-    const result = await lookupBarcodeProduct(parseResult.data.barcode);
+    const result = await lookupFoodItemByBarcode(parseResult.data.barcode);
     success(res, result);
   } catch (err: unknown) {
     const e = err as { statusCode?: number; message?: string };

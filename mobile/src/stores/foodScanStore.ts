@@ -9,9 +9,12 @@ export type NutritionFoodItem = {
   fat: number;
   fiber: number;
   sugar: number;
-  sodium: number;
-  vitaminC: number;
+  vitamins: Record<string, number>;
+  minerals: Record<string, number>;
   tags: string[];
+  source?: 'ai_scan' | 'barcode' | 'manual';
+  barcode?: string;
+  provenance?: Record<string, unknown>;
 };
 
 export type NutritionResult = {
@@ -22,7 +25,7 @@ export type NutritionResult = {
     carbs: number;
     fat: number;
   };
-  aiProvider: 'logmeal' | 'openai' | 'manual';
+  aiProvider: 'logmeal' | 'gemini' | 'manual';
   imageUrl: string | null;
 };
 

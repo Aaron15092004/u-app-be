@@ -16,6 +16,10 @@ export const saveFoodLogSchema = z.object({
         vitaminC: z.number().min(0).default(0),
         vitamins: z.record(z.string(), z.number()).optional().default({}),
         minerals: z.record(z.string(), z.number()).optional().default({}),
+        tags: z.array(z.string()).optional().default([]),
+        source: z.enum(['ai_scan', 'barcode', 'manual']).optional(),
+        barcode: z.string().regex(/^\d{6,18}$/).optional(),
+        provenance: z.record(z.string(), z.unknown()).optional().default({}),
       }),
     )
     .min(1, 'Phải có ít nhất 1 món ăn'),

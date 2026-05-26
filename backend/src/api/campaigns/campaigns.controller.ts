@@ -31,11 +31,11 @@ export const redeemCampaignCode = async (req: Request, res: Response): Promise<v
   }
 
   try {
-    const result = await redeemCampaignCodeService(userId, parseResult.data);
+    const result = await redeemCampaignCodeService(userId, parseResult.data, { ip: req.ip });
     success(res, result);
   } catch (err: unknown) {
-    const e = err as { statusCode?: number; message?: string };
-    error(res, e.message ?? 'Loi kich hoat ma', e.statusCode ?? 500);
+    const e = err as { statusCode?: number; message?: string; errorCode?: string };
+    error(res, e.message ?? 'Loi kich hoat ma', e.statusCode ?? 500, e.errorCode);
   }
 };
 

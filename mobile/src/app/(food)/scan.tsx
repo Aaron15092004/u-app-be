@@ -14,7 +14,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import ScanFrame from '../../components/ui/ScanFrame';
 import CameraControls from '../../components/ui/CameraControls';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -22,13 +22,14 @@ import RedeemCodeCard from '../../components/ui/RedeemCodeCard';
 import ScanEntitlementBadge from '../../components/ui/ScanEntitlementBadge';
 import AppRatingPrompt from '../../components/ui/AppRatingPrompt';
 import { useFoodScanStore } from '../../stores/foodScanStore';
-import { saveFoodLogApi, scanFoodApi } from '../../lib/api/food.api';
+import { scanFoodApi } from '../../lib/api/food.api';
 import { getFoodItemByBarcodeApi, getScanEntitlementsApi } from '../../lib/api/v2-contracts.api';
 
 export default function ScanScreen() {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [barcode, setBarcode] = useState('');
+  const [barcodeMode, setBarcodeMode] = useState(false);
   const [quotaInfo, setQuotaInfo] = useState<{
     usedToday?: number;
     limit?: number;
@@ -37,24 +38,25 @@ export default function ScanScreen() {
   const [ratingVisible, setRatingVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  const queryClient = useQueryClient();
+  const lastBarcodeRef = useRef<{ value: string; at: number } | null>(null);
   const entitlementQ = useQuery({
     queryKey: ['v2', 'scan-entitlements'],
     queryFn: getScanEntitlementsApi,
   });
   const barcodeMutation = useMutation({
     mutationFn: async (value: string) => getFoodItemByBarcodeApi(value),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       if (!result.isSaveReady || !result.minimumNutrition) {
         Alert.alert(
           'Chưa đủ dữ liệu',
-          result.message ?? 'Sản phẩm này thiếu dữ liệu dinh dưỡng. Bạn có thể quét ảnh bữa ăn thay thế.',
+          result.message ?? 'Sản phẩm này thiếu dữ liệu dinh dưỡng. Bạn có thể tìm thủ công hoặc quét ảnh bữa ăn.',
         );
         return;
       }
       const serving = result.servingSizeG ?? 100;
       const factor = serving / 100;
-      await saveFoodLogApi({
+      setPendingImageUri(null);
+      setScanResult({
         foods: [{
           name: result.name ?? result.minimumNutrition.name,
           weightG: serving,
@@ -64,9 +66,17 @@ export default function ScanScreen() {
           fat: result.minimumNutrition.fat * factor,
           fiber: (result.fiber ?? 0) * factor,
           sugar: (result.sugar ?? 0) * factor,
-          sodium: (result.sodium ?? 0) * factor,
-          vitaminC: (result.vitaminC ?? 0) * factor,
+          vitamins: { vitaminC: (result.vitaminC ?? 0) * factor },
+          minerals: { sodium: (result.sodium ?? 0) * factor },
           tags: ['barcode', result.source],
+          source: 'barcode',
+          barcode: result.barcode,
+          provenance: {
+            provider: result.provenance?.provider ?? result.source,
+            fetchedAt: result.provenance?.fetchedAt,
+            lastVerifiedAt: result.provenance?.lastVerifiedAt,
+            productId: result.productId,
+          },
         }],
         totals: {
           calories: result.minimumNutrition.calories * factor,
@@ -77,9 +87,9 @@ export default function ScanScreen() {
         aiProvider: 'manual',
         imageUrl: null,
       });
-      await queryClient.invalidateQueries({ queryKey: ['food', 'logs'] });
       setBarcode('');
-      Alert.alert('Đã lưu', `${result.name ?? 'Sản phẩm'} đã được thêm vào nhật ký bữa ăn.`);
+      setBarcodeMode(false);
+      router.push('/(food)/result');
     },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: string } }; message?: string };
@@ -182,6 +192,20 @@ export default function ScanScreen() {
     barcodeMutation.mutate(normalized);
   }
 
+  function handleCameraBarcodeScanned(event: { data?: string }) {
+    if (!barcodeMode || barcodeMutation.isPending) return;
+    const value = String(event.data ?? '').trim();
+    if (!/^\d{6,18}$/.test(value)) return;
+
+    const now = Date.now();
+    const last = lastBarcodeRef.current;
+    if (last && last.value === value && now - last.at < 2500) return;
+
+    lastBarcodeRef.current = { value, at: now };
+    setBarcode(value);
+    barcodeMutation.mutate(value);
+  }
+
   // Still loading permissions
   if (!permission) {
     return null;
@@ -215,6 +239,10 @@ export default function ScanScreen() {
         facing="back"
         flash={flash}
         ref={cameraRef}
+        onBarcodeScanned={barcodeMode ? handleCameraBarcodeScanned : undefined}
+        barcodeScannerSettings={{
+          barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'],
+        }}
       >
         {/* Header overlay */}
         <View style={styles.header}>
@@ -229,7 +257,7 @@ export default function ScanScreen() {
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>Quét bữa ăn</Text>
             <Text style={styles.headerSubtitle}>
-              Chụp ảnh để phân tích dinh dưỡng
+              {barcodeMode ? 'Đưa mã vạch vào khung để tra cứu' : 'Chụp ảnh để phân tích dinh dưỡng'}
             </Text>
           </View>
         </View>
@@ -237,6 +265,9 @@ export default function ScanScreen() {
         {/* Scan frame centered */}
         <View style={styles.frameContainer}>
           <ScanFrame />
+          {barcodeMode && (
+            <Text style={styles.barcodeScanHint}>Đang chờ mã vạch sản phẩm...</Text>
+          )}
           {isScanning && (
             <View style={styles.scanningRow}>
               <ActivityIndicator color="#FFFFFF" size="small" />
@@ -268,7 +299,18 @@ export default function ScanScreen() {
             </View>
           )}
           <View style={styles.barcodeCard}>
-            <Text style={styles.barcodeTitle}>Tra cứu bằng mã vạch</Text>
+            <View style={styles.barcodeHeader}>
+              <Text style={styles.barcodeTitle}>Tra cứu bằng mã vạch</Text>
+              <Pressable
+                style={[styles.modeButton, barcodeMode && styles.modeButtonActive]}
+                onPress={() => setBarcodeMode((value) => !value)}
+              >
+                <Ionicons name="barcode-outline" size={16} color={barcodeMode ? '#FFFFFF' : '#2E7D32'} />
+                <Text style={[styles.modeButtonText, barcodeMode && styles.modeButtonTextActive]}>
+                  {barcodeMode ? 'Đang quét' : 'Quét camera'}
+                </Text>
+              </Pressable>
+            </View>
             <View style={styles.barcodeRow}>
               <TextInput
                 value={barcode}
@@ -284,7 +326,7 @@ export default function ScanScreen() {
                 onPress={handleBarcodeLookup}
               >
                 <Text style={styles.barcodeButtonText}>
-                  {barcodeMutation.isPending ? 'Đang tìm' : 'Lưu'}
+                  {barcodeMutation.isPending ? 'Đang tìm' : 'Xem'}
                 </Text>
               </Pressable>
             </View>
@@ -383,6 +425,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#1F1F1F',
+  },
+  barcodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  modeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2E7D32',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  modeButtonActive: {
+    backgroundColor: '#2E7D32',
+  },
+  modeButtonText: {
+    color: '#2E7D32',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modeButtonTextActive: {
+    color: '#FFFFFF',
+  },
+  barcodeScanHint: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    backgroundColor: 'rgba(0,0,0,0.42)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   barcodeRow: {
     flexDirection: 'row',

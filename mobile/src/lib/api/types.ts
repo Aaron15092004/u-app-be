@@ -136,6 +136,9 @@ export interface IFoodLogItem {
   vitamins?: Record<string, number>;
   minerals?: Record<string, number>;
   tags?: string[];
+  source?: 'ai_scan' | 'barcode' | 'manual';
+  barcode?: string;
+  provenance?: Record<string, unknown>;
 }
 
 export interface IFoodLog {
@@ -185,9 +188,12 @@ export interface IScanFoodResponse {
     fat: number;
     fiber: number;
     sugar: number;
-    vitamins: Record<string, number>; // { vitaminC: 15, vitaminA: 80, ... }
-    minerals: Record<string, number>; // { sodium: 350, potassium: 200, ... }
-    tags: string[];
+  vitamins: Record<string, number>; // { vitaminC: 15, vitaminA: 80, ... }
+  minerals: Record<string, number>; // { sodium: 350, potassium: 200, ... }
+  tags: string[];
+  source?: 'ai_scan' | 'barcode' | 'manual';
+  barcode?: string;
+  provenance?: Record<string, unknown>;
   }>;
   totals: { calories: number; protein: number; carbs: number; fat: number };
   aiProvider: 'logmeal' | 'gemini' | 'manual';
@@ -377,7 +383,7 @@ export interface IV2ScanEntitlementStatus {
 }
 
 export interface IV2RedeemCampaignCodeResponse {
-  status: 'success' | 'invalid' | 'already_used' | 'expired' | 'revoked' | 'unauthenticated';
+  status: 'success' | 'invalid' | 'already_used' | 'expired' | 'revoked' | 'unauthenticated' | 'rate_limited';
   message: string;
   entitlement?: IV2UserScanEntitlement | null;
 }

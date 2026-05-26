@@ -2,7 +2,7 @@ const OPEN_FOOD_FACTS_BASE_URL = 'https://world.openfoodfacts.org/api/v2/product
 const FETCH_TIMEOUT_MS = 5000;
 
 type MissingField = 'name' | 'calories' | 'protein' | 'carbs' | 'fat';
-type BarcodeSource = 'open_food_facts';
+type BarcodeSource = 'local' | 'open_food_facts';
 
 interface OpenFoodFactsProduct {
   product_name?: string;
