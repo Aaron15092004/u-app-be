@@ -12,7 +12,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: v2 Data Foundation** — Shared models, indexes, validation, contracts, and package additions for v2.0 features.
+- [x] **Phase 1: v2 Data Foundation** — Shared models, indexes, validation, contracts, and package additions for v2.0 features. (completed 2026-05-26)
 - [ ] **Phase 2: Campaign Codes & Unlimited Scan Entitlements** — Admin creates bulk bottle codes; users redeem by text/QR; active entitlements bypass AI scan limit with safeguards.
 - [ ] **Phase 3: Barcode Food Scan** — Users scan packaged-food barcodes, review nutrition, and log with local/external lookup fallback.
 - [ ] **Phase 4: Ủ Milk Recommendation** — BMI-based Ủ milk suggestions with safe Vietnamese copy and saved user preference.
@@ -160,7 +160,7 @@
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | v2 Data Foundation | 4/5 | In Progress | — |
+| 1 | v2 Data Foundation | 5/5 | Complete   | 2026-05-26 |
 | 2 | Campaign Codes & Unlimited Scan Entitlements | 0/TBD | Pending | — |
 | 3 | Barcode Food Scan | 0/TBD | Pending | — |
 | 4 | Ủ Milk Recommendation | 0/TBD | Pending | — |

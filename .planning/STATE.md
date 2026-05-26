@@ -2,32 +2,32 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
-status: executing
-last_updated: "2026-05-26T11:28:34.214Z"
+status: verifying
+last_updated: "2026-05-26T11:41:46.166Z"
 last_activity: 2026-05-26
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 17
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — v2 Data Foundation — **In progress** (Plan 4 of 5 complete)
+Phase 1 — v2 Data Foundation — **Complete** (Plan 5 of 5 complete)
 
 ## Status
 
-Phase 1 execution is underway. Plan 01-04 added mobile/admin v2 DTO contracts; next action is Plan 01-05.
+Phase 1 execution is complete. Plan 01-05 added automated backend verification for CODE-11 and v2 data foundation contracts; next action is Phase 1 verification or Phase 2 planning.
 
 ## Phase Progress
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | v2 Data Foundation | In Progress |
+| 1 | v2 Data Foundation | Complete |
 | 2 | Campaign Codes & Unlimited Scan Entitlements | Pending |
 | 3 | Barcode Food Scan | Pending |
 | 4 | Ủ Milk Recommendation | Pending |
@@ -37,7 +37,7 @@ Phase 1 execution is underway. Plan 01-04 added mobile/admin v2 DTO contracts; n
 ## Progress Bar
 
 ```
-Phase 1 [########--] 80%
+Phase 1 [##########] 100%
 Phase 2 [----------] 0%
 Phase 3 [----------] 0%
 Phase 4 [----------] 0%
@@ -48,9 +48,9 @@ Phase 6 [----------] 0%
 ## Performance Metrics
 
 - Requirements covered: 36/36
-- Phases completed: 0/6
-- Plans completed: 4/5
-- Last plan metric: Phase 01 Plan 04 completed in 408s, 2 tasks, 4 files
+- Phases completed: 1/6
+- Plans completed: 5/5
+- Last plan metric: Phase 01 Plan 05 completed in 4320s, 2 tasks, 7 files
 
 ## Accumulated Context
 
@@ -71,6 +71,10 @@ Phase 6 [----------] 0%
 - Phase 01 Plan 04: Scan entitlement DTOs carry `activeUntil`, `campaignId`, `redeemCodeId`, and finite `high_daily_quota` policy metadata.
 - Phase 01 Plan 04: Barcode contract DTOs keep barcode values as strings and expose `isSaveReady` plus required macro fields for minimum nutrition readiness.
 - Phase 01 Plan 04: Exercise `imageUrl` remains unchanged while optional `imageAssetId` prepares future media asset workflows.
+- Phase 01 Plan 05: `test:v2-foundation` is the fast backend gate for Phase 1 data foundation contracts.
+- Phase 01 Plan 05: CODE-11 is verified at service and model/index layers: normalized HMAC hashes, no plaintext schema paths, and unique `codeHash` enforcement.
+- Phase 01 Plan 05: Barcode tests assert string digit handling with leading zeros and required macro fields before save-ready behavior.
+- Phase 01 Plan 05: Admin v2 scaffold tests verify campaign, rating, and media endpoints remain behind `requireAdmin`.
 - Stack: Expo SDK 54 + React 19 + Express 5.1 + MongoDB Atlas M2 + LogMeal/GPT-4o-mini + Cloudinary + Firebase FCM
 - AI food scan proxied through backend — never called directly from client
 - Apple Sign In is required (App Store Guideline 4.8) when any OAuth is present
@@ -261,17 +265,17 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 01 Plan 04 complete (commits e7344f5, d9f8105). Added mobile/admin v2 DTO contracts and typed mobile scaffold helpers.
-**Next action**: Execute Phase 01 Plan 05.
+**Last action**: Phase 01 Plan 05 complete (commits cacf680, cdb684d, 2645c68). Added automated v2 foundation contract tests and fast backend verification script.
+**Next action**: Verify Phase 1 or proceed to Phase 2 planning/execution.
 **Resume file**: None
 
 ## Last Updated
 
-2026-05-26 (Phase 01 Plan 04 complete)
+2026-05-26 (Phase 01 Plan 05 complete)
 
 ## Current Position
 
-Phase: 01 (v2 Data Foundation) — EXECUTING
+Phase: 01 (v2 Data Foundation) — COMPLETE
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-26
