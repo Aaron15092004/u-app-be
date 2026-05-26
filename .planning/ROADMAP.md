@@ -160,7 +160,7 @@
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | v2 Data Foundation | 0/TBD | Pending | — |
+| 1 | v2 Data Foundation | 1/5 | In Progress | — |
 | 2 | Campaign Codes & Unlimited Scan Entitlements | 0/TBD | Pending | — |
 | 3 | Barcode Food Scan | 0/TBD | Pending | — |
 | 4 | Ủ Milk Recommendation | 0/TBD | Pending | — |
@@ -183,7 +183,7 @@
 | CODE-08 | Phase 2 | Pending |
 | CODE-09 | Phase 2 | Pending |
 | CODE-10 | Phase 2 | Pending |
-| CODE-11 | Phase 1 | Pending |
+| CODE-11 | Phase 1 | Complete |
 | CODE-12 | Phase 2 | Pending |
 | BAR-01 | Phase 3 | Pending |
 | BAR-02 | Phase 3 | Pending |

@@ -17,7 +17,7 @@
 - [ ] **CODE-08**: User sees clear Vietnamese redemption results for success, invalid, already used, expired, revoked, and unauthenticated states.
 - [ ] **CODE-09**: User with an active entitlement can use AI food scan beyond the normal daily scan limit until the entitlement expires.
 - [ ] **CODE-10**: User can view current scan entitlement status and exact active-until time in the app.
-- [ ] **CODE-11**: Backend stores redeem codes hashed at rest and redeems them atomically so the same code cannot be reused.
+- [x] **CODE-11**: Backend stores redeem codes hashed at rest and redeems them atomically so the same code cannot be reused.
 - [ ] **CODE-12**: Backend applies anti-abuse controls for redemption attempts and fair-use protection for "unlimited" AI scan traffic.
 
 ### Barcode Food Scan
@@ -114,7 +114,7 @@
 | CODE-08 | Phase 2 | Pending |
 | CODE-09 | Phase 2 | Pending |
 | CODE-10 | Phase 2 | Pending |
-| CODE-11 | Phase 1 | Pending |
+| CODE-11 | Phase 1 | Complete |
 | CODE-12 | Phase 2 | Pending |
 | BAR-01 | Phase 3 | Pending |
 | BAR-02 | Phase 3 | Pending |

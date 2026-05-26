@@ -3,31 +3,31 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
 status: executing
-last_updated: "2026-05-26T08:06:50.658Z"
-last_activity: 2026-05-26 -- Phase 1 planning complete
+last_updated: "2026-05-26T08:21:58.996Z"
+last_activity: 2026-05-26
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 20
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — v2 Data Foundation — **Not started** (requirements and roadmap defined)
+Phase 1 — v2 Data Foundation — **In progress** (Plan 1 of 5 complete)
 
 ## Status
 
-Milestone v2.0 planning initialized. Research complete for campaign code entitlements, barcode food scan, BMI-based Ủ milk recommendation, exercise media operations, and app feedback/ratings. Requirements and roadmap are defined; next action is to discuss or plan Phase 1.
+Phase 1 execution is underway. Plan 01-01 added approved v2 foundation packages and the CODE-11 redeem-code hashing utility; next action is Plan 01-02.
 
 ## Phase Progress
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | v2 Data Foundation | Pending |
+| 1 | v2 Data Foundation | In Progress |
 | 2 | Campaign Codes & Unlimited Scan Entitlements | Pending |
 | 3 | Barcode Food Scan | Pending |
 | 4 | Ủ Milk Recommendation | Pending |
@@ -37,7 +37,7 @@ Milestone v2.0 planning initialized. Research complete for campaign code entitle
 ## Progress Bar
 
 ```
-Phase 1 [----------] 0%
+Phase 1 [##--------] 20%
 Phase 2 [----------] 0%
 Phase 3 [----------] 0%
 Phase 4 [----------] 0%
@@ -49,12 +49,15 @@ Phase 6 [----------] 0%
 
 - Requirements covered: 36/36
 - Phases completed: 0/6
-- Plans completed: 0/0 (plans not generated yet)
+- Plans completed: 1/5
+- Last plan metric: Phase 01 Plan 01 completed in 442s, 2 tasks, 6 files
 
 ## Accumulated Context
 
 ### Key Decisions Logged
 
+- Phase 01 Plan 01: Redeem-code hashing uses HMAC-SHA-256 with `REDEEM_CODE_PEPPER`; raw codes remain transient export/query payload material only.
+- Phase 01 Plan 01: v2 scan entitlement foundation uses finite `high_daily_quota` metadata, not an unbounded scan bypass.
 - Stack: Expo SDK 54 + React 19 + Express 5.1 + MongoDB Atlas M2 + LogMeal/GPT-4o-mini + Cloudinary + Firebase FCM
 - AI food scan proxied through backend — never called directly from client
 - Apple Sign In is required (App Store Guideline 4.8) when any OAuth is present
@@ -245,17 +248,17 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 6 Plan 04 complete (commits 89cd905, 51b85f2). Admin CRUD pages: DataTable, ImageUploadField, feature hooks, ExercisesPage + FoodItemsPage + UsersPage full implementation. typecheck clean (0 errors), dev server starts on port 3001.
-**Next action**: Phase 6 complete — run `/gsd:verify-work 6` for admin dashboard verification.
-**Resume file**: None (Phase 6 all 4 plans done)
+**Last action**: Phase 01 Plan 01 complete (commits 2f2ce8e, abd80ba, fa3ff31). Added QR/CSV/store-review packages and redeem-code HMAC utility with tests.
+**Next action**: Execute Phase 01 Plan 02.
+**Resume file**: None
 
 ## Last Updated
 
-2026-05-20 (Phase 6 Plan 02 complete)
+2026-05-26 (Phase 01 Plan 01 complete)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-05-26 -- Phase 1 planning complete
+Phase: 01 (v2 Data Foundation) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute Plan 2
+Last activity: 2026-05-26 -- Phase 01 Plan 01 complete
