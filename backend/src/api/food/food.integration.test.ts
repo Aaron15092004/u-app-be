@@ -12,11 +12,11 @@ process.env.CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? 'test';
 process.env.FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID ?? 'test';
 process.env.FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL ?? 'test@test.com';
 process.env.FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY ?? 'test-key';
-// IMPORTANT: Use a literal test key — NEVER the real OPENAI_API_KEY.
-// This prevents "OpenAI API key is required" error when food service is imported.
+// IMPORTANT: Use a literal test key — NEVER the real GEMINI_API_KEY.
+// This prevents API key errors when food service is imported.
 // The real key is only in backend/.env (gitignored). Tests must mock analyzeImage()
-// and never call the real OpenAI API.
-process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'test-key';
+// and never call the real Gemini API.
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? 'test-key';
 
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -27,7 +27,9 @@ import app from '../../app';
 import User from '../../models/User';
 import FoodLog from '../../models/FoodLog';
 import FoodItem from '../../models/FoodItem';
+import FoodScanAttempt from '../../models/FoodScanAttempt';
 import { signAccessToken } from '../../utils/jwt';
+import { barcodeParamSchema, barcodeSaveMinimumNutritionSchema } from './food.validation';
 
 // ---------------------------------------------------------------------------
 // MongoMemoryServer + test user setup
@@ -55,6 +57,7 @@ beforeEach(async () => {
   await User.deleteMany({});
   await FoodLog.deleteMany({});
   await FoodItem.deleteMany({});
+  await FoodScanAttempt.deleteMany({});
 
   // Create user A
   const userA = await User.create({
@@ -92,7 +95,7 @@ test('POST /api/food/scan without auth → 401', async () => {
 //
 // This test verifies the route exists, authentication works, and the "no image"
 // validation guard fires correctly — without calling real OpenAI.
-// The 200 + NutritionResult path requires a live OPENAI_API_KEY (integration env).
+// The 200 + NutritionResult path requires a live GEMINI_API_KEY (integration env).
 // ---------------------------------------------------------------------------
 test('POST /api/food/scan with auth but no image → 400 with Vietnamese error', async () => {
   // Send request with auth but without a multipart image attachment
@@ -110,17 +113,14 @@ test('POST /api/food/scan with auth but no image → 400 with Vietnamese error',
 // Test 3: POST /api/food/scan when daily AI count >= 20 → 429
 // ---------------------------------------------------------------------------
 test('POST /api/food/scan when daily AI count >= 20 → 429 with Vietnamese rate limit message', async () => {
-  // Seed 20 FoodLog docs with aiProvider='openai' for today
+  // Seed 20 scan attempts for today. The rate limiter counts AI attempts,
+  // not saved FoodLog documents.
   const now = new Date();
-  const foodLogDocs = Array.from({ length: 20 }, () => ({
+  const attemptDocs = Array.from({ length: 20 }, () => ({
     userId: new mongoose.Types.ObjectId(userIdA),
-    date: now,
-    aiProvider: 'openai',
-    foods: [{ name: 'Cơm', calories: 200, protein: 5, carbs: 40, fat: 1, fiber: 0, sugar: 0 }],
-    totals: { calories: 200, protein: 5, carbs: 40, fat: 1 },
-    imageUrl: null,
+    createdAt: now,
   }));
-  await FoodLog.insertMany(foodLogDocs);
+  await FoodScanAttempt.insertMany(attemptDocs);
 
   const tinyJpeg = Buffer.from('fake-jpeg');
 
@@ -131,7 +131,9 @@ test('POST /api/food/scan when daily AI count >= 20 → 429 with Vietnamese rate
 
   assert.equal(res.status, 429);
   assert.equal(res.body.success, false);
-  assert.equal(res.body.error, 'Bạn đã quét 20 lần hôm nay. Vui lòng thử lại vào ngày mai.');
+  assert.match(res.body.error, /Bạn đã dùng hết 20 lượt quét hôm nay/);
+  assert.equal(res.body.usedToday, 20);
+  assert.equal(res.body.limit, 20);
 });
 
 // ---------------------------------------------------------------------------
@@ -141,7 +143,7 @@ test('POST /api/food/logs with valid body → 201 + FoodLog document created', a
   const body = {
     foods: [{ name: 'Phở bò', calories: 350, protein: 20, carbs: 45, fat: 8 }],
     totals: { calories: 350, protein: 20, carbs: 45, fat: 8 },
-    aiProvider: 'openai',
+    aiProvider: 'gemini',
     imageUrl: null,
   };
 
@@ -168,7 +170,7 @@ test('GET /api/food/logs?date=YYYY-MM-DD → 200 + array of logs for that user o
   await FoodLog.create({
     userId: new mongoose.Types.ObjectId(userIdA),
     date: today,
-    aiProvider: 'openai',
+    aiProvider: 'gemini',
     foods: [{ name: 'Cơm', calories: 200, protein: 5, carbs: 40, fat: 1, fiber: 0, sugar: 0 }],
     totals: { calories: 200, protein: 5, carbs: 40, fat: 1 },
     imageUrl: null,
@@ -205,7 +207,7 @@ test('DELETE /api/food/logs/:id (own log) → 200; DELETE other user log → 404
   const logA = await FoodLog.create({
     userId: new mongoose.Types.ObjectId(userIdA),
     date: today,
-    aiProvider: 'openai',
+    aiProvider: 'gemini',
     foods: [{ name: 'Cơm', calories: 200, protein: 5, carbs: 40, fat: 1, fiber: 0, sugar: 0 }],
     totals: { calories: 200, protein: 5, carbs: 40, fat: 1 },
     imageUrl: null,
@@ -266,4 +268,52 @@ test('GET /api/food/items?q=pho → 200 + array (requires FoodItem seeded or cre
   assert.equal(res.body.success, true);
   assert.ok(Array.isArray(res.body.data), 'data should be an array');
   // Note: text search result count depends on MongoDB index; at minimum expect 200 response
+});
+
+test('barcode validation preserves leading-zero digit strings and rejects invalid params', () => {
+  const valid = barcodeParamSchema.safeParse({ barcode: '0123456789012' });
+  assert.equal(valid.success, true);
+  if (valid.success) {
+    assert.equal(valid.data.barcode, '0123456789012');
+  }
+
+  assert.equal(barcodeParamSchema.safeParse({ barcode: 'ABC123' }).success, false);
+  assert.equal(barcodeParamSchema.safeParse({ barcode: '12345' }).success, false);
+});
+
+test('barcode minimum nutrition validation requires name, calories, and macros', () => {
+  const complete = barcodeSaveMinimumNutritionSchema.safeParse({
+    name: 'Sua hat dong chai',
+    calories: 120,
+    protein: 4,
+    carbs: 18,
+    fat: 3,
+  });
+  assert.equal(complete.success, true);
+
+  const missingFat = barcodeSaveMinimumNutritionSchema.safeParse({
+    name: 'Sua hat dong chai',
+    calories: 120,
+    protein: 4,
+    carbs: 18,
+  });
+  assert.equal(missingFat.success, false);
+});
+
+test('GET /api/food/items/barcode/:barcode accepts leading-zero string route contract', async () => {
+  const res = await request(app)
+    .get('/api/food/items/barcode/0123456789012')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 501);
+  assert.equal(res.body.success, false);
+});
+
+test('GET /api/food/items/barcode/:barcode rejects invalid barcode params', async () => {
+  const res = await request(app)
+    .get('/api/food/items/barcode/ABC123')
+    .set('Authorization', `Bearer ${tokenA}`);
+
+  assert.equal(res.status, 400);
+  assert.equal(res.body.success, false);
 });

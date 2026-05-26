@@ -71,6 +71,35 @@ describe('requireAdmin guard', () => {
     const res = await supertest(app).get('/api/admin/exercises');
     assert.equal(res.status, 401);
   });
+
+  it('keeps v2 campaign, rating, and media scaffolds behind requireAdmin', async () => {
+    const guardedEndpoints = [
+      ['get', '/api/admin/campaigns'],
+      ['post', '/api/admin/campaigns'],
+      ['post', '/api/admin/campaigns/000000000000000000000000/codes/generate'],
+      ['get', '/api/admin/ratings'],
+      ['get', '/api/admin/media-assets'],
+      ['post', '/api/admin/media-assets/upload'],
+    ] as const;
+
+    for (const [method, path] of guardedEndpoints) {
+      const noToken = await supertest(app)[method](path);
+      assert.equal(noToken.status, 401, `${method.toUpperCase()} ${path} should require auth`);
+
+      const nonAdmin = await supertest(app)[method](path)
+        .set('Authorization', `Bearer ${userToken}`);
+      assert.equal(nonAdmin.status, 403, `${method.toUpperCase()} ${path} should require admin`);
+    }
+  });
+
+  it('allows admin users to reach v2 scaffold placeholder responses', async () => {
+    const res = await supertest(app)
+      .get('/api/admin/campaigns')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    assert.equal(res.status, 501);
+    assert.equal(res.body.success, false);
+  });
 });
 
 // ------- isActive ban check -------

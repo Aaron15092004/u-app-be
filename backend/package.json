@@ -24,7 +24,7 @@
     "test:users": "node --env-file=.env.test --require tsx/cjs --test src/api/users/users.integration.test.ts",
     "test:water": "node --env-file=.env.test --require tsx/cjs --test src/api/water/water.integration.test.ts",
     "test:admin": "node --env-file=.env.test --require tsx/cjs --test src/api/admin/admin.integration.test.ts",
-    "test:v2-foundation": "node --env-file=.env.test --require tsx/cjs --test src/services/redeem-code.service.test.ts src/models/RedeemCode.test.ts"
+    "test:v2-foundation": "node --env-file=.env.test --require tsx/cjs --test src/services/redeem-code.service.test.ts src/models/RedeemCode.test.ts src/models/v2-data-foundation.test.ts src/api/campaigns/campaigns.integration.test.ts src/api/food/food.integration.test.ts src/api/admin/admin.integration.test.ts"
   },
   "dependencies": {
     "apple-signin-auth": "^2.0.0",
