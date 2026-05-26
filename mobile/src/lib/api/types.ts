@@ -442,6 +442,7 @@ export interface IV2NutMilkRecommendationResponse {
   bmiRule: IV2NutMilkResolvedBmiRule | null;
   signals: Required<IV2NutMilkSignals>;
   flavors: IV2NutMilkFlavorRule[];
+  currentPreference?: IV2NutMilkPreference | null;
   disclaimer: string;
 }
 

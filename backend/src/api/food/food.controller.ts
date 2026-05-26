@@ -19,6 +19,7 @@ import {
 } from './food.validation';
 import * as aiFoodService from '../../services/ai-food.service';
 import { uploadImageBuffer } from '../../utils/cloudinary';
+import { lookupBarcodeProduct } from './barcode-provider.service';
 
 // ---------------------------------------------------------------------------
 // POST /api/food/scan — AI image analysis with rate limit (D-72, T-04-03-01/02)
@@ -235,7 +236,7 @@ export const searchItems = async (req: Request, res: Response): Promise<void> =>
 };
 
 // ---------------------------------------------------------------------------
-// GET /api/food/items/barcode/:barcode — barcode lookup scaffold (Phase 3)
+// GET /api/food/items/barcode/:barcode — external barcode lookup MVP
 // ---------------------------------------------------------------------------
 
 export const getFoodItemByBarcode = async (req: Request, res: Response): Promise<void> => {
@@ -246,5 +247,11 @@ export const getFoodItemByBarcode = async (req: Request, res: Response): Promise
     return;
   }
 
-  error(res, 'Tinh nang tra cuu ma vach se duoc trien khai o Phase 3', 501);
+  try {
+    const result = await lookupBarcodeProduct(parseResult.data.barcode);
+    success(res, result);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Loi tra cuu ma vach', e.statusCode ?? 500);
+  }
 };

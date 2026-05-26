@@ -7,13 +7,14 @@ import {
   Pressable,
   ActivityIndicator,
   SafeAreaView,
+  TextInput,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ScanFrame from '../../components/ui/ScanFrame';
 import CameraControls from '../../components/ui/CameraControls';
 import PrimaryButton from '../../components/ui/PrimaryButton';
@@ -21,12 +22,13 @@ import RedeemCodeCard from '../../components/ui/RedeemCodeCard';
 import ScanEntitlementBadge from '../../components/ui/ScanEntitlementBadge';
 import AppRatingPrompt from '../../components/ui/AppRatingPrompt';
 import { useFoodScanStore } from '../../stores/foodScanStore';
-import { scanFoodApi } from '../../lib/api/food.api';
-import { getScanEntitlementsApi } from '../../lib/api/v2-contracts.api';
+import { saveFoodLogApi, scanFoodApi } from '../../lib/api/food.api';
+import { getFoodItemByBarcodeApi, getScanEntitlementsApi } from '../../lib/api/v2-contracts.api';
 
 export default function ScanScreen() {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   const [quotaBlocked, setQuotaBlocked] = useState(false);
+  const [barcode, setBarcode] = useState('');
   const [quotaInfo, setQuotaInfo] = useState<{
     usedToday?: number;
     limit?: number;
@@ -35,9 +37,54 @@ export default function ScanScreen() {
   const [ratingVisible, setRatingVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const queryClient = useQueryClient();
   const entitlementQ = useQuery({
     queryKey: ['v2', 'scan-entitlements'],
     queryFn: getScanEntitlementsApi,
+  });
+  const barcodeMutation = useMutation({
+    mutationFn: async (value: string) => getFoodItemByBarcodeApi(value),
+    onSuccess: async (result) => {
+      if (!result.isSaveReady || !result.minimumNutrition) {
+        Alert.alert(
+          'Chưa đủ dữ liệu',
+          result.message ?? 'Sản phẩm này thiếu dữ liệu dinh dưỡng. Bạn có thể quét ảnh bữa ăn thay thế.',
+        );
+        return;
+      }
+      const serving = result.servingSizeG ?? 100;
+      const factor = serving / 100;
+      await saveFoodLogApi({
+        foods: [{
+          name: result.name ?? result.minimumNutrition.name,
+          weightG: serving,
+          calories: result.minimumNutrition.calories * factor,
+          protein: result.minimumNutrition.protein * factor,
+          carbs: result.minimumNutrition.carbs * factor,
+          fat: result.minimumNutrition.fat * factor,
+          fiber: (result.fiber ?? 0) * factor,
+          sugar: (result.sugar ?? 0) * factor,
+          sodium: (result.sodium ?? 0) * factor,
+          vitaminC: (result.vitaminC ?? 0) * factor,
+          tags: ['barcode', result.source],
+        }],
+        totals: {
+          calories: result.minimumNutrition.calories * factor,
+          protein: result.minimumNutrition.protein * factor,
+          carbs: result.minimumNutrition.carbs * factor,
+          fat: result.minimumNutrition.fat * factor,
+        },
+        aiProvider: 'manual',
+        imageUrl: null,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['food', 'logs'] });
+      setBarcode('');
+      Alert.alert('Đã lưu', `${result.name ?? 'Sản phẩm'} đã được thêm vào nhật ký bữa ăn.`);
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      Alert.alert('Không thể tra cứu', e.response?.data?.error ?? e.message ?? 'Vui lòng thử lại.');
+    },
   });
 
   const { setIsScanning, isScanning, setScanResult, setPendingImageUri } =
@@ -126,6 +173,15 @@ export default function ScanScreen() {
     setFlash((prev) => (prev === 'off' ? 'on' : 'off'));
   }
 
+  function handleBarcodeLookup() {
+    const normalized = barcode.trim();
+    if (!/^\d{6,18}$/.test(normalized)) {
+      Alert.alert('Mã vạch chưa hợp lệ', 'Vui lòng nhập 6-18 chữ số, giữ nguyên số 0 ở đầu nếu có.');
+      return;
+    }
+    barcodeMutation.mutate(normalized);
+  }
+
   // Still loading permissions
   if (!permission) {
     return null;
@@ -211,6 +267,28 @@ export default function ScanScreen() {
               />
             </View>
           )}
+          <View style={styles.barcodeCard}>
+            <Text style={styles.barcodeTitle}>Tra cứu bằng mã vạch</Text>
+            <View style={styles.barcodeRow}>
+              <TextInput
+                value={barcode}
+                onChangeText={setBarcode}
+                placeholder="Nhập barcode"
+                keyboardType="number-pad"
+                style={styles.barcodeInput}
+                editable={!barcodeMutation.isPending}
+              />
+              <Pressable
+                style={[styles.barcodeButton, barcodeMutation.isPending && styles.barcodeButtonDisabled]}
+                disabled={barcodeMutation.isPending}
+                onPress={handleBarcodeLookup}
+              >
+                <Text style={styles.barcodeButtonText}>
+                  {barcodeMutation.isPending ? 'Đang tìm' : 'Lưu'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
           <Text style={styles.hintText}>
             Nhấn nút chụp hoặc chọn từ thư viện
           </Text>
@@ -293,6 +371,46 @@ const styles = StyleSheet.create({
   },
   redeemWrap: {
     width: '100%',
+  },
+  barcodeCard: {
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+  },
+  barcodeTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1F1F1F',
+  },
+  barcodeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  barcodeInput: {
+    flex: 1,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  barcodeButton: {
+    height: 42,
+    minWidth: 72,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2E7D32',
+  },
+  barcodeButtonDisabled: {
+    opacity: 0.6,
+  },
+  barcodeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   hintText: {
     fontSize: 14,

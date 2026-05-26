@@ -11,12 +11,16 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../providers/AuthProvider";
 import { getProfileStatsApi } from "../../../lib/api/users.api";
 import { getStreakApi } from "../../../lib/api/habits.api";
-import { getScanEntitlementsApi } from "../../../lib/api/v2-contracts.api";
+import {
+  getNutMilkRecommendationsApi,
+  getScanEntitlementsApi,
+  selectNutMilkFlavorApi,
+} from "../../../lib/api/v2-contracts.api";
 import RedeemCodeCard from "../../../components/ui/RedeemCodeCard";
 import ScanEntitlementBadge from "../../../components/ui/ScanEntitlementBadge";
 import AppRatingPrompt from "../../../components/ui/AppRatingPrompt";
@@ -190,8 +194,10 @@ export default function ProfileScreen(): React.JSX.Element {
   const insets = useSafeAreaInsets();
   const auth   = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [ratingVisible, setRatingVisible] = useState(false);
+  const [milkSelectedId, setMilkSelectedId] = useState<string | null>(null);
 
   const statsQ  = useQuery({ queryKey: ["users", "profile", "stats"], queryFn: getProfileStatsApi });
   const streakQ = useQuery({ queryKey: ["habits", "streak"],          queryFn: getStreakApi });
@@ -202,6 +208,26 @@ export default function ProfileScreen(): React.JSX.Element {
 
   const user        = auth.user;
   const profile     = user?.profile;
+  const bmi = profile?.heightCm && profile?.weightKg
+    ? profile.weightKg / ((profile.heightCm / 100) ** 2)
+    : undefined;
+  const milkQ = useQuery({
+    queryKey: ["v2", "nut-milk", bmi],
+    queryFn: () => getNutMilkRecommendationsApi({ bmi }),
+  });
+  const milkMutation = useMutation({
+    mutationFn: (selectedFlavorId: string) => selectNutMilkFlavorApi({
+      selectedFlavorId,
+      recommendedFlavorId: milkQ.data?.flavors[0]?.flavorId,
+      bmi,
+      source: "manual_profile",
+    }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["v2", "nut-milk"] });
+    },
+  });
+  const savedMilkId = milkQ.data?.currentPreference?.selectedFlavorId;
+  const activeMilkId = milkSelectedId ?? savedMilkId;
   const streakDays  = streakQ.data?.streakDays ?? statsQ.data?.streakDays ?? 0;
   const totalWork   = statsQ.data?.totalWorkouts ?? 0;
   const totalKcal   = statsQ.data?.totalKcalBurned ?? 0;
@@ -294,6 +320,44 @@ export default function ProfileScreen(): React.JSX.Element {
           <ScanEntitlementBadge status={entitlementQ.data} />
           <RedeemCodeCard onRedeemed={() => setRatingVisible(true)} />
         </View>
+
+        <SectionTitle title="Sữa Ủ phù hợp" />
+        <Card>
+          <Text style={styles.milkDisclaimer}>
+            {milkQ.data?.disclaimer ?? "Gợi ý sản phẩm theo sở thích và thể trạng, không phải tư vấn y khoa."}
+          </Text>
+          {(milkQ.data?.flavors ?? []).map((flavor) => {
+            const selected = activeMilkId === flavor.flavorId;
+            return (
+              <Pressable
+                key={flavor.flavorId}
+                style={[styles.milkOption, selected && styles.milkOptionActive]}
+                onPress={() => setMilkSelectedId(flavor.flavorId)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.milkName}>{flavor.nameVi}</Text>
+                  <Text style={styles.milkCopy}>{flavor.positioningVi}</Text>
+                </View>
+                <Ionicons
+                  name={selected ? "checkmark-circle" : "ellipse-outline"}
+                  size={22}
+                  color={selected ? PRIMARY_DARK : INACTIVE}
+                />
+              </Pressable>
+            );
+          })}
+          <Pressable
+            style={[styles.milkSave, (!activeMilkId || milkMutation.isPending) && styles.milkSaveDisabled]}
+            disabled={!activeMilkId || milkMutation.isPending}
+            onPress={() => {
+              if (activeMilkId) milkMutation.mutate(activeMilkId);
+            }}
+          >
+            <Text style={styles.milkSaveText}>
+              {milkMutation.isPending ? "Đang lưu..." : savedMilkId ? "Cập nhật lựa chọn" : "Lưu lựa chọn"}
+            </Text>
+          </Pressable>
+        </Card>
 
         {/* ── Thành tích — gradient card với border cam ── */}
         <SectionTitle title="Thành tích" />
@@ -409,4 +473,25 @@ const styles = StyleSheet.create({
 
   footer:    { alignItems: "center", marginTop: 32, gap: 4 },
   footerTxt: { fontSize: 12, color: "#BDBDBD" },
+  milkDisclaimer: { fontSize: 12, color: TEXT_SECONDARY, lineHeight: 18, paddingVertical: 12 },
+  milkOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#F0F0F0",
+  },
+  milkOptionActive: { backgroundColor: "#F7FBEE" },
+  milkName: { fontSize: 14, fontWeight: "700", color: TEXT },
+  milkCopy: { fontSize: 12, color: TEXT_SECONDARY, marginTop: 2, lineHeight: 18 },
+  milkSave: {
+    alignItems: "center",
+    marginVertical: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: PRIMARY_DARK,
+  },
+  milkSaveDisabled: { opacity: 0.5 },
+  milkSaveText: { color: "#FFFFFF", fontWeight: "700" },
 });
