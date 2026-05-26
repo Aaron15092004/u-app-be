@@ -116,30 +116,30 @@
 | CODE-10 | Phase 2 | Pending |
 | CODE-11 | Phase 1 | Complete |
 | CODE-12 | Phase 2 | Pending |
-| BAR-01 | Phase 3 | Pending |
-| BAR-02 | Phase 3 | Pending |
-| BAR-03 | Phase 3 | Pending |
-| BAR-04 | Phase 3 | Pending |
-| BAR-05 | Phase 3 | Pending |
-| BAR-06 | Phase 3 | Pending |
-| BAR-07 | Phase 3 | Pending |
-| MILK-01 | Phase 4 | Pending |
-| MILK-02 | Phase 4 | Pending |
-| MILK-03 | Phase 4 | Pending |
-| MILK-04 | Phase 4 | Pending |
-| MILK-05 | Phase 4 | Pending |
-| MILK-06 | Phase 4 | Pending |
-| MEDIA-01 | Phase 5 | Pending |
-| MEDIA-02 | Phase 5 | Pending |
-| MEDIA-03 | Phase 5 | Pending |
-| MEDIA-04 | Phase 5 | Pending |
-| MEDIA-05 | Phase 5 | Pending |
-| MEDIA-06 | Phase 5 | Pending |
-| RATE-01 | Phase 6 | Pending |
-| RATE-02 | Phase 6 | Pending |
-| RATE-03 | Phase 6 | Pending |
-| RATE-04 | Phase 6 | Pending |
-| RATE-05 | Phase 6 | Pending |
+| BAR-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-02 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-03 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-04 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-05 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-06 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-07 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-02 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-03 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-04 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-05 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MILK-06 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MEDIA-01 | Phase 3 hardening | Pending |
+| MEDIA-02 | Phase 3 hardening | Pending |
+| MEDIA-03 | Phase 3 hardening | Pending |
+| MEDIA-04 | Phase 3 hardening | Pending |
+| MEDIA-05 | Phase 3 hardening | Pending |
+| MEDIA-06 | Phase 3 hardening | Pending |
+| RATE-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-02 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-03 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-04 | Phase 2 MVP, Phase 3 hardening | Pending |
+| RATE-05 | Phase 2 MVP, Phase 3 hardening | Pending |
 
 **Coverage:**
 - v2.0 requirements: 36 total
@@ -148,4 +148,4 @@
 
 ---
 *Requirements defined: 2026-05-26*
-*Last updated: 2026-05-26 after v2.0 research*
+*Last updated: 2026-05-26 after Phase 2 MVP scope discussion*
