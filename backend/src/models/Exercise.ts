@@ -8,6 +8,7 @@ export interface IExercise extends Document {
   durationMinutes: number;
   caloriesBurned: number;
   imageUrl: string | null;
+  imageAssetId?: mongoose.Types.ObjectId;
   description?: string;
   steps: Array<{
     order: number;
@@ -28,6 +29,7 @@ const ExerciseSchema = new Schema<IExercise>(
     durationMinutes: { type: Number, required: true },
     caloriesBurned: { type: Number, required: true },
     imageUrl: { type: String, default: null },
+    imageAssetId: { type: Schema.Types.ObjectId, ref: 'MediaAsset' },
     description: String,
     steps: [
       {
@@ -42,5 +44,6 @@ const ExerciseSchema = new Schema<IExercise>(
 );
 
 ExerciseSchema.index({ category: 1, isActive: 1 });
+ExerciseSchema.index({ imageAssetId: 1 }, { sparse: true });
 
 export default mongoose.model<IExercise>('Exercise', ExerciseSchema);
