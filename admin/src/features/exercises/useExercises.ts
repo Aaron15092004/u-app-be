@@ -16,6 +16,7 @@ export interface Exercise {
   durationMinutes: number;
   caloriesBurned: number;
   imageUrl?: string | null;
+  imageAssetId?: string | null;
   description?: string;
   steps: ExerciseStep[];
   isActive: boolean;
