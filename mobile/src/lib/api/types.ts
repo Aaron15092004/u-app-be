@@ -4,6 +4,13 @@ export interface IAuthUser {
   name: string;
   role: 'user' | 'admin';
   profileCompleted: boolean;
+  profile?: {
+    heightCm?: number;
+    weightKg?: number;
+    age?: number;
+    goalType?: 'lose' | 'maintain' | 'gain';
+    waterGoal?: number;
+  };
 }
 
 export interface LoginRequest { email: string; password: string; }
@@ -126,6 +133,8 @@ export interface IFoodLogItem {
   sugar: number;
   sodium: number;
   vitaminC: number;
+  vitamins?: Record<string, number>;
+  minerals?: Record<string, number>;
   tags?: string[];
 }
 
@@ -133,11 +142,21 @@ export interface IFoodLog {
   _id: string;
   userId: string;
   date: string;
-  aiProvider: 'openai' | 'logmeal' | 'manual';
+  aiProvider: 'gemini' | 'logmeal' | 'manual';
   imageUrl: string | null;
   foods: IFoodLogItem[];
   totals: { calories: number; protein: number; carbs: number; fat: number };
   createdAt: string;
+}
+
+export interface IFoodDaySummary {
+  date: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  logCount: number;
 }
 
 export interface IFoodItem {
@@ -166,13 +185,18 @@ export interface IScanFoodResponse {
     fat: number;
     fiber: number;
     sugar: number;
-    sodium: number;
-    vitaminC: number;
+    vitamins: Record<string, number>; // { vitaminC: 15, vitaminA: 80, ... }
+    minerals: Record<string, number>; // { sodium: 350, potassium: 200, ... }
     tags: string[];
   }>;
   totals: { calories: number; protein: number; carbs: number; fat: number };
-  aiProvider: 'logmeal' | 'openai' | 'manual';
+  aiProvider: 'logmeal' | 'gemini' | 'manual';
   imageUrl: string | null;
+  usedToday?: number;
+  limit?: number;
+  quotaMode?: 'standard_daily_limit' | 'entitlement_30_daily';
+  entitlementId?: string | null;
+  activeUntil?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,7 +237,95 @@ export interface IProfileStats {
   totalWorkouts: number;
   totalKcalBurned: number;
   notifications: IUserNotifications; // WARNING 3 fix — added so notifications.tsx initialises form state from server, not hardcoded defaults
+  dailyTargets: { kcal: number; protein: number; carbs: number; fat: number };
 }
+
+// ---------------------------------------------------------------------------
+// Workout Programs & Sessions
+// ---------------------------------------------------------------------------
+
+export interface IProgramExercise {
+  exerciseId?: string;
+  exerciseName: string;
+  category?: string;
+  durationSeconds: number;
+  restSeconds: number;
+  order: number;
+  imageUrl?: string | null;
+}
+
+export interface IProgramDay {
+  dayNumber: number;
+  title: string;
+  exercises: IProgramExercise[];
+  totalDurationSeconds: number;
+  totalDurationMinutes: number;
+}
+
+export interface IUserProgramProgress {
+  _id: string;
+  programId: string;
+  currentDay: number;       // next day to train (1-based)
+  completedDays: number[];  // days already done
+  status: 'active' | 'completed' | 'paused';
+  startedAt: string;
+  lastActiveAt: string;
+}
+
+export interface IWorkoutProgram {
+  _id: string;
+  title: string;
+  titleEn?: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  description?: string;
+  imageUrl?: string | null;
+  totalDays: number;
+  estimatedWeeks: number;
+  days: IProgramDay[];
+  userProgress?: IUserProgramProgress | null;
+}
+
+export interface IWorkoutProgramSummary {
+  _id: string;
+  title: string;
+  titleEn?: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  description?: string;
+  imageUrl?: string | null;
+  totalDays: number;
+  estimatedWeeks: number;
+  avgDayMinutes: number;
+  userProgress?: IUserProgramProgress | null;
+}
+
+export interface ISessionExercise {
+  name: string;
+  category?: string;
+  durationSeconds: number;
+  restSeconds: number;
+  order: number;
+  completedAt?: string;
+}
+
+export interface IWorkoutSession {
+  _id: string;
+  programId?: string;
+  dayNumber?: number;
+  dayTitle: string;
+  exercises: ISessionExercise[];
+  status: 'in_progress' | 'completed' | 'abandoned';
+  totalDurationSeconds?: number;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface IWorkoutStreak {
+  currentStreak: number;
+  longestStreak: number;
+  lastWorkoutDate: string | null;
+  totalWorkouts: number;
+}
+
 // ---------------------------------------------------------------------------
 // Phase 1 v2.0 Data Foundation Contracts
 // ---------------------------------------------------------------------------

@@ -1,286 +1,412 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Alert,
-  Image,
   Pressable,
-  SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../../../providers/AuthProvider';
-import { getProfileStatsApi } from '../../../lib/api/users.api';
-import { getStreakApi } from '../../../lib/api/habits.api';
-import PrimaryButton from '../../../components/ui/PrimaryButton';
-import AchievementBadgesRow from '../../../components/ui/AchievementBadgesRow';
-import ProfileMenuCard from '../../../components/ui/ProfileMenuCard';
-import ProfileMenuRow from '../../../components/ui/ProfileMenuRow';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../../../providers/AuthProvider";
+import { getProfileStatsApi } from "../../../lib/api/users.api";
+import { getStreakApi } from "../../../lib/api/habits.api";
+import { getScanEntitlementsApi } from "../../../lib/api/v2-contracts.api";
+import RedeemCodeCard from "../../../components/ui/RedeemCodeCard";
+import ScanEntitlementBadge from "../../../components/ui/ScanEntitlementBadge";
+import AppRatingPrompt from "../../../components/ui/AppRatingPrompt";
 import {
-  PRIMARY,
-  BACKGROUND,
+  PRIMARY_DEEP,
+  PRIMARY_DARK,
   SURFACE,
   TEXT,
   TEXT_SECONDARY,
+  INACTIVE,
   STREAK_BADGE,
-} from '../../../constants/colors';
+} from "../../../constants/colors";
 
-export default function ProfileScreen(): React.JSX.Element {
-  const auth = useAuth();
-  const router = useRouter();
-  const [logoutLoading, setLogoutLoading] = useState(false);
+// ─── Milestone config ─────────────────────────────────────────────────────────
 
-  const statsQuery = useQuery({
-    queryKey: ['users', 'profile', 'stats'],
-    queryFn: getProfileStatsApi,
-  });
+const MILESTONES: { days: number; icon: string }[] = [
+  { days: 7,  icon: "trending-up-outline" },
+  { days: 14, icon: "ribbon-outline" },
+  { days: 28, icon: "medal-outline" },
+  { days: 60, icon: "trophy-outline" },
+];
 
-  const streakQuery = useQuery({
-    queryKey: ['habits', 'streak'],
-    queryFn: getStreakApi,
-  });
+const GOAL_LABEL: Record<string, string> = {
+  lose: "Giảm cân",
+  maintain: "Giữ cân nặng",
+  gain: "Tăng cân",
+};
 
-  const confirmLogout = (): void => {
-    Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc muốn đăng xuất không?',
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Đăng xuất',
-          style: 'destructive',
-          onPress: async () => {
-            setLogoutLoading(true);
-            await auth.logout();
-            setLogoutLoading(false);
-          },
-        },
-      ],
-    );
-  };
+// ─── Info row ─────────────────────────────────────────────────────────────────
 
-  const userName = auth.user?.name ?? '';
-  const userEmail = auth.user?.email ?? '';
-  const streakDays = streakQuery.data?.streakDays ?? 0;
-  const totalWorkouts = statsQuery.data?.totalWorkouts;
-  const totalKcalBurned = statsQuery.data?.totalKcalBurned;
-
+function InfoRow({
+  icon, label, value, action, onAction, last,
+}: {
+  icon: string; label: string; value: string;
+  action?: string; onAction?: () => void; last?: boolean;
+}): React.JSX.Element {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* 1. Avatar + name + email */}
-        <View style={styles.avatarBlock}>
-          {/* Avatar: initial letter placeholder (no avatar field in IAuthUser) */}
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>
-              {userName.charAt(0).toUpperCase() || '?'}
-            </Text>
-          </View>
-          <Text style={styles.name}>{userName}</Text>
-          <Text style={styles.email}>{userEmail}</Text>
-        </View>
-
-        {/* 2. Stats row */}
-        <View style={styles.statsCard}>
-          {/* Streak */}
-          <View style={styles.statsCol}>
-            <View style={styles.statsValueRow}>
-              <Ionicons name="flame-outline" size={16} color={STREAK_BADGE} />
-              <Text style={styles.statsValue}>
-                {statsQuery.data?.streakDays ?? '—'}
-              </Text>
-            </View>
-            <Text style={styles.statsLabel}>ngày streak</Text>
-          </View>
-          <View style={styles.statsDivider} />
-          {/* Workouts */}
-          <View style={styles.statsCol}>
-            <Text style={styles.statsValue}>
-              {totalWorkouts ?? '—'}
-            </Text>
-            <Text style={styles.statsLabel}>bài tập</Text>
-          </View>
-          <View style={styles.statsDivider} />
-          {/* Kcal */}
-          <View style={styles.statsCol}>
-            <Text style={styles.statsValue}>
-              {totalKcalBurned ?? '—'}
-            </Text>
-            <Text style={styles.statsLabel}>kcal đốt</Text>
-          </View>
-        </View>
-
-        {/* Error state for stats */}
-        {statsQuery.isError && (
-          <View style={styles.errorCard}>
-            <Ionicons name="warning-outline" size={16} color="#FFA726" />
-            <Text style={styles.errorText}>Lỗi tải thống kê</Text>
-            <Pressable
-              onPress={() => { void statsQuery.refetch(); }}
-              style={styles.retryButton}
-            >
-              <Text style={styles.retryText}>Thử lại</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* 3. Achievement badges */}
-        <View style={styles.section}>
-          <AchievementBadgesRow streakDays={streakDays} />
-        </View>
-
-        {/* 4. Menu card */}
-        <View style={styles.section}>
-          <ProfileMenuCard>
-            <ProfileMenuRow
-              iconName="create-outline"
-              label="Chỉnh sửa hồ sơ"
-              onPress={() => router.push('/(tabs)/profile/edit')}
-            />
-            <ProfileMenuRow
-              iconName="notifications-outline"
-              label="Cài đặt thông báo"
-              onPress={() => router.push('/(tabs)/profile/notifications')}
-            />
-            <ProfileMenuRow
-              iconName="help-circle-outline"
-              label="Trợ giúp & Hỗ trợ"
-              onPress={() => router.push('/(tabs)/profile/help')}
-            />
-          </ProfileMenuCard>
-        </View>
-
-        {/* 5. Logout button */}
-        <View style={styles.section}>
-          <PrimaryButton
-            variant="outlined"
-            label="Đăng xuất"
-            loading={logoutLoading}
-            onPress={confirmLogout}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={[infoSt.row, last && { borderBottomWidth: 0 }]}>
+      <Ionicons name={icon as never} size={18} color={TEXT_SECONDARY} style={infoSt.icon} />
+      <View style={infoSt.mid}>
+        <Text style={infoSt.lbl}>{label}</Text>
+        <Text style={infoSt.val}>{value}</Text>
+      </View>
+      {action && (
+        <Pressable onPress={onAction} hitSlop={8}>
+          <Text style={infoSt.action}>{action}</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
+const infoSt = StyleSheet.create({
+  row: {
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#F0F0F0",
+  },
+  icon: { marginRight: 12 },
+  mid: { flex: 1 },
+  lbl: { fontSize: 11, color: TEXT_SECONDARY, marginBottom: 1 },
+  val: { fontSize: 14, fontWeight: "500", color: TEXT },
+  action: { fontSize: 13, fontWeight: "600", color: PRIMARY_DARK },
+});
+
+// ─── Settings row ─────────────────────────────────────────────────────────────
+
+function SettingsRow({
+  icon, label, onPress, danger, last,
+}: {
+  icon: string; label: string; onPress: () => void; danger?: boolean; last?: boolean;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        settSt.row,
+        last && { borderBottomWidth: 0 },
+        pressed && { backgroundColor: "#F8F8F8" },
+      ]}
+    >
+      <Ionicons name={icon as never} size={20} color={danger ? "#EF5350" : TEXT_SECONDARY} style={settSt.icon} />
+      <Text style={[settSt.label, danger && { color: "#EF5350" }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={16} color={INACTIVE} />
+    </Pressable>
+  );
+}
+
+const settSt = StyleSheet.create({
+  row: {
+    flexDirection: "row", alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#F0F0F0",
+  },
+  icon: { marginRight: 12 },
+  label: { flex: 1, fontSize: 15, color: TEXT },
+});
+
+// ─── Milestone badge ──────────────────────────────────────────────────────────
+
+function MilestoneBadge({
+  days, icon, state,
+}: {
+  days: number; icon: string; state: "active" | "done" | "locked";
+}): React.JSX.Element {
+  const isActive = state === "active";
+  const isDone   = state === "done";
+  return (
+    <View style={badgeSt.col}>
+      <View style={[
+        badgeSt.circle,
+        isActive && badgeSt.circleActive,
+        isDone   && badgeSt.circleDone,
+        state === "locked" && badgeSt.circleLocked,
+      ]}>
+        <Ionicons
+          name={icon as never}
+          size={22}
+          color={isActive ? "#FFF" : isDone ? STREAK_BADGE : INACTIVE}
+        />
+      </View>
+      <Text style={[badgeSt.label, (isActive || isDone) && { color: STREAK_BADGE }]}>
+        {days} ngày
+      </Text>
+    </View>
+  );
+}
+
+const badgeSt = StyleSheet.create({
+  col: { alignItems: "center", flex: 1 },
+  circle: {
+    width: 52, height: 52, borderRadius: 12,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "#F5F5F5",
+  },
+  circleActive: { backgroundColor: STREAK_BADGE },
+  circleDone:   { backgroundColor: "transparent" },
+  circleLocked: {
+    backgroundColor: "transparent",
+    borderWidth: 1.5, borderStyle: "dashed", borderColor: INACTIVE,
+  },
+  label: { fontSize: 11, fontWeight: "600", color: INACTIVE, marginTop: 6 },
+});
+
+// ─── Card ─────────────────────────────────────────────────────────────────────
+
+function Card({ children, style }: { children: React.ReactNode; style?: object }): React.JSX.Element {
+  return <View style={[cardSt.card, style]}>{children}</View>;
+}
+
+const cardSt = StyleSheet.create({
+  card: {
+    backgroundColor: SURFACE, borderRadius: 14, paddingHorizontal: 16,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 1,
+  },
+});
+
+// ─── Section title ────────────────────────────────────────────────────────────
+
+function SectionTitle({ title }: { title: string }): React.JSX.Element {
+  return <Text style={secSt.t}>{title}</Text>;
+}
+const secSt = StyleSheet.create({
+  t: { fontSize: 16, fontWeight: "700", color: TEXT, marginTop: 24, marginBottom: 10 },
+});
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
+export default function ProfileScreen(): React.JSX.Element {
+  const insets = useSafeAreaInsets();
+  const auth   = useAuth();
+  const router = useRouter();
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [ratingVisible, setRatingVisible] = useState(false);
+
+  const statsQ  = useQuery({ queryKey: ["users", "profile", "stats"], queryFn: getProfileStatsApi });
+  const streakQ = useQuery({ queryKey: ["habits", "streak"],          queryFn: getStreakApi });
+  const entitlementQ = useQuery({
+    queryKey: ["v2", "scan-entitlements"],
+    queryFn: getScanEntitlementsApi,
+  });
+
+  const user        = auth.user;
+  const profile     = user?.profile;
+  const streakDays  = streakQ.data?.streakDays ?? statsQ.data?.streakDays ?? 0;
+  const totalWork   = statsQ.data?.totalWorkouts ?? 0;
+  const totalKcal   = statsQ.data?.totalKcalBurned ?? 0;
+
+  const fmtKcal = totalKcal >= 1000
+    ? `${(totalKcal / 1000).toFixed(1)}k`
+    : String(totalKcal);
+
+  // Highest achieved milestone = "active"; past achieved = "done"; future = "locked"
+  const getMilestoneState = (m: number): "active" | "done" | "locked" => {
+    if (streakDays < m) return "locked";
+    const nextIdx = MILESTONES.findIndex((ms) => ms.days > streakDays);
+    const topIdx  = nextIdx === -1 ? MILESTONES.length - 1 : nextIdx - 1;
+    return MILESTONES[topIdx]?.days === m ? "active" : "done";
+  };
+
+  const achievementTitle =
+    streakDays >= 60 ? "Người bất khuất"    :
+    streakDays >= 28 ? "Người kiên trì"     :
+    streakDays >= 14 ? "Người chăm chỉ"     :
+    streakDays >= 7  ? "Người mới bắt đầu"  :
+                       "Đang xây dựng thói quen";
+
+  const confirmLogout = (): void => {
+    Alert.alert("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Đăng xuất", style: "destructive",
+        onPress: async () => {
+          setLogoutLoading(true);
+          await auth.logout();
+          setLogoutLoading(false);
+        },
+      },
+    ]);
+  };
+
+  return (
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
+
+      {/* ── Gradient header — rounded bottom corners ── */}
+      <LinearGradient
+        colors={[PRIMARY_DEEP, PRIMARY_DARK]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
+      >
+        <View style={styles.avatarCircle}>
+          <Ionicons name="person-outline" size={36} color="#FFF" />
+        </View>
+        <Text style={styles.headerName}>{user?.name ?? ""}</Text>
+        <Text style={styles.headerEmail}>{user?.email ?? ""}</Text>
+
+        <View style={styles.statsRow}>
+          {[
+            { num: String(streakDays), lbl: "Ngày streak" },
+            { num: String(totalWork),  lbl: "Bài tập" },
+            { num: fmtKcal,            lbl: "Calo đốt" },
+          ].map(({ num, lbl }) => (
+            <View key={lbl} style={styles.statBox}>
+              <Text style={styles.statNum}>{num}</Text>
+              <Text style={styles.statLbl}>{lbl}</Text>
+            </View>
+          ))}
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+      >
+        {/* ── Thông tin cá nhân ── */}
+        <SectionTitle title="Thông tin cá nhân" />
+        <Card>
+          <InfoRow icon="mail-outline"    label="Email"      value={user?.email ?? "—"} />
+          <InfoRow icon="calendar-outline" label="Tuổi"      value={profile?.age ? `${profile.age} tuổi` : "—"} />
+          <InfoRow icon="resize-outline"  label="Chiều cao"  value={profile?.heightCm ? `${profile.heightCm} cm` : "—"}
+            action="Cập nhật" onAction={() => router.push("/(tabs)/profile/edit" as never)} />
+          <InfoRow icon="barbell-outline" label="Cân nặng"   value={profile?.weightKg ? `${profile.weightKg} kg` : "—"}
+            action="Cập nhật" onAction={() => router.push("/(tabs)/profile/edit" as never)} />
+          <InfoRow icon="flag-outline"    label="Mục tiêu"   value={GOAL_LABEL[profile?.goalType ?? ""] ?? "—"}
+            action="Thay đổi" onAction={() => router.push("/(tabs)/profile/edit" as never)} />
+          <InfoRow icon="body-outline"    label="Chỉ số BMI" value="Xem chi tiết"
+            action="→" onAction={() => router.push("/(tabs)/bmi" as never)} last />
+        </Card>
+
+        <SectionTitle title="Gói scan AI" />
+        <View style={styles.redeemStack}>
+          <ScanEntitlementBadge status={entitlementQ.data} />
+          <RedeemCodeCard onRedeemed={() => setRatingVisible(true)} />
+        </View>
+
+        {/* ── Thành tích — gradient card với border cam ── */}
+        <SectionTitle title="Thành tích" />
+        <LinearGradient
+          colors={["#FFF9F2", "#FFEFD8"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.achieveCard}
+        >
+          {/* Hero row */}
+          <View style={styles.achieveHero}>
+            <View style={styles.achieveIcon}>
+              <Ionicons name="ribbon-outline" size={28} color={STREAK_BADGE} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.achieveTitle}>{achievementTitle}</Text>
+              <Text style={styles.achieveSub}>Duy trì {streakDays} ngày liên tiếp</Text>
+            </View>
+          </View>
+
+          {/* Milestone badges */}
+          <View style={styles.badgeRow}>
+            {MILESTONES.map(({ days, icon }) => (
+              <MilestoneBadge key={days} days={days} icon={icon} state={getMilestoneState(days)} />
+            ))}
+          </View>
+        </LinearGradient>
+
+        {/* ── Cài đặt ── */}
+        <SectionTitle title="Cài đặt" />
+        <Card>
+          <SettingsRow icon="notifications-outline" label="Thông báo"
+            onPress={() => router.push("/(tabs)/profile/notifications" as never)} />
+          <SettingsRow icon="shield-outline" label="Quyền riêng tư"
+            onPress={() => router.push("/(tabs)/profile/help" as never)} />
+          <SettingsRow icon="help-circle-outline" label="Trợ giúp & Hỗ trợ"
+            onPress={() => router.push("/(tabs)/profile/help" as never)} />
+          <SettingsRow icon="log-out-outline"
+            label={logoutLoading ? "Đang đăng xuất..." : "Đăng xuất"}
+            onPress={confirmLogout} danger last />
+        </Card>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerTxt}>Ú App · Phiên bản 1.0.0</Text>
+          <Text style={styles.footerTxt}>© 2026 Ú Health & Wellness</Text>
+        </View>
+      </ScrollView>
+      <AppRatingPrompt
+        visible={ratingVisible}
+        contextNote="Đánh giá sau khi kích hoạt mã scan AI thành công."
+        onClose={() => setRatingVisible(false)}
+      />
+    </View>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: BACKGROUND,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 48,
-  },
-  // Avatar block
-  avatarBlock: {
-    alignItems: 'center',
-    marginBottom: 4,
+  root: { flex: 1, backgroundColor: "#FFFFFF" },
+
+  // Header — rounded bottom corners
+  header: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: PRIMARY,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 10,
   },
-  avatarInitial: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  headerName:  { fontSize: 20, fontWeight: "700", color: "#FFF" },
+  headerEmail: { fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 2 },
+
+  statsRow: { flexDirection: "row", gap: 10, marginTop: 20, width: "100%" },
+  statBox: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    borderRadius: 12, paddingVertical: 10, alignItems: "center",
   },
-  avatarImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  name: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: TEXT,
-    marginTop: 12,
-  },
-  email: {
-    fontSize: 16,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
-  },
-  // Stats row
-  statsCard: {
-    backgroundColor: SURFACE,
-    borderRadius: 12,
+  statNum: { fontSize: 20, fontWeight: "700", color: "#FFF" },
+  statLbl: { fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 },
+
+  scroll: { paddingHorizontal: 16 },
+  redeemStack: { gap: 12 },
+
+  // Achievement card — gradient + border
+  achieveCard: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#FFCC80",
     padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowColor: STREAK_BADGE,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
-    flexDirection: 'row',
-    marginTop: 24,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  statsCol: {
-    flex: 1,
-    alignItems: 'center',
+  achieveHero: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
+  achieveIcon: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: "#FFF3EE",
+    alignItems: "center", justifyContent: "center",
   },
-  statsValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statsValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: TEXT,
-  },
-  statsLabel: {
-    fontSize: 12,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  statsDivider: {
-    width: 1,
-    backgroundColor: '#E0E0E0',
-    alignSelf: 'stretch',
-    marginVertical: 4,
-  },
-  // Error
-  errorCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: SURFACE,
-    borderRadius: 8,
-  },
-  errorText: {
-    fontSize: 14,
-    color: TEXT_SECONDARY,
-    flex: 1,
-  },
-  retryButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: 'rgba(76,175,80,0.1)',
-  },
-  retryText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: PRIMARY,
-  },
-  // Section spacing
-  section: {
-    marginTop: 16,
-  },
+  achieveTitle: { fontSize: 15, fontWeight: "700", color: TEXT },
+  achieveSub:   { fontSize: 12, color: TEXT_SECONDARY, marginTop: 2 },
+  badgeRow:     { flexDirection: "row", justifyContent: "space-between" },
+
+  footer:    { alignItems: "center", marginTop: 32, gap: 4 },
+  footerTxt: { fontSize: 12, color: "#BDBDBD" },
 });

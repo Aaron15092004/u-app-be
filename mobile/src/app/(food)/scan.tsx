@@ -13,16 +13,32 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import ScanFrame from '../../components/ui/ScanFrame';
 import CameraControls from '../../components/ui/CameraControls';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import RedeemCodeCard from '../../components/ui/RedeemCodeCard';
+import ScanEntitlementBadge from '../../components/ui/ScanEntitlementBadge';
+import AppRatingPrompt from '../../components/ui/AppRatingPrompt';
 import { useFoodScanStore } from '../../stores/foodScanStore';
 import { scanFoodApi } from '../../lib/api/food.api';
+import { getScanEntitlementsApi } from '../../lib/api/v2-contracts.api';
 
 export default function ScanScreen() {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
+  const [quotaBlocked, setQuotaBlocked] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<{
+    usedToday?: number;
+    limit?: number;
+    quotaMode?: 'standard_daily_limit' | 'entitlement_30_daily';
+  }>({});
+  const [ratingVisible, setRatingVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
+  const entitlementQ = useQuery({
+    queryKey: ['v2', 'scan-entitlements'],
+    queryFn: getScanEntitlementsApi,
+  });
 
   const { setIsScanning, isScanning, setScanResult, setPendingImageUri } =
     useFoodScanStore();
@@ -42,18 +58,49 @@ export default function ScanScreen() {
       const compressed = await compressImage(uri);
       setPendingImageUri(compressed);
       const result = await scanFoodApi(compressed);
+      setQuotaBlocked(false);
+      setQuotaInfo({
+        usedToday: result.usedToday,
+        limit: result.limit,
+        quotaMode: result.quotaMode,
+      });
       setScanResult(result);
       router.push('/(food)/result');
     } catch (err: unknown) {
       setIsScanning(false);
-      const error = err as { response?: { status?: number } };
-      if (error?.response?.status === 429) {
+      const e = err as {
+        response?: {
+          status?: number;
+          data?: {
+            error?: string;
+            retryAfterSeconds?: number;
+            usedToday?: number;
+            limit?: number;
+            quotaMode?: 'standard_daily_limit' | 'entitlement_30_daily';
+          };
+        };
+        message?: string;
+      };
+      const status = e?.response?.status;
+      if (status === 429) {
+        const msg = e?.response?.data?.error ?? 'Bạn đã dùng hết lượt quét hôm nay.';
+        setQuotaBlocked(true);
+        setQuotaInfo({
+          usedToday: e.response?.data?.usedToday,
+          limit: e.response?.data?.limit,
+          quotaMode: e.response?.data?.quotaMode,
+        });
+        Alert.alert('Hết lượt quét', msg);
+      } else if (status === 422) {
         Alert.alert(
-          '',
-          'Bạn đã quét 20 lần hôm nay. Vui lòng thử lại vào ngày mai.'
+          'Không nhận dạng được',
+          e?.response?.data?.error ?? 'Không tìm thấy món ăn trong ảnh. Hãy chụp rõ hơn và thử lại.',
         );
+      } else if (status === 503) {
+        Alert.alert('Tính năng tạm thời không khả dụng', e?.response?.data?.error ?? 'Vui lòng thử lại sau.');
       } else {
-        Alert.alert('Lỗi', 'Đã xảy ra lỗi. Vui lòng thử lại.');
+        const msg = e?.response?.data?.error ?? e?.message ?? 'Vui lòng kiểm tra kết nối mạng và thử lại.';
+        Alert.alert('Quét ảnh thất bại', msg);
       }
     }
   }
@@ -68,7 +115,7 @@ export default function ScanScreen() {
 
   async function handleGallery() {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 1,
     });
     if (result.canceled || !result.assets[0]) return;
@@ -144,6 +191,26 @@ export default function ScanScreen() {
 
         {/* Bottom hint and controls */}
         <View style={styles.bottomArea}>
+          <View style={styles.entitlementWrap}>
+            <ScanEntitlementBadge
+              status={entitlementQ.data}
+              usedToday={quotaInfo.usedToday}
+              limit={quotaInfo.limit}
+              quotaMode={quotaInfo.quotaMode}
+            />
+          </View>
+          {quotaBlocked && (
+            <View style={styles.redeemWrap}>
+              <RedeemCodeCard
+                title="Nhập mã để tiếp tục quét"
+                compact
+                onRedeemed={() => {
+                  setQuotaBlocked(false);
+                  setRatingVisible(true);
+                }}
+              />
+            </View>
+          )}
           <Text style={styles.hintText}>
             Nhấn nút chụp hoặc chọn từ thư viện
           </Text>
@@ -155,6 +222,11 @@ export default function ScanScreen() {
             isLoading={isScanning}
           />
         </View>
+        <AppRatingPrompt
+          visible={ratingVisible}
+          contextNote="Đánh giá sau khi kích hoạt mã scan AI từ màn quét."
+          onClose={() => setRatingVisible(false)}
+        />
       </CameraView>
     </SafeAreaView>
   );
@@ -214,6 +286,13 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     gap: 16,
     alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  entitlementWrap: {
+    width: '100%',
+  },
+  redeemWrap: {
+    width: '100%',
   },
   hintText: {
     fontSize: 14,
