@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
 status: executing
-last_updated: "2026-05-26T08:21:58.996Z"
+last_updated: "2026-05-26T08:29:46.004Z"
 last_activity: 2026-05-26
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
-  percent: 20
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — v2 Data Foundation — **In progress** (Plan 1 of 5 complete)
+Phase 1 — v2 Data Foundation — **In progress** (Plan 2 of 5 complete)
 
 ## Status
 
-Phase 1 execution is underway. Plan 01-01 added approved v2 foundation packages and the CODE-11 redeem-code hashing utility; next action is Plan 01-02.
+Phase 1 execution is underway. Plan 01-02 added v2 data model contracts; next action is Plan 01-03.
 
 ## Phase Progress
 
@@ -37,7 +37,7 @@ Phase 1 execution is underway. Plan 01-01 added approved v2 foundation packages 
 ## Progress Bar
 
 ```
-Phase 1 [##--------] 20%
+Phase 1 [####------] 40%
 Phase 2 [----------] 0%
 Phase 3 [----------] 0%
 Phase 4 [----------] 0%
@@ -49,8 +49,8 @@ Phase 6 [----------] 0%
 
 - Requirements covered: 36/36
 - Phases completed: 0/6
-- Plans completed: 1/5
-- Last plan metric: Phase 01 Plan 01 completed in 442s, 2 tasks, 6 files
+- Plans completed: 2/5
+- Last plan metric: Phase 01 Plan 02 completed in 206s, 2 tasks, 11 files
 
 ## Accumulated Context
 
@@ -58,6 +58,11 @@ Phase 6 [----------] 0%
 
 - Phase 01 Plan 01: Redeem-code hashing uses HMAC-SHA-256 with `REDEEM_CODE_PEPPER`; raw codes remain transient export/query payload material only.
 - Phase 01 Plan 01: v2 scan entitlement foundation uses finite `high_daily_quota` metadata, not an unbounded scan bypass.
+- Phase 01 Plan 02: RedeemCode persists only `codeHash` and metadata; raw reusable code fields are absent.
+- Phase 01 Plan 02: UserScanEntitlement stores finite `high_daily_quota` policy with unique `redeemCodeId` linkage for future atomic redemption.
+- Phase 01 Plan 02: FoodItem barcode fields are optional string arrays and Vietnamese text search keeps `default_language: none` while adding brand.
+- Phase 01 Plan 02: Exercise keeps `imageUrl` unchanged and adds optional `imageAssetId` for future media workflows.
+- Phase 01 Plan 02: Nut-milk rules are static backend constants with explicit BMI 23.0 boundary handling.
 - Stack: Expo SDK 54 + React 19 + Express 5.1 + MongoDB Atlas M2 + LogMeal/GPT-4o-mini + Cloudinary + Firebase FCM
 - AI food scan proxied through backend — never called directly from client
 - Apple Sign In is required (App Store Guideline 4.8) when any OAuth is present
@@ -248,17 +253,17 @@ None currently.
 
 ## Session Continuity
 
-**Last action**: Phase 01 Plan 01 complete (commits 2f2ce8e, abd80ba, fa3ff31). Added QR/CSV/store-review packages and redeem-code HMAC utility with tests.
-**Next action**: Execute Phase 01 Plan 02.
+**Last action**: Phase 01 Plan 02 complete (commits e9a1ac9, 26b9fed). Added v2 Mongoose data contracts and static nut-milk rule config.
+**Next action**: Execute Phase 01 Plan 03.
 **Resume file**: None
 
 ## Last Updated
 
-2026-05-26 (Phase 01 Plan 01 complete)
+2026-05-26 (Phase 01 Plan 02 complete)
 
 ## Current Position
 
 Phase: 01 (v2 Data Foundation) — EXECUTING
-Plan: 2 of 5
-Status: Ready to execute Plan 2
-Last activity: 2026-05-26 -- Phase 01 Plan 01 complete
+Plan: 3 of 5
+Status: Ready to execute Plan 3
+Last activity: 2026-05-26 -- Phase 01 Plan 02 complete
