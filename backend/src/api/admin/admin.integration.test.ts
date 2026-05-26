@@ -92,13 +92,14 @@ describe('requireAdmin guard', () => {
     }
   });
 
-  it('allows admin users to reach v2 scaffold placeholder responses', async () => {
+  it('allows admin users to reach real campaign list responses', async () => {
     const res = await supertest(app)
       .get('/api/admin/campaigns')
       .set('Authorization', `Bearer ${adminToken}`);
 
-    assert.equal(res.status, 501);
-    assert.equal(res.body.success, false);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.ok(Array.isArray(res.body.data.items));
   });
 });
 
