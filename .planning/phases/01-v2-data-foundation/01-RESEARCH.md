@@ -432,22 +432,22 @@ export const NUT_MILK_FLAVORS = [
 | A4 | `FeedbackPromptState.cooldownUntil` index may be useful for future jobs. | Model Shapes | Low; harmless but can be omitted if no background jobs are planned. |
 | A5 | Adding optional fields with defaults will not require old-document migration. | Pitfalls | Low; Mongoose defaults apply on new docs, but old docs may need read-path defaults. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Redeem-code pepper env name**
    - What we know: hashing must use server-only pepper and no raw code storage. [VERIFIED: CONTEXT.md]
-   - What's unclear: exact env var name and rotation policy. [ASSUMED]
-   - Recommendation: use `REDEEM_CODE_PEPPER` and fail startup or generation if absent outside tests. [ASSUMED]
+   - Resolution: use `REDEEM_CODE_PEPPER` as the canonical env var name. Phase 1 should add this to env config/example files and tests should set a deterministic test value.
+   - Rotation policy: rotation is out of scope for Phase 1. The Phase 1 contract should make pepper use centralized so a future rotation strategy can be added without changing call sites.
 
 2. **ZIP export dependency**
    - What we know: ZIP export is optional only if needed. [VERIFIED: ROADMAP.md]
-   - What's unclear: whether print operations require QR image ZIPs in v2.0. [VERIFIED: ROADMAP.md]
-   - Recommendation: do not install `archiver` unless a Phase 2 task explicitly requires ZIP export. [VERIFIED: ROADMAP.md]
+   - Resolution: do not install `archiver` in Phase 1. CSV export scaffolding is enough for the foundation; Phase 2 can add `archiver` only if print operations explicitly require QR image ZIPs.
+   - Planner instruction: package additions for Phase 1 should include `qrcode`, `csv-parse`, `csv-stringify`, `@types/qrcode`, and `expo-store-review`; `archiver` remains a documented future conditional dependency.
 
 3. **BMI 23.0 boundary**
    - What we know: Phase 4 baseline says BMI `18.5-22.9` and `> 23`. [VERIFIED: ROADMAP.md]
-   - What's unclear: exact treatment of BMI `23.0`. [VERIFIED: PITFALLS.md]
-   - Recommendation: Phase 1 static rules should encode a TODO/test placeholder and Phase 4 should get product signoff. [ASSUMED]
+   - Resolution: Phase 1 static rule config should encode explicit ranges and tests that preserve the current product wording: normal recommendation applies through `22.9`; Rau má sữa dừa applies only for values strictly greater than `23`. BMI `23.0` should not be silently rounded into either side without a named boundary test.
+   - Planner instruction: Phase 1 may include a TODO/comment that Phase 4 must get product/legal signoff on the exact Vietnamese copy and display behavior for BMI `23.0`.
 
 ## Environment Availability
 
