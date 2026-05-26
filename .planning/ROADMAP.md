@@ -1,256 +1,158 @@
-# Roadmap — Ủ App
+# Roadmap — Ủ App v2.0
 
 ## Overview
 
-**Project**: Ủ App — Vietnamese Health & Wellness Mobile Application
-**Coverage**: 71/71 v1 requirements mapped
-**Granularity**: Standard (6 phases)
-**Last updated**: 2026-05-19
+**Project**: Ủ App — v2.0 urgent commercial feature release  
+**Coverage**: 36/36 v2.0 requirements mapped  
+**Granularity**: Standard (6 phases)  
+**Last updated**: 2026-05-26  
+**Phase numbering**: Reset to Phase 1 for v2.0
 
 ---
 
 ## Phases
 
-- [x] **Phase 1: Infrastructure** — Project scaffold, API skeleton, all third-party services wired up, CI/CD pipeline ready
-- [x] **Phase 2: Authentication** — Onboarding + full auth flow (email, Google, Apple, JWT sessions)
-- [x] **Phase 3: Core Health Tracking** — Workout library + timer, Habit tracking + streaks, BMI calculator + 30-day chart
-- [x] **Phase 4: AI Food Scan** — Camera scan, AI proxy, Vietnamese food database, meal logging + history
-- [ ] **Phase 5: Home Dashboard, Profile & Notifications** — Assembled dashboard, user profile, push notification reminders
-- [x] **Phase 6: Admin Web Dashboard** — Admin login, exercise CRUD, food DB CRUD, user management (completed 2026-05-19)
+- [ ] **Phase 1: v2 Data Foundation** — Shared models, indexes, validation, contracts, and package additions for v2.0 features.
+- [ ] **Phase 2: Campaign Codes & Unlimited Scan Entitlements** — Admin creates bulk bottle codes; users redeem by text/QR; active entitlements bypass AI scan limit with safeguards.
+- [ ] **Phase 3: Barcode Food Scan** — Users scan packaged-food barcodes, review nutrition, and log with local/external lookup fallback.
+- [ ] **Phase 4: Ủ Milk Recommendation** — BMI-based Ủ milk suggestions with safe Vietnamese copy and saved user preference.
+- [ ] **Phase 5: Exercise Media Operations** — Admin can bulk upload, map, preview, and audit exercise images for hundreds of records.
+- [ ] **Phase 6: Feedback & Ratings** — In-app star/comment feedback, cooldown prompt logic, admin review table, optional native store review.
 
 ---
 
 ## Phase Details
 
-### Phase 1: Infrastructure
+### Phase 1: v2 Data Foundation
 
-**Goal**: All foundational services are running and wired together so every subsequent phase can build immediately without environment blockers.
-**Mode**: mvp
-**Depends on**: Nothing
-**Requirements**: *(No user-facing v1 requirements — pure foundation enabling all other phases)*
+**Goal**: Establish v2.0 backend contracts and data foundations so later phases can build without schema churn or security shortcuts.  
+**Depends on**: Existing v1 app complete  
+**Requirements**: CODE-11
 
 **Success Criteria**:
 
-1. Expo development build runs on a physical iOS and Android device without errors
-2. Express API server starts and returns a health-check response at `/api/health`
-3. MongoDB Atlas connection is live; a test document can be written and read via Mongoose
-4. Cloudinary image upload returns a public URL from a test image
-5. Firebase project is configured and Expo push token can be registered from the device
+1. Backend has Mongoose models/indexes for Campaign, RedeemCode, UserScanEntitlement, AppRating, MediaAsset, and recommendation/preference storage.
+2. RedeemCode stores only hashed code lookup material, never raw reusable code values beyond controlled generation/export response.
+3. FoodItem and Exercise schemas support barcode/media additions while preserving existing mobile compatibility.
+4. Shared validation schemas and API route scaffolds exist for campaign, barcode, recommendation, rating, and media domains.
+5. Required packages are added narrowly: QR generation, CSV import/export, optional ZIP export only if needed, and mobile store review support.
 
-**Plans**: 5 plans
+**Plans**: TBD by `$gsd-plan-phase 1`
 
-Wave 1:
-
-- [x] 01-PLAN-01.md — Project scaffold: mobile, backend, admin directory structure + package.json + tsconfig
-
-Wave 2 *(blocked on Wave 1)*:
-
-- [x] 01-PLAN-02.md — Backend core: Express app, Mongoose loader (M2 pool settings), all models with compound indexes, GET /api/health
-- [x] 01-PLAN-03.md — Mobile foundation: Expo Router layout, providers (Query/Auth/Theme), API client, Walking Skeleton health-check screen
-
-Wave 3 *(blocked on Wave 2)*:
-
-- [x] 01-PLAN-04.md — Third-party services: Cloudinary upload, Firebase Admin SDK, FCM service, AI food service stubs, push token endpoint
-- [x] 01-PLAN-05.md — CI/CD: GitHub Actions lint+typecheck, EAS 3-profile config, Render deploy config, env file audit
-
-**Cross-cutting constraints:** TypeScript strict mode across all workspaces (D-07); compound indexes on all health collections required before Phase 2 (D-11); JWT tokens only in expo-secure-store never AsyncStorage (D-22)
+**Cross-cutting constraints**: Keep v2.0 in existing Expo/Express/Mongo/Cloudinary architecture; backend remains source of truth for entitlement, recommendation, barcode normalization, and rating persistence.
 
 ---
 
-### Phase 2: Authentication
+### Phase 2: Campaign Codes & Unlimited Scan Entitlements
 
-**Goal**: Users can create accounts and securely access the app through email, Google, or Apple — and stay logged in across sessions.
-**Mode**: mvp
-**Depends on**: Phase 1
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, AUTH-08
+**Goal**: Admins can generate milk-bottle redeem codes and users can redeem them to unlock time-boxed unlimited AI scans with backend cost and abuse controls.  
+**Depends on**: Phase 1  
+**Requirements**: CODE-01, CODE-02, CODE-03, CODE-04, CODE-05, CODE-06, CODE-07, CODE-08, CODE-09, CODE-10, CODE-12
 
 **Success Criteria**:
 
-1. First-time user sees all 3 onboarding screens (Welcome / Daily tracking / Get started) before reaching login
-2. User can register with email + password (minimum 8 characters, confirm password, Terms agreement) and land on the main app
-3. User can log in with email/password and receive a JWT that persists across app restarts (refresh token)
-4. User can trigger a password reset email and set a new password via the link
-5. User can authenticate with Google OAuth and Apple Sign In on iOS without redirect errors
-6. User can log out and be returned to the login screen with session cleared
+1. Admin can create a campaign, generate bulk single-use codes, export CSV with QR/deep-link payloads, and search/filter/revoke codes.
+2. User can enter a code manually or scan a QR code from a milk bottle and receive clear Vietnamese status messaging.
+3. Redemption is atomic: the same code cannot be redeemed twice, and revoked/expired codes never create entitlement.
+4. `/api/food/scan` uses an entitlement-aware quota resolver so active users bypass the normal daily scan limit until `activeUntil`.
+5. User can see entitlement status and expiry in-app, rendered in Vietnam time from UTC source data.
+6. Redemption attempts and high scan volume remain rate-limited/fair-use protected despite the product wording "unlimited".
 
-**Plans**: 7 plans
+**Plans**: TBD by `$gsd-plan-phase 2`
 
-Wave 1:
-
-- [x] 02-01-PLAN.md — Backend foundations: User model patch + JWT/password utilities + Resend email service + JWT middleware (AUTH-02/03/04/07)
-- [x] 02-02-PLAN.md — Mobile foundations: MMKV singleton + Zustand auth store + API types + 5 reusable UI components (AUTH-01/02/03/07)
-
-Wave 2 *(blocked on Wave 1)*:
-
-- [x] 02-03-PLAN.md — Onboarding vertical slice: 3 screens, MMKV gating, gestureEnabled=false (AUTH-01)
-- [x] 02-04-PLAN.md — Backend email auth: register/login/refresh/logout/complete-profile endpoints + zod validation + supertest integration tests (AUTH-02/03/07)
-
-Wave 3 *(blocked on Wave 2)*:
-
-- [x] 02-05-PLAN.md — Mobile email auth: AuthProvider rewrite + 401 refresh-and-retry interceptor + login/register/complete-profile screens + root layout state-diagram routing + SplashScreen orchestration (AUTH-02/03/07)
-
-Wave 4 *(blocked on Wave 3)*:
-
-- [x] 02-06-PLAN.md — Password reset vertical slice: backend forgot/reset endpoints + Resend Vietnamese email + mobile forgot-password and reset-password screens + uapp:// deep link (AUTH-04)
-
-Wave 5 *(blocked on Wave 4)*:
-
-- [x] 02-07-PLAN.md — OAuth + logout: Google OAuth (native SDK D-19) + Apple Sign In (D-23) backend verification + mobile SDK wrappers + real logout button on /(tabs) (AUTH-05/06/08)
-
-**Cross-cutting constraints:** JWT access token 15min in-memory in Zustand (D-22); refresh token 7d in expo-secure-store, hashed in MongoDB (D-22); Apple Sign In mandatory alongside Google (D-23 + App Store 4.8); no AsyncStorage anywhere (CLAUDE.md); MMKV onboarding_seen preserved across logout (D-37); no Bỏ qua skip button on onboarding (D-35); SplashScreen.hideAsync() called from AuthProvider not root layout (D-38).
+**Research flags**: Decide fixed campaign expiry vs N days after redemption, stacking behavior, QR payload format, and whether CSV alone is enough for print operations.
 
 ---
 
-### Phase 3: Core Health Tracking
+### Phase 3: Barcode Food Scan
 
-**Goal**: Users can browse and complete workouts, check in daily habits, and view their BMI — all stored to their account history.
-**Mode**: mvp
-**Depends on**: Phase 2
-**Requirements**: WO-01, WO-02, WO-03, WO-04, WO-05, WO-06, WO-07, WO-08, WO-09, WO-10, WO-11, HAB-01, HAB-02, HAB-03, HAB-04, HAB-05, HAB-06, HAB-07, BMI-01, BMI-02, BMI-03, BMI-04, BMI-05, BMI-06
+**Goal**: Food logging supports packaged-product barcode scan as a supplement to AI image scan and manual food search.  
+**Depends on**: Phase 1, Phase 2 camera routing patterns  
+**Requirements**: BAR-01, BAR-02, BAR-03, BAR-04, BAR-05, BAR-06, BAR-07
 
 **Success Criteria**:
 
-1. User can browse 100+ exercises filtered by category (Yoga/Cardio/Tạ/Giãn cơ), view detail with description and movement list, and start a countdown timer that can be paused, stopped, or completed
-2. Completing a workout shows the "Xuất sắc!" screen and saves the session to workout history; weekly stats (days/exercises/kcal/minutes) update correctly
-3. User sees the 6 default habits with a daily progress counter, can tap "Đánh dấu +1" on each, and the streak counter increments for consecutive days; progress resets at 00:00
-4. User can update height and weight via sliders, the BMI score and category label (Thiếu cân/Bình thường/Thừa cân/Béo phì) recalculate instantly, and a 30-day bar chart reflects past entries
+1. User can choose barcode mode in the food scan flow and scan common packaged-food barcodes through the existing camera stack.
+2. Backend searches local FoodItem barcode fields first, then calls Open Food Facts fallback and caches normalized results.
+3. Barcode values preserve leading zeros and are never stored as numbers.
+4. Result screen clearly shows source/provenance and allows edit-before-log.
+5. Unknown or incomplete barcode results offer manual search and AI image scan fallback without dead ends.
+6. Saved food logs from barcode include source metadata for support and future data-quality review.
 
-**Plans**: 9 plans
+**Plans**: TBD by `$gsd-plan-phase 3`
 
-Wave 1 *(parallel — backend foundations, no inter-plan file conflicts)*:
-
-- [x] 03-01-PLAN.md — Exercise API + Vietnamese seed script (100 exercises, idempotent npm run seed) (WO-01/02/05/11)
-- [x] 03-02-PLAN.md — Workout API: POST /api/workouts + GET /api/workouts/stats/weekly + date utility (WO-03/04/06–10)
-- [x] 03-03-PLAN.md — Habit API: check-in (idempotent upsert) + today + weekly heatmap + streak (HAB-01–HAB-07, D-49 ≥3/6 rule)
-- [x] 03-04-PLAN.md — BMI API: PATCH atomic save (BMIRecord + User.profile) + GET 30-day history (BMI-01–BMI-06, D-54)
-
-Wave 2 *(blocked on Wave 1 — mobile shared infrastructure)*:
-
-- [x] 03-05-PLAN.md — Tab layout (4 tabs), design tokens (11 new), API clients (4 modules), Zustand timer store (Phase 3 cross-cutting)
-
-Wave 3 *(parallel — mobile vertical slices, blocked on Wave 2)*:
-
-- [x] 03-06-PLAN.md — Workout slice part 1: Exercise List + Detail screens + 4 components (WO-01/02/03/04/05/06/11)
-- [x] 03-08-PLAN.md — Habit slice: Habit screen + 3 components, optimistic check-in (HAB-01–HAB-07)
-- [x] 03-09-PLAN.md — BMI slice: BMI screen + 3 components (incl. victory-native chart), slider install (BMI-01–BMI-06)
-
-Wave 4 *(blocked on Wave 3 — workout completion path depends on /exercises/[id] route from 03-06)*:
-
-- [x] 03-07-PLAN.md — Workout slice part 2: Timer + Complete screens + 2 components, AppState auto-pause, POST /api/workouts on mount (WO-06/07/08/09/10)
-
-**Cross-cutting constraints:** Exercise model enum is English (yoga/cardio/weights/stretching, easy/medium/hard) — UI maps to Vietnamese display labels; victory-native@40.2.1 chosen over gifted-charts (already in mobile/package.json); D-49 streak rule = ≥3/6 distinct habits/day UTC+7; D-47 only Complete creates WorkoutLog (Stop discards); D-54 PATCH /api/bmi atomically writes BMIRecord + User.profile; HabitLog unique index enforces strict 1-check-per-habit-per-day (planner-locked binary semantics — "Đánh dấu +1" is CTA label only).
+**Research flags**: Test real Vietnam products and define minimum nutrition fields required before allowing save.
 
 ---
 
-### Phase 4: AI Food Scan
+### Phase 4: Ủ Milk Recommendation
 
-**Goal**: Users can photograph a meal, receive AI-generated nutrition data, and log confirmed meals to a date-based food diary.
-**Mode**: mvp
-**Depends on**: Phase 2
-**Requirements**: FOOD-01, FOOD-02, FOOD-03, FOOD-04, FOOD-05, FOOD-06, FOOD-07, FOOD-08, FOOD-09
+**Goal**: Users receive safe, deterministic Ủ milk flavor guidance from BMI and can save their preferred flavor.  
+**Depends on**: Phase 1, existing BMI feature  
+**Requirements**: MILK-01, MILK-02, MILK-03, MILK-04, MILK-05, MILK-06
 
 **Success Criteria**:
 
-1. Camera scan screen opens (dark theme, scan frame, flash, gallery button); user can capture a photo or pick from gallery and the image is sent for AI analysis (proxied through backend, never called directly from client)
-2. AI result screen shows food name + tags, total kcal, Protein/Carbs/Fat, and micronutrients (fiber/sugar/sodium/Vitamin C); user can tap "Chụp lại" to discard and retry
-3. User can confirm and save a meal ("Xác nhận & Lưu") and it appears in the daily food diary
-4. User can search the Vietnamese food database manually (200–500 seed items) and log a meal without using the camera
-5. Daily food diary shows all logged meals grouped by date with correct kcal totals
+1. Backend recommendation endpoint returns deterministic flavor options from BMI and optional need signals.
+2. BMI screen displays recommendations with Vietnamese product-preference copy and a clear non-medical disclaimer.
+3. Rule boundaries are implemented and tested: BMI < 18.5, BMI 18.5-22.9, BMI > 23, plus any-BMI options.
+4. User can save one selected Ủ flavor and see it persist in BMI/profile context.
+5. Recalculating BMI updates recommendations but does not silently overwrite the user's saved preference.
 
-**Plans**: 7 plans
+**Milk rule baseline**:
 
-Wave 1 *(dependency installs + test scaffold — blocks all other waves)*:
+| Flavor | BMI fit | Need group |
+|--------|---------|------------|
+| Rau má sữa dừa | BMI > 23 | Thanh nhiệt & kiểm soát cân nặng |
+| Rau má - Hạt sen | Mọi chỉ số BMI | Giảm stress & ngủ ngon sâu giấc |
+| Gạo lứt - Mè đen - Hạt sen | BMI 18.5-22.9 | Duy trì vóc dáng & đẹp da, chống lão hóa |
+| Gạo lứt - Óc chó - Hạnh nhân | BMI < 18.5 | Bổ sung dinh dưỡng & tăng cường trí não |
+| Hạt sen - Óc chó | Mọi chỉ số BMI | Phục hồi năng lượng & trí nhớ bền bỉ |
 
-- [x] 04-01-PLAN.md — Install openai (backend) + expo-camera/upgrade image packages (mobile) + food integration test scaffold (FOOD-01/02/05/07/08/09)
+**Plans**: TBD by `$gsd-plan-phase 4`
 
-Wave 2 *(blocked on Wave 1 — backend model foundation)*:
-
-- [x] 04-02-PLAN.md — FoodLog schema update (remove mealType, add sodium/vitaminC) + FoodItem model (text index) + ai-food.service.ts GPT-4o-mini vision implementation (D-58/59/60/61/63/65)
-
-Wave 3 *(parallel — blocked on Wave 2; food API and seed can run in parallel)*:
-
-- [x] 04-03-PLAN.md — Food API: food.validation/service/controller/routes + app.ts mount — all 5 endpoints (POST scan, POST/GET/DELETE logs, GET items) (FOOD-01/02/05/06/07/09)
-- [x] 04-04-PLAN.md — Vietnamese food seed: vietnamese-foods.json (150+ items) + seed-foods.ts (idempotent) + seed:foods npm script (FOOD-08)
-
-Wave 4 *(blocked on Wave 1 — mobile infrastructure, runs parallel with Wave 3)*:
-
-- [x] 04-05-PLAN.md — Mobile foundations: foodScanStore (Zustand) + food.api.ts (5 functions, 30s timeout) + Phase 4 types + (food)/ route group layout + 4 screen stubs (FOOD-01/02/03/04/05/06/07/08/09)
-
-Wave 5 *(blocked on Wave 3 + Wave 4 — mobile screen implementations)*:
-
-- [x] 04-06-PLAN.md — Camera scan screen (CameraView, dark theme, ScanFrame, CameraControls, compress flow) + AI result screen (NutritionSummaryCard, NutritionDetailRow, FoodTagPill, Xác nhận/Chụp lại) (FOOD-01/02/03/04/05/06)
-- [x] 04-07-PLAN.md — Manual search screen (debounce, ServingSizeSheet, aiProvider=manual) + Food diary screen (DatePill, FoodDiaryItem, TanStack Query, swipe-delete) + D-69 home tab navigation buttons (FOOD-07/08/09)
-
-**Cross-cutting constraints:** AI calls proxy via backend only (CLAUDE.md); compress images to <500KB before upload (D-70: max 800×800, JPEG 0.7 via expo-image-manipulator); rate limit 20 AI scans/user/day server-side (D-72); GPT-4o-mini sole provider Phase 4 (D-58); no mealType in FoodLog (D-61); imageUrl=null in Phase 4 (D-62); NutritionResult passed scan→result via Zustand store not router params (D architecture); text index { default_language: 'none' } for Vietnamese search accuracy (Pitfall 8); seed-foods.ts is standalone script never called from server startup (Pitfall 4).
+**Research flags**: Final product/legal review of Vietnamese copy, disclaimer, and BMI boundary handling.
 
 ---
 
-### Phase 5: Home Dashboard, Profile & Notifications
+### Phase 5: Exercise Media Operations
 
-**Goal**: Users land on a unified dashboard summarizing all tracked data, manage their profile, and receive timely push notification reminders.
-**Mode**: mvp
-**Depends on**: Phase 3, Phase 4
-**Requirements**: HOME-01, HOME-02, HOME-03, HOME-04, HOME-05, HOME-06, PRO-01, PRO-02, PRO-03, PRO-04, PRO-05, PRO-06, PRO-07, NOTIF-01, NOTIF-02, NOTIF-03, NOTIF-04
+**Goal**: Admins can add and manage exercise images at scale without manually editing hundreds of exercise records one by one.  
+**Depends on**: Phase 1, existing admin exercise CRUD  
+**Requirements**: MEDIA-01, MEDIA-02, MEDIA-03, MEDIA-04, MEDIA-05, MEDIA-06
 
 **Success Criteria**:
 
-1. Home screen greets the user by name, shows today's kcal consumed / water glasses / workout minutes, a BMI widget, a macro nutrition summary with progress bars, quick action buttons (Quét bữa ăn / Bắt đầu tập / Thói quen), and the Ủ Shop banner that opens an external link
-2. Profile screen shows avatar, name, email, personal stats (streak/workouts/calories burned), achievement badges at streak milestones (7/14/28/60 days), and allows editing of age/height/weight/health goal
-3. User can toggle notification permissions on/off from Profile settings; the app shows a rationale screen before requesting system permission for the first time
-4. User receives a push notification reminding them to drink water, start a workout, and a streak alert when they are about to break their streak — all delivered via Firebase Cloud Messaging on both iOS and Android (including OEM devices)
+1. Admin can filter exercises missing images and see a queue optimized for bulk work.
+2. Admin can upload multiple images through signed backend upload and preview them before assignment.
+3. Admin can map images to exercises by deterministic filename and manually correct mismatches.
+4. Confirming a batch updates exercise records while preserving `imageUrl` compatibility for existing mobile screens.
+5. Admin can inspect batch status, assignment errors, and audit metadata.
+6. Backend prevents unsafe delete/replacement that would leave broken exercise image references.
 
-**Plans**: 7 plans
+**Plans**: TBD by `$gsd-plan-phase 5`
 
-Wave 0 (foundations — blocks all other waves):
-
-- [x] 05-01-PLAN.md — Install node-cron + mobile packages, migrate User schema (waterGoal + waterReminderTime + workoutReminderTime), create WaterLog model, 3 integration test scaffolds, badge color tokens
-
-Wave 1 (parallel — backend APIs):
-
-- [x] 05-02-PLAN.md — Water + Home + Config APIs: water CRUD with IDOR-safe delete, /api/home/today-summary aggregation, /api/config/shop-url (HOME-02/04/05/06)
-- [x] 05-03-PLAN.md — Users API: GET /profile/stats, PATCH /profile, PATCH /notifications with Zod whitelist + HH:MM regex (PRO-02/03/05)
-- [x] 05-04-PLAN.md — FCM batch + cron scheduler (per-minute water/workout reminders, daily 20:00 streak alert), authenticate /register-token (NOTIF-02/03/04)
-
-Wave 2 (blocked on Wave 1 — mobile foundations):
-
-- [x] 05-05-PLAN.md — Mobile foundations: 5th Profile tab, 4 API modules, 5 Phase 5 types, (tabs)/profile + (home) stack layouts, 5 stub screens (HOME-01/03, PRO-01)
-
-Wave 3 (parallel — mobile screens, blocked on Wave 2):
-
-- [x] 05-06-PLAN.md — Home Dashboard + Water Log: full (tabs)/index.tsx rewrite + (home)/water.tsx + 9 UI components (HOME-01/02/03/04/05/06)
-- [x] 05-07-PLAN.md — Profile stack: tab + edit + notifications + help + rationale modal + permission flow + 8 UI components + logout (PRO-01/02/03/04/05/06/07, NOTIF-01) ⚠ device checkpoint deferred
-
-**UI hint**: yes
+**Research flags**: Decide naming convention, rollback/audit needs, replacement policy, and Cloudinary orphan cleanup policy.
 
 ---
 
-### Phase 6: Admin Web Dashboard
+### Phase 6: Feedback & Ratings
 
-**Goal**: Admins can log into a web interface and manage the exercise library, food database, and user list that power the mobile app.
-**Mode**: mvp
-**Depends on**: Phase 2
-**Requirements**: ADM-01, ADM-02, ADM-03, ADM-04
+**Goal**: Collect lightweight user feedback after meaningful feature usage and expose it to admins for release feedback loops.  
+**Depends on**: Phase 1  
+**Requirements**: RATE-01, RATE-02, RATE-03, RATE-04, RATE-05
 
 **Success Criteria**:
 
-1. Admin can log in to the web dashboard with email/password (separate admin role, not a regular user account)
-2. Admin can create, edit, and delete exercises including all fields (name, category, difficulty, duration, kcal, image upload, movement list) and changes appear in the mobile app immediately
-3. Admin can create, edit, and delete food items in the Vietnamese database (name, kcal, macros, micros) and changes are searchable in the mobile app
-4. Admin can view the user list with email, registration date, and account status
+1. Mobile prompt coordinator triggers only after meaningful success events and respects cooldown/dismissal state.
+2. User can submit star rating and optional comment in Vietnamese UI.
+3. Feedback is persisted with feature context, app version, and user metadata needed by admin support.
+4. Admin can view and filter feedback entries.
+5. Positive internal feedback can optionally trigger native store review through platform-supported API without gating or pressure.
 
-**Plans**: 4 plans
+**Plans**: TBD by `$gsd-plan-phase 6`
 
-Wave 1 *(sequential — Plan 01 before Plan 02)*:
-
-- [x] 06-01-PLAN.md — Backend foundations: User.isActive + FoodItem.imageUrl schema patches, authenticate isActive check, requireAdmin middleware, seed:admin script, admin integration test scaffold (ADM-01/04, D-97)
-- [x] 06-02-PLAN.md — Admin API: `/api/admin/*` router — upload endpoint, exercises CRUD, food-items CRUD, users list/ban/delete — all protected by authenticate + requireAdmin (ADM-01/02/03/04, D-90)
-
-Wave 2 *(blocked on Wave 1)*:
-
-- [x] 06-03-PLAN.md — Admin frontend setup: Tailwind v4 + shadcn/ui install, tsconfig @/ alias, vite.config proxy, axios interceptor with JWT refresh queue, QueryProvider, ProtectedRoute, AppShell/Sidebar, LoginPage (ADM-01, D-84/85/86/87/88)
-- [x] 06-04-PLAN.md — Admin CRUD pages: ExercisesPage (DataTable + dialog + useFieldArray steps editor + image upload), FoodItemsPage (DataTable + dialog + 7 macro fields + image upload), UsersPage (DataTable + ban toggle + delete) (ADM-02/03/04, D-95/96)
-
-**UI hint**: yes
+**Cuttable scope**: If schedule compresses, ship internal star/comment feedback first and defer native store review prompt.
 
 ---
 
@@ -258,12 +160,12 @@ Wave 2 *(blocked on Wave 1)*:
 
 | Phase | Name | Plans Complete | Status | Completed |
 |-------|------|----------------|--------|-----------|
-| 1 | Infrastructure | 5/5 | Done | 2026-05-17 |
-| 2 | Authentication | 7/7 | Done | 2026-05-18 |
-| 3 | Core Health Tracking | 9/9 | Done | 2026-05-18 |
-| 4 | AI Food Scan | 7/7 | Executed | 2026-05-19 |
-| 5 | Home Dashboard, Profile & Notifications | 7/7 | Code-Complete (device checkpoint deferred) | 2026-05-19 |
-| 6 | Admin Web Dashboard | 4/4 | Complete   | 2026-05-19 |
+| 1 | v2 Data Foundation | 0/TBD | Pending | — |
+| 2 | Campaign Codes & Unlimited Scan Entitlements | 0/TBD | Pending | — |
+| 3 | Barcode Food Scan | 0/TBD | Pending | — |
+| 4 | Ủ Milk Recommendation | 0/TBD | Pending | — |
+| 5 | Exercise Media Operations | 0/TBD | Pending | — |
+| 6 | Feedback & Ratings | 0/TBD | Pending | — |
 
 ---
 
@@ -271,72 +173,52 @@ Wave 2 *(blocked on Wave 1)*:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 2 | Done |
-| AUTH-02 | Phase 2 | Done |
-| AUTH-03 | Phase 2 | Done |
-| AUTH-04 | Phase 2 | Done |
-| AUTH-05 | Phase 2 | Done |
-| AUTH-06 | Phase 2 | Done |
-| AUTH-07 | Phase 2 | Done |
-| AUTH-08 | Phase 2 | Done |
-| HOME-01 | Phase 5 | Done |
-| HOME-02 | Phase 5 | Done |
-| HOME-03 | Phase 5 | Done |
-| HOME-04 | Phase 5 | Done |
-| HOME-05 | Phase 5 | Done |
-| HOME-06 | Phase 5 | Done |
-| FOOD-01 | Phase 4 | Planned |
-| FOOD-02 | Phase 4 | Planned |
-| FOOD-03 | Phase 4 | Planned |
-| FOOD-04 | Phase 4 | Planned |
-| FOOD-05 | Phase 4 | Planned |
-| FOOD-06 | Phase 4 | Planned |
-| FOOD-07 | Phase 4 | Planned |
-| FOOD-08 | Phase 4 | Done |
-| FOOD-09 | Phase 4 | Planned |
-| WO-01 | Phase 3 | Done |
-| WO-02 | Phase 3 | Done |
-| WO-03 | Phase 3 | Done |
-| WO-04 | Phase 3 | Done |
-| WO-05 | Phase 3 | Done |
-| WO-06 | Phase 3 | Done |
-| WO-07 | Phase 3 | Done |
-| WO-08 | Phase 3 | Done |
-| WO-09 | Phase 3 | Done |
-| WO-10 | Phase 3 | Done |
-| WO-11 | Phase 3 | Done |
-| HAB-01 | Phase 3 | Done |
-| HAB-02 | Phase 3 | Done |
-| HAB-03 | Phase 3 | Done |
-| HAB-04 | Phase 3 | Done |
-| HAB-05 | Phase 3 | Done |
-| HAB-06 | Phase 3 | Done |
-| HAB-07 | Phase 3 | Done |
-| BMI-01 | Phase 3 | Done |
-| BMI-02 | Phase 3 | Done |
-| BMI-03 | Phase 3 | Done |
-| BMI-04 | Phase 3 | Done |
-| BMI-05 | Phase 3 | Done |
-| BMI-06 | Phase 3 | Done |
-| PRO-01 | Phase 5 | Pending |
-| PRO-02 | Phase 5 | Pending |
-| PRO-03 | Phase 5 | Pending |
-| PRO-04 | Phase 5 | Pending |
-| PRO-05 | Phase 5 | Pending |
-| PRO-06 | Phase 5 | Pending |
-| PRO-07 | Phase 5 | Pending |
-| NOTIF-01 | Phase 5 | Pending |
-| NOTIF-02 | Phase 5 | Pending |
-| NOTIF-03 | Phase 5 | Pending |
-| NOTIF-04 | Phase 5 | Pending |
-| ADM-01 | Phase 6 | Pending |
-| ADM-02 | Phase 6 | Pending |
-| ADM-03 | Phase 6 | Pending |
-| ADM-04 | Phase 6 | Pending |
+| CODE-01 | Phase 2 | Pending |
+| CODE-02 | Phase 2 | Pending |
+| CODE-03 | Phase 2 | Pending |
+| CODE-04 | Phase 2 | Pending |
+| CODE-05 | Phase 2 | Pending |
+| CODE-06 | Phase 2 | Pending |
+| CODE-07 | Phase 2 | Pending |
+| CODE-08 | Phase 2 | Pending |
+| CODE-09 | Phase 2 | Pending |
+| CODE-10 | Phase 2 | Pending |
+| CODE-11 | Phase 1 | Pending |
+| CODE-12 | Phase 2 | Pending |
+| BAR-01 | Phase 3 | Pending |
+| BAR-02 | Phase 3 | Pending |
+| BAR-03 | Phase 3 | Pending |
+| BAR-04 | Phase 3 | Pending |
+| BAR-05 | Phase 3 | Pending |
+| BAR-06 | Phase 3 | Pending |
+| BAR-07 | Phase 3 | Pending |
+| MILK-01 | Phase 4 | Pending |
+| MILK-02 | Phase 4 | Pending |
+| MILK-03 | Phase 4 | Pending |
+| MILK-04 | Phase 4 | Pending |
+| MILK-05 | Phase 4 | Pending |
+| MILK-06 | Phase 4 | Pending |
+| MEDIA-01 | Phase 5 | Pending |
+| MEDIA-02 | Phase 5 | Pending |
+| MEDIA-03 | Phase 5 | Pending |
+| MEDIA-04 | Phase 5 | Pending |
+| MEDIA-05 | Phase 5 | Pending |
+| MEDIA-06 | Phase 5 | Pending |
+| RATE-01 | Phase 6 | Pending |
+| RATE-02 | Phase 6 | Pending |
+| RATE-03 | Phase 6 | Pending |
+| RATE-04 | Phase 6 | Pending |
+| RATE-05 | Phase 6 | Pending |
 
-**Total mapped: 62/62**
+**Total mapped: 36/36**
 
 ---
 
-*Created: 2026-05-17*
-*Updated: 2026-05-19 — Phase 4 Plan 04 complete: vietnamese-foods.json (150 items) + seed-foods.ts seeder*
+## Archived Previous Milestone
+
+Previous v1.0 phase directories were archived to `.planning/milestones/v1.0-phases/` before resetting v2.0 phase numbering to Phase 1.
+
+---
+
+*Created: 2026-05-26*
+*Updated: 2026-05-26 — v2.0 roadmap created from research synthesis*

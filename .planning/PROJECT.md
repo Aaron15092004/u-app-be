@@ -62,6 +62,17 @@
 | MongoDB Atlas | Flexible schema cho nutrition data, free tier đủ cho development | Confirmed |
 | Admin web dashboard | Content management cho exercises/food/habits | Node.js + React (separate from mobile) |
 
+## Current Milestone: v2.0 Feature release nhanh
+
+**Goal:** Ship the next commercial feature release quickly, focused on milk-code monetization, better food scanning, BMI-based Ủ milk guidance, app feedback, and scalable exercise image management.
+
+**Target features:**
+- Admin can generate bulk redeem codes/QR codes for bottled milk campaigns; users can enter or scan a code to unlock unlimited AI food scans for that code's expiry window.
+- App can recommend and store a user's selected Ủ nut-milk flavor based on BMI and health need rules.
+- Food scanning gains barcode scan support to complement AI image scan and manual search.
+- Users can rate the app with stars and a short comment after using key features.
+- Admin/content workflow makes adding images for hundreds of exercises easier and repeatable.
+
 ## Requirements
 
 ### Validated
@@ -168,4 +179,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-17 after initialization*
+*Last updated: 2026-05-26 after starting milestone v2.0*

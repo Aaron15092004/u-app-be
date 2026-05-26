@@ -1,7 +1,8 @@
 ---
 phase: 5
 slug: home-dashboard-profile-notifications
-status: draft
+status: approved
+reviewed_at: 2026-05-19
 shadcn_initialized: false
 preset: none
 created: 2026-05-19
@@ -262,7 +263,7 @@ Additional confirmed sizes from existing components (do not deviate):
 
 **Form fields (white card, borderRadius 12, padding 16, elevation 2):**
 Each field uses a consistent field row pattern:
-- Label: 16px weight 700 TEXT, `marginBottom: 6`.
+- Label: 16px weight 700 TEXT, `marginBottom: 8`.
 - Input: height 48, borderRadius 8, borderWidth 1, border color #E0E0E0 (inactive) / PRIMARY (focused), background #FFFFFF, paddingHorizontal 12, fontSize 16 weight 400 TEXT.
 
 Fields (top to bottom):

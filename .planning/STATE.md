@@ -1,54 +1,55 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: in_progress
-last_updated: "2026-05-20T00:00:00.000Z"
+milestone: v2.0
+milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
+status: planning
+last_updated: "2026-05-26T06:39:28.145Z"
+last_activity: 2026-05-26
 progress:
   total_phases: 6
-  completed_phases: 6
-  total_plans: 39
-  completed_plans: 39
-  percent: 100
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 6 — Admin Web Dashboard — **Code-Complete** (4/4 plans done)
+Phase 1 — v2 Data Foundation — **Not started** (requirements and roadmap defined)
 
 ## Status
 
-Phase 6 code-complete. All 4 plans executed. Backend: User.isActive + FoodItem.imageUrl schema patches, requireAdmin middleware, admin API (exercises/food-items/users CRUD + upload), 17/17 integration tests pass. Frontend: Tailwind v4 + shadcn/ui (base-nova), LoginPage, AppShell, ExercisesPage + FoodItemsPage + UsersPage with dynamic forms and image upload. `npm run typecheck` clean in both backend/ and admin/.
+Milestone v2.0 planning initialized. Research complete for campaign code entitlements, barcode food scan, BMI-based Ủ milk recommendation, exercise media operations, and app feedback/ratings. Requirements and roadmap are defined; next action is to discuss or plan Phase 1.
 
 ## Phase Progress
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Infrastructure | Completed (5/5 plans) |
-| 2 | Authentication | Completed (7/7 plans) |
-| 3 | Core Health Tracking | Completed (9/9 plans) |
-| 4 | AI Food Scan | Completed (7/7 plans) |
-| 5 | Home Dashboard, Profile & Notifications | Code-Complete (7/7 plans, device checkpoint deferred) |
-| 6 | Admin Web Dashboard | Complete (4/4 plans done) |
+| 1 | v2 Data Foundation | Pending |
+| 2 | Campaign Codes & Unlimited Scan Entitlements | Pending |
+| 3 | Barcode Food Scan | Pending |
+| 4 | Ủ Milk Recommendation | Pending |
+| 5 | Exercise Media Operations | Pending |
+| 6 | Feedback & Ratings | Pending |
 
 ## Progress Bar
 
 ```
-Phase 1 [##########] 100%
-Phase 2 [##########] 100%
-Phase 3 [##########] 100%
-Phase 4 [##########] 100%
-Phase 5 [#########∙] 100% (code), device checkpoint pending
-Phase 6 [##########] 100% (4/4 plans)
+Phase 1 [----------] 0%
+Phase 2 [----------] 0%
+Phase 3 [----------] 0%
+Phase 4 [----------] 0%
+Phase 5 [----------] 0%
+Phase 6 [----------] 0%
 ```
 
 ## Performance Metrics
 
-- Requirements covered: 71/71
-- Phases completed: 4/6
-- Plans completed: 35/35 (Phase 1: 5, Phase 2: 7, Phase 3: 9, Phase 4: 7, Phase 5+6: pending)
+- Requirements covered: 36/36
+- Phases completed: 0/6
+- Plans completed: 0/0 (plans not generated yet)
 
 ## Accumulated Context
 
@@ -251,3 +252,10 @@ None currently.
 ## Last Updated
 
 2026-05-20 (Phase 6 Plan 02 complete)
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-26 — Milestone v2.0 started

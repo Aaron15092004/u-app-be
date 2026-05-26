@@ -1,197 +1,151 @@
-# Requirements — Ủ App
+# Requirements: Ủ App v2.0
 
-## v1 Requirements
+**Defined:** 2026-05-26  
+**Core Value:** AI food scanning + habit tracking trong một app đơn giản, đẹp, và bản địa hóa hoàn toàn tiếng Việt cho thị trường Việt Nam.
 
-### AUTH — Authentication & Onboarding
+## v2.0 Requirements
 
-- [ ] **AUTH-01**: User xem 3 màn onboarding (Welcome / Daily tracking / Get started) khi lần đầu mở app
-- [ ] **AUTH-02**: User đăng ký tài khoản bằng email + password (tối thiểu 8 ký tự, xác nhận mật khẩu, đồng ý Terms)
-- [ ] **AUTH-03**: User đăng nhập bằng email + password
-- [ ] **AUTH-04**: User reset mật khẩu qua link email
-- [ ] **AUTH-05**: User đăng nhập / đăng ký bằng Google OAuth
-- [ ] **AUTH-06**: User đăng nhập / đăng ký bằng Apple Sign In
-- [ ] **AUTH-07**: User ở trạng thái đăng nhập xuyên suốt giữa các session (JWT refresh token)
-- [ ] **AUTH-08**: User đăng xuất khỏi app
+### Campaign Codes & Scan Entitlements
 
-### HOME — Dashboard
+- [ ] **CODE-01**: Admin can create a campaign with name, description, active window, redemption expiry policy, scan entitlement duration, and status.
+- [ ] **CODE-02**: Admin can generate bulk single-use redeem codes for a campaign with configurable quantity and human-readable labels.
+- [ ] **CODE-03**: Admin can export generated codes as CSV containing code, campaign metadata, expiry, and QR/deep-link payload for bottle printing.
+- [ ] **CODE-04**: Admin can search and filter codes by campaign, status, created date, redeemed user, and expiry state.
+- [ ] **CODE-05**: Admin can revoke a campaign or individual code before redemption.
+- [ ] **CODE-06**: User can redeem a campaign code by typing it manually in the mobile app.
+- [ ] **CODE-07**: User can redeem a campaign code by scanning QR from a milk bottle.
+- [ ] **CODE-08**: User sees clear Vietnamese redemption results for success, invalid, already used, expired, revoked, and unauthenticated states.
+- [ ] **CODE-09**: User with an active entitlement can use AI food scan beyond the normal daily scan limit until the entitlement expires.
+- [ ] **CODE-10**: User can view current scan entitlement status and exact active-until time in the app.
+- [ ] **CODE-11**: Backend stores redeem codes hashed at rest and redeems them atomically so the same code cannot be reused.
+- [ ] **CODE-12**: Backend applies anti-abuse controls for redemption attempts and fair-use protection for "unlimited" AI scan traffic.
 
-- [ ] **HOME-01**: Home hiển thị lời chào theo tên user và thông báo bell icon
-- [ ] **HOME-02**: Home hiển thị tổng quan hôm nay: tổng kcal tiêu thụ, số ly nước, số phút tập
-- [ ] **HOME-03**: Home có quick actions: Quét bữa ăn, Bắt đầu tập, Thói quen
-- [ ] **HOME-04**: Home hiển thị BMI widget (chỉ số + phân loại)
-- [ ] **HOME-05**: Home hiển thị Nutrition summary hôm nay (Calo/Protein/Carbs/Chất béo với progress bar)
-- [ ] **HOME-06**: Home hiển thị Ủ Shop banner (tap mở external link / webview)
+### Barcode Food Scan
 
-### FOOD — Bữa ăn & Dinh dưỡng
+- [ ] **BAR-01**: User can open barcode scan mode from the food scan flow.
+- [ ] **BAR-02**: User can scan packaged-food barcodes with the existing camera infrastructure.
+- [ ] **BAR-03**: Backend can look up barcode products from the local food database before calling an external fallback.
+- [ ] **BAR-04**: Backend can query and cache Open Food Facts barcode results with normalized Vietnamese-compatible nutrition fields.
+- [ ] **BAR-05**: User can review and edit barcode nutrition data before saving it as a food log.
+- [ ] **BAR-06**: User can fall back to manual food search or AI image scan when barcode data is missing or incomplete.
+- [ ] **BAR-07**: Food logs created from barcode preserve source/provenance for later support and data-quality review.
 
-- [ ] **FOOD-01**: User chụp ảnh bữa ăn bằng camera để phân tích dinh dưỡng bằng AI
-- [ ] **FOOD-02**: User chọn ảnh từ thư viện điện thoại để phân tích
-- [ ] **FOOD-03**: App hiển thị màn camera scan với scan frame, nút chụp, gallery, flash (dark theme — theo mockup)
-- [ ] **FOOD-04**: Sau khi phân tích AI, app hiển thị: tên món ăn + tags (rau xanh, cà rốt...), tổng kcal, Protein/Carbs/Chất béo, Chất xơ/Đường/Natri/Vitamin C
-- [ ] **FOOD-05**: User xác nhận kết quả AI và lưu bữa ăn vào nhật ký ("Xác nhận & Lưu")
-- [ ] **FOOD-06**: User chụp lại nếu kết quả không chính xác ("Chụp lại")
-- [ ] **FOOD-07**: User tìm kiếm món ăn thủ công trong database
-- [ ] **FOOD-08**: App có database thực phẩm Việt Nam (200-500 món seed sẵn) + Open Food Facts API cho barcode scan
-- [ ] **FOOD-09**: User xem nhật ký bữa ăn theo ngày (lịch sử)
+### Ủ Milk Recommendation
 
-### WORKOUT — Tập luyện
+- [ ] **MILK-01**: Backend exposes deterministic Ủ milk recommendation rules based on BMI category and optional need signals.
+- [ ] **MILK-02**: User can see recommended Ủ milk flavors after BMI calculation or from the BMI screen.
+- [ ] **MILK-03**: Recommendation UI explains the suggestion in Vietnamese using product-preference wording, not medical treatment claims.
+- [ ] **MILK-04**: User can choose and save one preferred Ủ milk flavor from the recommendation result.
+- [ ] **MILK-05**: User's saved milk preference persists across app restarts and remains visible in profile/BMI context.
+- [ ] **MILK-06**: BMI rule boundaries are explicit and tested: BMI < 18.5, BMI 18.5-22.9, BMI > 23, plus any-BMI lifestyle options.
 
-- [ ] **WO-01**: User xem danh sách bài tập với filter theo category: Tất cả / Yoga / Cardio / Tạ / Giãn cơ
-- [ ] **WO-02**: Mỗi bài tập hiển thị: tên, hình ảnh, độ khó (Dễ/Trung bình/Khó), thời gian (phút), kcal
-- [ ] **WO-03**: User xem thống kê tuần: tổng ngày hoàn thành / 7, tổng bài tập, tổng kcal đốt, tổng phút
-- [ ] **WO-04**: User xem daily challenge (đốt X calo) với progress bar
-- [ ] **WO-05**: User xem chi tiết bài tập: mô tả, danh sách động tác (tên + số phút), lưu ý
-- [ ] **WO-06**: User bắt đầu tập luyện từ màn chi tiết
-- [ ] **WO-07**: App hiển thị countdown timer (thời gian còn lại) với tên bài tập (orange theme — theo mockup)
-- [ ] **WO-08**: User có thể pause, dừng, hoặc hoàn thành bài tập trong lúc tập
-- [ ] **WO-09**: Sau khi hoàn thành, app hiển thị màn "Xuất sắc!" với nút Hoàn tất (orange theme — theo mockup)
-- [ ] **WO-10**: Bài tập được lưu vào lịch sử workout của user
-- [ ] **WO-11**: App có sẵn 100+ bài tập từ launch (seed data trong 4 categories)
+### Exercise Media Operations
 
-### HABIT — Thói quen
+- [ ] **MEDIA-01**: Admin can view exercises missing images in a dedicated queue or filter.
+- [ ] **MEDIA-02**: Admin can upload multiple exercise images through the existing signed backend upload flow.
+- [ ] **MEDIA-03**: Admin can map uploaded images to exercises by deterministic filename or manual selection with preview before applying.
+- [ ] **MEDIA-04**: Admin can confirm a batch image assignment and update exercise records without breaking existing `imageUrl` mobile compatibility.
+- [ ] **MEDIA-05**: Admin can see image assignment status, upload errors, and batch audit metadata.
+- [ ] **MEDIA-06**: Backend prevents deletion or replacement from orphaning exercise images without an explicit safe path.
 
-- [ ] **HAB-01**: User xem danh sách thói quen hàng ngày với progress (X/6 hoàn thành, %)
-- [ ] **HAB-02**: App có sẵn 6 thói quen mặc định: Uống 8 ly nước, Ăn 5 bữa rau củ, Tập luyện 30 phút, Ngủ đủ 8 tiếng, Đọc sách 20 phút, Uống sữa hạt
-- [ ] **HAB-03**: User đánh dấu hoàn thành từng thói quen ("Đánh dấu +1")
-- [ ] **HAB-04**: App hiển thị streak counter (chuỗi ngày liên tiếp)
-- [ ] **HAB-05**: App hiển thị heatmap tuần (T2-T3-T4-T5-T6-T7-CN) để theo dõi consistency
-- [ ] **HAB-06**: App hiển thị tips section về habit building
-- [ ] **HAB-07**: Tiến độ thói quen hàng ngày được reset lúc 00:00
+### App Feedback & Ratings
 
-### BMI — Chỉ số cơ thể
+- [ ] **RATE-01**: User is prompted for app feedback only after meaningful feature usage, not on first launch or after an error.
+- [ ] **RATE-02**: User can submit a star rating and optional comment from inside the mobile app.
+- [ ] **RATE-03**: User can dismiss the prompt and will not be repeatedly prompted within the cooldown window.
+- [ ] **RATE-04**: Admin can view feedback entries with user, rating, comment, feature context, created date, and app version.
+- [ ] **RATE-05**: App can optionally trigger the native store review prompt after positive internal feedback when the platform supports it.
 
-- [ ] **BMI-01**: User xem màn Phân tích BMI với chỉ số hiện tại + phân loại (Thiếu cân/Bình thường/Thừa cân/Béo phì)
-- [ ] **BMI-02**: App hiển thị BMI scale bar (15–40) với vị trí điểm hiện tại
-- [ ] **BMI-03**: User cập nhật chiều cao và cân nặng qua slider
-- [ ] **BMI-04**: App tự động tính và cập nhật BMI khi thay đổi chiều cao/cân nặng
-- [ ] **BMI-05**: App hiển thị lời khuyên sức khỏe dựa trên BMI (ví dụ: "Duy trì thói quen tốt")
-- [ ] **BMI-06**: App hiển thị lịch sử BMI 30 ngày qua bar chart
+## Future Requirements
 
-### PROFILE — Hồ sơ cá nhân
+### Campaigns
 
-- [ ] **PRO-01**: User xem hồ sơ với: avatar, tên, email
-- [ ] **PRO-02**: User xem thống kê cá nhân: Ngày streak, số Bài tập, tổng Calo đốt
-- [ ] **PRO-03**: User xem và cập nhật thông tin: email, tuổi, chiều cao, cân nặng, mục tiêu sức khỏe
-- [ ] **PRO-04**: App hiển thị thành tích "Người kiên trì" với các mốc 7/14/28/60 ngày
-- [ ] **PRO-05**: User vào cài đặt thông báo (on/off)
-- [ ] **PRO-06**: User vào Trợ giúp & Hỗ trợ
-- [ ] **PRO-07**: User đăng xuất từ màn Profile
+- **CODE-F01**: Admin can view campaign revenue attribution and bottle batch analytics.
+- **CODE-F02**: Admin can integrate directly with print vendors for QR assets.
+- **CODE-F03**: User can stack, transfer, gift, or share entitlements.
+- **CODE-F04**: App supports paid subscription or in-app purchase for scan entitlement.
 
-### NOTIF — Push Notifications
+### Barcode
 
-- [ ] **NOTIF-01**: App hiển thị rationale screen giải thích lý do trước khi xin permission push notification
-- [ ] **NOTIF-02**: App gửi reminder uống nước hàng ngày (theo giờ cài đặt)
-- [ ] **NOTIF-03**: App gửi reminder bắt đầu tập luyện (theo giờ cài đặt)
-- [ ] **NOTIF-04**: App gửi streak alert khi user sắp mất streak
+- **BAR-F01**: Admin can moderate and enrich unknown barcode products from user submissions.
+- **BAR-F02**: App writes corrected products back to a public barcode database.
+- **BAR-F03**: App uses a paid commercial barcode nutrition database.
 
-### ADMIN — Web Dashboard
+### Milk Recommendation
 
-- [x] **ADM-01**: Admin đăng nhập web dashboard bằng email/password
-- [ ] **ADM-02**: Admin xem, tạo, sửa, xóa bài tập (tên, category, độ khó, thời gian, kcal, hình ảnh, danh sách động tác)
-- [ ] **ADM-03**: Admin xem, tạo, sửa, xóa thực phẩm trong database (tên, kcal, macros, micros)
-- [ ] **ADM-04**: Admin xem danh sách users (email, ngày đăng ký, trạng thái)
+- **MILK-F01**: Admin can edit recommendation rules from dashboard.
+- **MILK-F02**: App connects milk recommendation to inventory, checkout, or promotional campaigns.
+- **MILK-F03**: App uses AI-generated personalized milk explanation.
 
----
+### Media
 
-## v2 Requirements (Deferred)
+- **MEDIA-F01**: Admin can crop, transform, or annotate exercise images in-app.
+- **MEDIA-F02**: AI suggests the best image for each exercise.
+- **MEDIA-F03**: Full digital asset manager with folders, tagging, and versioning.
 
-- Social features (follow users, share progress, leaderboard)
-- Custom habit creation (user tạo thói quen riêng)
-- Recipe builder
-- AI chat coach
-- Wearable integration (Apple Watch, Garmin)
-- Video workout content
-- Barcode scan mở rộng (Open Food Facts integration in v1 giới hạn packaged goods)
-- Progress photo comparison
-- Diet plan / meal plan generation
-- Zalo integration
-- Multi-language (English)
-- HealthKit / Google Fit sync
+### Feedback
 
----
+- **RATE-F01**: Rating prompt A/B testing and advanced analytics.
+- **RATE-F02**: Sentiment analysis and support-ticket workflow from comments.
 
-## Out of Scope (v1)
+## Out of Scope
 
-- E-commerce / checkout trong app — Ủ Shop chỉ là redirect link
-- Real-time social feed — tăng complexity đáng kể
-- Video exercise content — cần CDN + storage phức tạp
-- Custom habit creation — 6 habit defaults đủ cho v1 validation
-- Barcode scan phần cứng (chỉ dùng Open Food Facts API cho text search đóng hộp) — barcode camera scanner để v2
-- Wearable sync — requires separate SDK + permissions
-- Web app cho end users — mobile only v1
-
----
+| Feature | Reason |
+|---------|--------|
+| E-commerce checkout for Ủ milk | Milestone focuses on bottled-code activation and product guidance, not payments. |
+| Subscription/paywall SDK | Code-based campaign entitlement is the urgent monetization path. |
+| Admin-editable recommendation rule CMS | Static backend rules are faster and safer for release; product/legal copy can be reviewed in code. |
+| Paid barcode database | Vietnam coverage must be validated with free/local data first. |
+| QR vendor integration | CSV/deep-link export is enough for first print workflow unless operations proves otherwise. |
+| Full media DAM | Missing-image queue and batch assignment solve the current hundreds-of-exercises pain. |
+| Public store-review gating | App can ask for internal feedback, but cannot condition functionality on public review. |
 
 ## Traceability
 
-| REQ-ID | Phase | Status |
-| ------ | ----- | ------ |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| AUTH-06 | Phase 2 | Pending |
-| AUTH-07 | Phase 2 | Pending |
-| AUTH-08 | Phase 2 | Pending |
-| HOME-01 | Phase 5 | Pending |
-| HOME-02 | Phase 5 | Pending |
-| HOME-03 | Phase 5 | Pending |
-| HOME-04 | Phase 5 | Pending |
-| HOME-05 | Phase 5 | Pending |
-| HOME-06 | Phase 5 | Pending |
-| FOOD-01 | Phase 4 | Pending |
-| FOOD-02 | Phase 4 | Pending |
-| FOOD-03 | Phase 4 | Pending |
-| FOOD-04 | Phase 4 | Pending |
-| FOOD-05 | Phase 4 | Pending |
-| FOOD-06 | Phase 4 | Pending |
-| FOOD-07 | Phase 4 | Pending |
-| FOOD-08 | Phase 4 | Pending |
-| FOOD-09 | Phase 4 | Pending |
-| WO-01 | Phase 3 | Pending |
-| WO-02 | Phase 3 | Pending |
-| WO-03 | Phase 3 | Pending |
-| WO-04 | Phase 3 | Pending |
-| WO-05 | Phase 3 | Pending |
-| WO-06 | Phase 3 | Pending |
-| WO-07 | Phase 3 | Pending |
-| WO-08 | Phase 3 | Pending |
-| WO-09 | Phase 3 | Pending |
-| WO-10 | Phase 3 | Pending |
-| WO-11 | Phase 3 | Pending |
-| HAB-01 | Phase 3 | Pending |
-| HAB-02 | Phase 3 | Pending |
-| HAB-03 | Phase 3 | Pending |
-| HAB-04 | Phase 3 | Pending |
-| HAB-05 | Phase 3 | Pending |
-| HAB-06 | Phase 3 | Pending |
-| HAB-07 | Phase 3 | Pending |
-| BMI-01 | Phase 3 | Pending |
-| BMI-02 | Phase 3 | Pending |
-| BMI-03 | Phase 3 | Pending |
-| BMI-04 | Phase 3 | Pending |
-| BMI-05 | Phase 3 | Pending |
-| BMI-06 | Phase 3 | Pending |
-| PRO-01 | Phase 5 | Pending |
-| PRO-02 | Phase 5 | Pending |
-| PRO-03 | Phase 5 | Pending |
-| PRO-04 | Phase 5 | Pending |
-| PRO-05 | Phase 5 | Pending |
-| PRO-06 | Phase 5 | Pending |
-| PRO-07 | Phase 5 | Pending |
-| NOTIF-01 | Phase 5 | Pending |
-| NOTIF-02 | Phase 5 | Pending |
-| NOTIF-03 | Phase 5 | Pending |
-| NOTIF-04 | Phase 5 | Pending |
-| ADM-01 | Phase 6 | Complete |
-| ADM-02 | Phase 6 | Pending |
-| ADM-03 | Phase 6 | Pending |
-| ADM-04 | Phase 6 | Pending |
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CODE-01 | Phase 2 | Pending |
+| CODE-02 | Phase 2 | Pending |
+| CODE-03 | Phase 2 | Pending |
+| CODE-04 | Phase 2 | Pending |
+| CODE-05 | Phase 2 | Pending |
+| CODE-06 | Phase 2 | Pending |
+| CODE-07 | Phase 2 | Pending |
+| CODE-08 | Phase 2 | Pending |
+| CODE-09 | Phase 2 | Pending |
+| CODE-10 | Phase 2 | Pending |
+| CODE-11 | Phase 1 | Pending |
+| CODE-12 | Phase 2 | Pending |
+| BAR-01 | Phase 3 | Pending |
+| BAR-02 | Phase 3 | Pending |
+| BAR-03 | Phase 3 | Pending |
+| BAR-04 | Phase 3 | Pending |
+| BAR-05 | Phase 3 | Pending |
+| BAR-06 | Phase 3 | Pending |
+| BAR-07 | Phase 3 | Pending |
+| MILK-01 | Phase 4 | Pending |
+| MILK-02 | Phase 4 | Pending |
+| MILK-03 | Phase 4 | Pending |
+| MILK-04 | Phase 4 | Pending |
+| MILK-05 | Phase 4 | Pending |
+| MILK-06 | Phase 4 | Pending |
+| MEDIA-01 | Phase 5 | Pending |
+| MEDIA-02 | Phase 5 | Pending |
+| MEDIA-03 | Phase 5 | Pending |
+| MEDIA-04 | Phase 5 | Pending |
+| MEDIA-05 | Phase 5 | Pending |
+| MEDIA-06 | Phase 5 | Pending |
+| RATE-01 | Phase 6 | Pending |
+| RATE-02 | Phase 6 | Pending |
+| RATE-03 | Phase 6 | Pending |
+| RATE-04 | Phase 6 | Pending |
+| RATE-05 | Phase 6 | Pending |
 
-<!-- Total: 62/62 v1 requirements mapped -->
+**Coverage:**
+- v2.0 requirements: 36 total
+- Mapped to phases: 36
+- Unmapped: 0
 
 ---
-
-*Created: 2026-05-17 — based on Figma mockup analysis + domain research*
-*Traceability updated: 2026-05-17 — roadmap finalized (6 phases)*
+*Requirements defined: 2026-05-26*
+*Last updated: 2026-05-26 after v2.0 research*
