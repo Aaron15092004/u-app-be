@@ -87,7 +87,18 @@
 | Gạo lứt - Óc chó - Hạnh nhân | BMI < 18.5 | Bổ sung dinh dưỡng & tăng cường trí não |
 | Hạt sen - Óc chó | Mọi chỉ số BMI | Phục hồi năng lượng & trí nhớ bền bỉ |
 
-**Plans**: TBD by `$gsd-plan-phase 3`
+**Plans**:
+
+| Plan | Wave | Focus |
+|------|------|-------|
+| 03-01 | 1 | Manual redeem UX, status-specific errors, and anti-abuse |
+| 03-02 | 1 | Barcode camera scanner, review-before-save, local-first cache |
+| 03-03 | 2 | Admin campaign/code and rating operations dashboards |
+| 03-04 | 2 | Positive-rating native store review prompt with cooldown/fallback |
+| 03-05 | 3 | Exercise media exact filename mapping and audit logging |
+| 03-06 | 4 | Release verification and regression gates |
+
+**Scope correction**: QR redeem scanner and redeem deep-link polish are deferred by Phase 3 context decision D-01; Phase 3 redeem hardening is manual-code only.
 
 **Research flags**: Validate real Vietnam barcode products, legal/product review of milk copy, QR scan behavior on target devices, and Cloudinary cleanup policy.
 
@@ -99,7 +110,7 @@
 |-------|------|----------------|--------|-----------|
 | 1 | v2 Data Foundation | 5/5 | Complete   | 2026-05-26 |
 | 2 | MVP Fast Release Pack | 0/TBD | Pending | — |
-| 3 | Post-MVP Hardening | 0/TBD | Pending | — |
+| 3 | Post-MVP Hardening | 0/6 | Ready to execute | — |
 
 ---
 

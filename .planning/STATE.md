@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: "Feature release nhanh: code unlimited scan, sữa Ủ theo BMI, barcode, đánh giá app, ảnh bài tập"
-status: planning
-last_updated: "2026-05-26T18:28:16.341Z"
-last_activity: 2026-05-26
+status: executing
+last_updated: "2026-05-27T00:00:00+07:00"
+last_activity: 2026-05-27 -- Phase 3 planning complete
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 10
+  total_plans: 16
   completed_plans: 10
-  percent: 67
+  percent: 63
 ---
 
 # Project State — Ủ App
 
 ## Current Phase
 
-Phase 1 — v2 Data Foundation — **Complete** (Plan 5 of 5 complete)
+Phase 3 — Post-MVP Hardening — **Ready to execute** (6 plans prepared)
 
 ## Status
 
-Phase 1 execution is complete. Plan 01-05 added automated backend verification for CODE-11 and v2 data foundation contracts; next action is Phase 1 verification or Phase 2 planning.
+Phase 3 planning is complete. Next action is executing the six hardening plans for manual redeem polish, barcode scanner/cache, admin dashboards, store review, exercise media mapping, and release verification.
 
 ## Phase Progress
 
@@ -29,14 +29,14 @@ Phase 1 execution is complete. Plan 01-05 added automated backend verification f
 |-------|------|--------|
 | 1 | v2 Data Foundation | Complete |
 | 2 | MVP Fast Release Pack | Pending |
-| 3 | Post-MVP Hardening | Pending |
+| 3 | Post-MVP Hardening | Ready to execute |
 
 ## Progress Bar
 
 ```
 Phase 1 [##########] 100%
 Phase 2 [----------] 0%
-Phase 3 [----------] 0%
+Phase 3 [----------] 0% (planned)
 ```
 
 ## Performance Metrics
@@ -275,5 +275,5 @@ None currently.
 
 Phase: 3
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-26
+Status: Ready to execute
+Last activity: 2026-05-27 -- Phase 3 planning complete
