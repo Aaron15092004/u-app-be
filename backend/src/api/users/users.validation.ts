@@ -23,11 +23,16 @@ export const updateNotificationsSchema = z
   .object({
     waterReminder: z.boolean().optional(),
     workoutReminder: z.boolean().optional(),
+    nutMilkReminder: z.boolean().optional(),
     waterReminderTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ không hợp lệ (HH:MM)')
       .optional(),
     workoutReminderTime: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ không hợp lệ (HH:MM)')
+      .optional(),
+    nutMilkReminderTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ không hợp lệ (HH:MM)')
       .optional(),

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { Modal, Platform, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Notifications from "expo-notifications";
 import PrimaryButton from "./PrimaryButton";
-import { registerTokenApi } from "../../lib/api/notifications.api";
+import {
+  configureReminderChannel,
+  ensureLocalNotificationPermission,
+} from "../../lib/notifications/reminders";
 import { PRIMARY, SURFACE, TEXT, STREAK_BADGE } from "../../constants/colors";
 
 interface NotificationRationaleModalProps {
@@ -22,21 +24,9 @@ export default function NotificationRationaleModal({
   const handleEnable = async (): Promise<void> => {
     setLoading(true);
     try {
-      const { granted } = await Notifications.requestPermissionsAsync();
+      const granted = await ensureLocalNotificationPermission();
       if (granted) {
-        if (Platform.OS === "android") {
-          await Notifications.setNotificationChannelAsync("default", {
-            name: "default",
-            importance: Notifications.AndroidImportance.MAX,
-          });
-        }
-        const tokenData = await Notifications.getDevicePushTokenAsync();
-        if (tokenData?.data) {
-          await registerTokenApi(
-            tokenData.data,
-            Platform.OS === "ios" ? "ios" : "android",
-          );
-        }
+        await configureReminderChannel();
       }
     } catch (err) {
       console.warn("[NotificationRationaleModal] permission flow error:", err);
@@ -80,7 +70,7 @@ export default function NotificationRationaleModal({
           <View style={styles.bulletRow}>
             <Ionicons name="flame-outline" size={16} color={STREAK_BADGE} />
             <Text style={styles.bulletText}>
-              Cảnh báo khi bạn sắp mất streak
+              Nhắc uống sữa Ủ theo lịch bạn chọn
             </Text>
           </View>
         </View>

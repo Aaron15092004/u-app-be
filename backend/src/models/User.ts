@@ -19,8 +19,10 @@ export interface IUser extends Document {
   notifications: {
     waterReminder: boolean;
     workoutReminder: boolean;
+    nutMilkReminder: boolean;
     waterReminderTime: string;
     workoutReminderTime: string;
+    nutMilkReminderTime: string;
   };
   profileCompleted: boolean;
   refreshTokenHash: string | null;
@@ -52,8 +54,10 @@ const UserSchema = new Schema<IUser>(
     notifications: {
       waterReminder: { type: Boolean, default: true },
       workoutReminder: { type: Boolean, default: true },
+      nutMilkReminder: { type: Boolean, default: true },
       waterReminderTime: { type: String, default: '08:00' },
       workoutReminderTime: { type: String, default: '07:00' },
+      nutMilkReminderTime: { type: String, default: '20:00' },
     },
     profileCompleted: { type: Boolean, default: false },
     refreshTokenHash: { type: String, default: null },

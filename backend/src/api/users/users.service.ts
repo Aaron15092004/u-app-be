@@ -28,8 +28,10 @@ export interface IProfileStats {
   notifications: {
     waterReminder: boolean;
     workoutReminder: boolean;
+    nutMilkReminder: boolean;
     waterReminderTime: string;
     workoutReminderTime: string;
+    nutMilkReminderTime: string;
   };
   dailyTargets: { kcal: number; protein: number; carbs: number; fat: number };
 }
@@ -84,8 +86,10 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
     notifications: {
       waterReminder: userDoc?.notifications?.waterReminder ?? true,
       workoutReminder: userDoc?.notifications?.workoutReminder ?? true,
+      nutMilkReminder: userDoc?.notifications?.nutMilkReminder ?? true,
       waterReminderTime: userDoc?.notifications?.waterReminderTime ?? '08:00',
       workoutReminderTime: userDoc?.notifications?.workoutReminderTime ?? '07:00',
+      nutMilkReminderTime: userDoc?.notifications?.nutMilkReminderTime ?? '20:00',
     },
     dailyTargets,
   };
@@ -136,10 +140,14 @@ export async function updateUserNotifications(
   if (body.waterReminder !== undefined) update['notifications.waterReminder'] = body.waterReminder;
   if (body.workoutReminder !== undefined)
     update['notifications.workoutReminder'] = body.workoutReminder;
+  if (body.nutMilkReminder !== undefined)
+    update['notifications.nutMilkReminder'] = body.nutMilkReminder;
   if (body.waterReminderTime !== undefined)
     update['notifications.waterReminderTime'] = body.waterReminderTime;
   if (body.workoutReminderTime !== undefined)
     update['notifications.workoutReminderTime'] = body.workoutReminderTime;
+  if (body.nutMilkReminderTime !== undefined)
+    update['notifications.nutMilkReminderTime'] = body.nutMilkReminderTime;
 
   const user = await User.findByIdAndUpdate(userObjId, update, {
     new: true,

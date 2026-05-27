@@ -5,6 +5,8 @@ import QueryProvider from '../providers/QueryProvider';
 import { AuthProvider, useAuth } from '../providers/AuthProvider';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { getOnboardingSeen } from '../lib/storage/mmkv';
+import { getProfileStatsApi } from '../lib/api/users.api';
+import { syncReminderNotifications } from '../lib/notifications/reminders';
 
 // Prevent auto-hide — splash is dismissed by AuthProvider on cold-start (D-38)
 SplashScreen.preventAutoHideAsync();
@@ -39,6 +41,16 @@ function RouteGate({ children }: { children: React.ReactNode }): React.JSX.Eleme
       router.replace('/(tabs)');
     }
   }, [isLoading, isAuthenticated, user, segments]);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !user?.profileCompleted) return;
+
+    void getProfileStatsApi()
+      .then((stats) => syncReminderNotifications(stats.notifications))
+      .catch((err) => {
+        console.warn('[notifications] startup reminder sync failed:', err);
+      });
+  }, [isLoading, isAuthenticated, user?.profileCompleted]);
 
   if (isLoading) return null;
 

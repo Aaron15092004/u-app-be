@@ -42,6 +42,24 @@ async function dispatchWorkoutReminders(currentTime: string): Promise<void> {
   });
 }
 
+async function dispatchNutMilkReminders(currentTime: string): Promise<void> {
+  const users = await User.find({
+    'notifications.nutMilkReminder': true,
+    'notifications.nutMilkReminderTime': currentTime,
+  })
+    .select('_id')
+    .lean();
+
+  if (users.length === 0) return;
+
+  const userIds = users.map((u) => (u._id as mongoose.Types.ObjectId).toString());
+  await sendBatchNotificationToUsers(userIds, {
+    title: 'Nhắc uống sữa Ủ',
+    body: 'Đã đến giờ uống sữa Ủ theo lựa chọn phù hợp với thể trạng của bạn.',
+    data: { type: 'nut_milk_reminder' },
+  });
+}
+
 async function dispatchStreakAlerts(): Promise<void> {
   const users = await User.find({}).select('_id').lean();
 
@@ -87,6 +105,7 @@ export function startScheduler(): void {
         const currentTime = `${hh}:${mm}`;
         await dispatchWaterReminders(currentTime);
         await dispatchWorkoutReminders(currentTime);
+        await dispatchNutMilkReminders(currentTime);
       } catch (err) {
         console.error('[scheduler] per-minute job error:', err);
       }

@@ -24,6 +24,12 @@ Phase 3 — Post-MVP Hardening — **Ready to execute** (6 plans prepared)
 
 Phase 3 planning is complete. Next action is executing the six hardening plans for manual redeem polish, barcode scanner/cache, admin dashboards, store review, exercise media mapping, and release verification.
 
+## Quick Tasks Completed
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-05-27 | fix-notification-reminders | Complete | Added water/workout/sữa Ủ local reminders and removed FCM token lookup from the permission modal path. |
+
 ## Phase Progress
 
 | Phase | Name | Status |

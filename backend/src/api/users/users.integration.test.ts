@@ -97,8 +97,10 @@ test('Test 2: GET /api/users/profile/stats with no logs returns defaults', async
   // Notifications defaults from D-79
   assert.equal(res.body.data.notifications.waterReminder, true);
   assert.equal(res.body.data.notifications.workoutReminder, true);
+  assert.equal(res.body.data.notifications.nutMilkReminder, true);
   assert.equal(res.body.data.notifications.waterReminderTime, '08:00');
   assert.equal(res.body.data.notifications.workoutReminderTime, '07:00');
+  assert.equal(res.body.data.notifications.nutMilkReminderTime, '20:00');
 });
 
 // ---------------------------------------------------------------------------
@@ -259,8 +261,10 @@ test('Test 9: PATCH /api/users/notifications with valid data updates correctly',
     .send({
       waterReminder: false,
       workoutReminder: true,
+      nutMilkReminder: true,
       waterReminderTime: '09:30',
       workoutReminderTime: '06:00',
+      nutMilkReminderTime: '20:30',
     });
 
   assert.equal(res.status, 200);
@@ -268,8 +272,10 @@ test('Test 9: PATCH /api/users/notifications with valid data updates correctly',
   const user = await User.findById(userIdA).lean();
   assert.equal(user?.notifications.waterReminder, false);
   assert.equal(user?.notifications.workoutReminder, true);
+  assert.equal(user?.notifications.nutMilkReminder, true);
   assert.equal(user?.notifications.waterReminderTime, '09:30');
   assert.equal(user?.notifications.workoutReminderTime, '06:00');
+  assert.equal(user?.notifications.nutMilkReminderTime, '20:30');
 });
 
 // ---------------------------------------------------------------------------
@@ -281,8 +287,10 @@ test('Test 10 (partial update): PATCH notifications only updates provided fields
   await User.findByIdAndUpdate(userIdA, {
     'notifications.waterReminder': false,
     'notifications.workoutReminder': false,
+    'notifications.nutMilkReminder': false,
     'notifications.waterReminderTime': '09:00',
     'notifications.workoutReminderTime': '08:00',
+    'notifications.nutMilkReminderTime': '20:00',
   });
 
   const res = await request(app)
@@ -297,7 +305,9 @@ test('Test 10 (partial update): PATCH notifications only updates provided fields
   // Other fields must not change
   assert.equal(user?.notifications.waterReminder, false);
   assert.equal(user?.notifications.workoutReminder, false);
+  assert.equal(user?.notifications.nutMilkReminder, false);
   assert.equal(user?.notifications.workoutReminderTime, '08:00');
+  assert.equal(user?.notifications.nutMilkReminderTime, '20:00');
 });
 
 // ---------------------------------------------------------------------------
@@ -331,4 +341,5 @@ test('Test 12 (notifications round-trip): PATCH then GET stats shows updated not
     .set('Authorization', `Bearer ${tokenA}`);
   assert.equal(statsRes.status, 200);
   assert.equal(statsRes.body.data.notifications.waterReminderTime, '11:11');
+  assert.equal(statsRes.body.data.notifications.nutMilkReminderTime, '20:00');
 });

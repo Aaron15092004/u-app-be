@@ -234,8 +234,10 @@ export interface ITodayWater {
 export interface IUserNotifications {
   waterReminder: boolean;
   workoutReminder: boolean;
+  nutMilkReminder: boolean;
   waterReminderTime: string;
   workoutReminderTime: string;
+  nutMilkReminderTime: string;
 }
 
 export interface IProfileStats {

@@ -2,15 +2,18 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { AxiosInstance } from 'axios';
+import { configureReminderChannel, ensureLocalNotificationPermission } from './reminders';
 
 export async function registerPushToken(
   apiClient: AxiosInstance
 ): Promise<{ success: boolean; token?: string; error?: string }> {
   try {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== 'granted') {
+    const granted = await ensureLocalNotificationPermission();
+    if (!granted) {
       return { success: false, error: 'Notification permission denied' };
     }
+
+    await configureReminderChannel();
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId as string | undefined;
     const expoPushToken = await Notifications.getExpoPushTokenAsync({ projectId });

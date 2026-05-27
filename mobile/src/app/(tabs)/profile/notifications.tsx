@@ -17,6 +17,7 @@ import {
   getProfileStatsApi,
 } from "../../../lib/api/users.api";
 import { getNotifAsked, setNotifAsked } from "../../../lib/storage/mmkv";
+import { syncReminderNotifications } from "../../../lib/notifications/reminders";
 import { TEXT_SECONDARY, SURFACE } from "../../../constants/colors";
 
 export default function NotificationSettingsScreen(): React.JSX.Element {
@@ -31,10 +32,14 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
 
   const [waterReminder, setWaterReminder] = useState<boolean | null>(null);
   const [workoutReminder, setWorkoutReminder] = useState<boolean | null>(null);
+  const [nutMilkReminder, setNutMilkReminder] = useState<boolean | null>(null);
   const [waterReminderTime, setWaterReminderTime] = useState<string | null>(
     null,
   );
   const [workoutReminderTime, setWorkoutReminderTime] = useState<string | null>(
+    null,
+  );
+  const [nutMilkReminderTime, setNutMilkReminderTime] = useState<string | null>(
     null,
   );
 
@@ -43,8 +48,13 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
     if (serverNotif && waterReminder === null) {
       setWaterReminder(serverNotif.waterReminder);
       setWorkoutReminder(serverNotif.workoutReminder);
+      setNutMilkReminder(serverNotif.nutMilkReminder);
       setWaterReminderTime(serverNotif.waterReminderTime);
       setWorkoutReminderTime(serverNotif.workoutReminderTime);
+      setNutMilkReminderTime(serverNotif.nutMilkReminderTime);
+      void syncReminderNotifications(serverNotif).catch((err) => {
+        console.warn("[notifications] sync reminders failed:", err);
+      });
     }
   }, [serverNotif, waterReminder]);
 
@@ -58,7 +68,10 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
 
   const mutation = useMutation({
     mutationFn: updateNotificationsApi,
-    onSuccess: () => {
+    onSuccess: ({ notifications }) => {
+      void syncReminderNotifications(notifications, { requestPermission: true }).catch((err) => {
+        console.warn("[notifications] sync reminders failed:", err);
+      });
       void qc.invalidateQueries({ queryKey: ["users", "profile", "stats"] });
     },
   });
@@ -80,6 +93,9 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
   const handleAccept = async (): Promise<void> => {
     setNotifAsked(true);
     setShowRationale(false);
+    if (serverNotif) {
+      await syncReminderNotifications(serverNotif);
+    }
   };
 
   const handleDismiss = (): void => {
@@ -170,12 +186,39 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
               />
             </>
           )}
+
+          <View style={styles.separator} />
+
+          <NotifToggleRow
+            label="Nhắc uống sữa Ủ"
+            sublabel="Nhắc bạn uống sữa hạt theo lịch đã chọn"
+            value={nutMilkReminder ?? false}
+            onChange={(v) => {
+              setNutMilkReminder(v);
+              mutation.mutate({ nutMilkReminder: v });
+            }}
+          />
+
+          {nutMilkReminder === true && (
+            <>
+              <View style={styles.separator} />
+              <NotifTimeRow
+                label="Giờ nhắc uống sữa Ủ"
+                sublabel={nutMilkReminderTime ?? "20:00"}
+                time={nutMilkReminderTime ?? "20:00"}
+                onTimeChange={(newTime) => {
+                  setNutMilkReminderTime(newTime);
+                  debouncedMutate({ nutMilkReminderTime: newTime });
+                }}
+              />
+            </>
+          )}
         </View>
 
         {/* Info text */}
         <Text style={styles.infoText}>
-          Streak alert sẽ tự động gửi lúc 20:00 mỗi ngày nếu bạn chưa hoàn thành
-          thói quen.
+          App sẽ lên lịch lại nhắc nhở trên máy sau mỗi lần bạn thay đổi cài
+          đặt.
         </Text>
       </ScrollView>
 
