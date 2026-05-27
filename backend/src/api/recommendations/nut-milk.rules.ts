@@ -12,35 +12,35 @@ export interface NutMilkFlavorRule {
 export const NUT_MILK_FLAVORS: readonly NutMilkFlavorRule[] = [
   {
     flavorId: 'rau_ma_sua_dua',
-    nameVi: 'Rau ma sua dua',
+    nameVi: 'Rau má sữa dừa',
     bmiRule: 'gt_23',
-    positioningVi: 'Thanh nhiet va kiem soat can nang',
+    positioningVi: 'Thanh nhiệt và kiểm soát cân nặng',
   },
   {
     flavorId: 'rau_ma_hat_sen',
-    nameVi: 'Rau ma - Hat sen',
+    nameVi: 'Rau má - Hạt sen',
     bmiRule: 'any',
     needSignal: 'stress_sleep',
-    positioningVi: 'Giam stress va ngu ngon sau giac',
+    positioningVi: 'Giảm stress và ngủ ngon sâu giấc',
   },
   {
     flavorId: 'gao_lut_me_den_hat_sen',
-    nameVi: 'Gao lut - Me den - Hat sen',
+    nameVi: 'Gạo lứt - Mè đen - Hạt sen',
     bmiRule: 'range_18_5_22_9',
-    positioningVi: 'Duy tri voc dang va dep da, chong lao hoa',
+    positioningVi: 'Duy trì vóc dáng và đẹp da, chống lão hóa',
   },
   {
     flavorId: 'gao_lut_oc_cho_hanh_nhan',
-    nameVi: 'Gao lut - Oc cho - Hanh nhan',
+    nameVi: 'Gạo lứt - Óc chó - Hạnh nhân',
     bmiRule: 'lt_18_5',
-    positioningVi: 'Bo sung dinh duong va tang cuong tri nao',
+    positioningVi: 'Bổ sung dinh dưỡng và tăng cường trí não',
   },
   {
     flavorId: 'hat_sen_oc_cho',
-    nameVi: 'Hat sen - Oc cho',
+    nameVi: 'Hạt sen - Óc chó',
     bmiRule: 'any',
     needSignal: 'energy_memory',
-    positioningVi: 'Phuc hoi nang luong va tri nho ben bi',
+    positioningVi: 'Phục hồi năng lượng và trí nhớ bền bỉ',
   },
 ] as const;
 

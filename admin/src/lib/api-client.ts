@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? '';
+const BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -46,6 +46,9 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    if (!original) {
+      return Promise.reject(error);
+    }
     if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }

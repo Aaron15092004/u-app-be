@@ -32,7 +32,7 @@ export async function getNutMilkRules(userId: string, input: GetNutMilkRulesInpu
     flavors: NUT_MILK_FLAVORS,
     currentPreference,
     disclaimer:
-      'Goi y sua hat la goi y san pham theo so thich va chi so co the, khong phai chan doan hay dieu tri y khoa.',
+      'Gợi ý sữa hạt là gợi ý sản phẩm theo sở thích và chỉ số cơ thể, không phải chẩn đoán hay điều trị y khoa.',
   };
 }
 

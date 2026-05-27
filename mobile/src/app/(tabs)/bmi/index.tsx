@@ -5,20 +5,26 @@ import {
   View,
   Text,
   StyleSheet,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useAuthStore } from '../../../lib/auth/auth-store';
 import { saveBMIApi, getBMIHistoryApi } from '../../../lib/api/bmi.api';
+import {
+  getNutMilkRecommendationsApi,
+  selectNutMilkFlavorApi,
+} from '../../../lib/api/v2-contracts.api';
 import { setCachedUser } from '../../../lib/storage/mmkv';
 import BMIResultCard from '../../../components/ui/BMIResultCard';
 import BMIChart from '../../../components/ui/BMIChart';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
 import FormErrorText from '../../../components/ui/FormErrorText';
-import { PRIMARY, SURFACE, TEXT, BACKGROUND } from '../../../constants/colors';
-import type { IBMICategory } from '../../../lib/api/types';
+import { PRIMARY, PRIMARY_DARK, SURFACE, TEXT, TEXT_SECONDARY, BACKGROUND, INACTIVE } from '../../../constants/colors';
+import type { IBMICategory, IV2NutMilkFlavorRule } from '../../../lib/api/types';
 
 // ---------------------------------------------------------------------------
 // Pure functions
@@ -48,6 +54,18 @@ const CATEGORY_ADVICE: Record<IBMICategory, string> = {
   obese: 'Nên tham khảo ý kiến bác sĩ để có kế hoạch giảm cân an toàn.',
 };
 
+function findRecommendedMilk(
+  flavors: IV2NutMilkFlavorRule[],
+  bmiRule: string | null | undefined,
+): IV2NutMilkFlavorRule | undefined {
+  if (bmiRule === 'boundary_23') {
+    return flavors.find((flavor) => flavor.flavorId === 'rau_ma_sua_dua') ?? flavors[0];
+  }
+  return flavors.find((flavor) => flavor.bmiRule === bmiRule)
+    ?? flavors.find((flavor) => flavor.bmiRule === 'any')
+    ?? flavors[0];
+}
+
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
@@ -74,6 +92,14 @@ export default function BMIScreen(): React.JSX.Element {
     queryKey: ['bmi', 'history'],
     queryFn: getBMIHistoryApi,
   });
+  const milkQuery = useQuery({
+    queryKey: ['v2', 'nut-milk', bmi],
+    queryFn: () => getNutMilkRecommendationsApi({ bmi }),
+  });
+  const recommendedMilk = findRecommendedMilk(
+    milkQuery.data?.flavors ?? [],
+    milkQuery.data?.bmiRule,
+  );
 
   const mutation = useMutation({
     mutationFn: () => saveBMIApi(heightCm, weightKg),
@@ -99,6 +125,17 @@ export default function BMIScreen(): React.JSX.Element {
     },
     onError: () => {
       setSaveError('Không thể lưu chỉ số BMI. Kiểm tra kết nối và thử lại.');
+    },
+  });
+  const milkMutation = useMutation({
+    mutationFn: () => selectNutMilkFlavorApi({
+      selectedFlavorId: recommendedMilk?.flavorId ?? '',
+      recommendedFlavorId: recommendedMilk?.flavorId,
+      bmi,
+      source: 'bmi_recommendation',
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['v2', 'nut-milk'] });
     },
   });
 
@@ -170,6 +207,40 @@ export default function BMIScreen(): React.JSX.Element {
         <View style={styles.adviceCard}>
           <Text style={styles.sectionTitle}>Lời khuyên</Text>
           <Text style={styles.adviceText}>{CATEGORY_ADVICE[category]}</Text>
+        </View>
+
+        <View style={styles.milkCard}>
+          <View style={styles.milkHeader}>
+            <View style={styles.milkIcon}>
+              <Ionicons name="leaf-outline" size={20} color={PRIMARY_DARK} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.milkTitle}>Sữa Ủ phù hợp</Text>
+              <Text style={styles.milkSubtitle}>Gợi ý theo BMI hiện tại của bạn</Text>
+            </View>
+          </View>
+          {recommendedMilk ? (
+            <>
+              <Text style={styles.milkName}>{recommendedMilk.nameVi}</Text>
+              <Text style={styles.milkCopy}>{recommendedMilk.positioningVi}</Text>
+              <Text style={styles.milkDisclaimer}>
+                {milkQuery.data?.disclaimer ?? 'Gợi ý sản phẩm theo sở thích và thể trạng, không phải tư vấn y khoa.'}
+              </Text>
+              <Pressable
+                style={[styles.milkSave, milkMutation.isPending && styles.milkSaveDisabled]}
+                disabled={milkMutation.isPending}
+                onPress={() => milkMutation.mutate()}
+              >
+                <Text style={styles.milkSaveText}>
+                  {milkMutation.isPending ? 'Đang lưu...' : 'Lưu lựa chọn này'}
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={styles.milkEmpty}>
+              Không tải được gợi ý sữa. Kiểm tra kết nối và thử lại.
+            </Text>
+          )}
         </View>
 
         {/* Chart section */}
@@ -268,6 +339,70 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: TEXT,
     lineHeight: 24,
+  },
+  milkCard: {
+    backgroundColor: SURFACE,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8F1D0',
+  },
+  milkHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  milkIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EEF6CA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  milkTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: TEXT,
+  },
+  milkSubtitle: {
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 2,
+  },
+  milkName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: PRIMARY_DARK,
+    marginBottom: 6,
+  },
+  milkCopy: {
+    fontSize: 14,
+    color: TEXT,
+    lineHeight: 20,
+  },
+  milkDisclaimer: {
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    lineHeight: 18,
+    marginTop: 10,
+  },
+  milkSave: {
+    alignItems: 'center',
+    marginTop: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: PRIMARY_DARK,
+  },
+  milkSaveDisabled: { opacity: 0.5 },
+  milkSaveText: { color: '#FFFFFF', fontWeight: '700' },
+  milkEmpty: {
+    fontSize: 14,
+    color: INACTIVE,
+    lineHeight: 20,
   },
   chartSection: {
     paddingHorizontal: 16,

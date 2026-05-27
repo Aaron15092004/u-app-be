@@ -20,6 +20,7 @@ import type { IWorkoutProgramSummary } from "../../../lib/api/types";
 import {
   PRIMARY_DARK,
   PRIMARY_DEEP,
+  PRIMARY,
   BACKGROUND,
   SURFACE,
   TEXT,
@@ -36,24 +37,45 @@ import {
 type LevelFilter = "all" | "beginner" | "intermediate" | "advanced";
 
 const LEVEL_CHIPS: { id: LevelFilter; label: string }[] = [
-  { id: "all",          label: "Tất cả" },
-  { id: "beginner",     label: "Người mới" },
+  { id: "all", label: "Tất cả" },
+  { id: "beginner", label: "Người mới" },
   { id: "intermediate", label: "Trung cấp" },
-  { id: "advanced",     label: "Nâng cao" },
+  { id: "advanced", label: "Nâng cao" },
 ];
 
-const LEVEL_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  beginner:     { label: "Người mới",  color: DIFFICULTY_EASY,   icon: "leaf-outline" },
-  intermediate: { label: "Trung cấp",  color: DIFFICULTY_MEDIUM, icon: "flame-outline" },
-  advanced:     { label: "Nâng cao",   color: DIFFICULTY_HARD,   icon: "trophy-outline" },
+const LEVEL_CONFIG: Record<
+  string,
+  { label: string; color: string; icon: string }
+> = {
+  beginner: {
+    label: "Người mới",
+    color: DIFFICULTY_EASY,
+    icon: "leaf-outline",
+  },
+  intermediate: {
+    label: "Trung cấp",
+    color: DIFFICULTY_MEDIUM,
+    icon: "flame-outline",
+  },
+  advanced: {
+    label: "Nâng cao",
+    color: DIFFICULTY_HARD,
+    icon: "trophy-outline",
+  },
 };
 
 // ─── Resume banner ────────────────────────────────────────────────────────────
 
 function ResumeBanner({
-  dayTitle, programId, dayNumber, onPress,
+  dayTitle,
+  programId,
+  dayNumber,
+  onPress,
 }: {
-  dayTitle: string; programId: string | null; dayNumber: number | null; onPress: () => void;
+  dayTitle: string;
+  programId: string | null;
+  dayNumber: number | null;
+  onPress: () => void;
 }): React.JSX.Element {
   return (
     <Pressable
@@ -65,9 +87,15 @@ function ResumeBanner({
       </View>
       <View style={resumeSt.mid}>
         <Text style={resumeSt.label}>Đang tập dang dở</Text>
-        <Text style={resumeSt.sub} numberOfLines={1}>{dayTitle}</Text>
+        <Text style={resumeSt.sub} numberOfLines={1}>
+          {dayTitle}
+        </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color="rgba(255,255,255,0.7)"
+      />
     </Pressable>
   );
 }
@@ -89,31 +117,43 @@ const resumeSt = StyleSheet.create({
     elevation: 4,
   },
   iconWrap: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center", justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  mid:   { flex: 1 },
-  label: { fontSize: 11, fontWeight: "600", color: "rgba(255,255,255,0.8)", marginBottom: 2 },
-  sub:   { fontSize: 14, fontWeight: "700", color: "#FFF" },
+  mid: { flex: 1 },
+  label: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.8)",
+    marginBottom: 2,
+  },
+  sub: { fontSize: 14, fontWeight: "700", color: "#FFF" },
 });
 
 // ─── Program card ─────────────────────────────────────────────────────────────
 
 function ProgramCard({
-  program, onPress,
+  program,
+  onPress,
 }: {
-  program: IWorkoutProgramSummary; onPress: () => void;
+  program: IWorkoutProgramSummary;
+  onPress: () => void;
 }): React.JSX.Element {
-  const cfg      = LEVEL_CONFIG[program.level] ?? LEVEL_CONFIG.beginner;
+  const cfg = LEVEL_CONFIG[program.level] ?? LEVEL_CONFIG.beginner;
   const progress = program.userProgress;
   const hasImage = Boolean(program.imageUrl);
 
   const cardContent = (
     <LinearGradient
-      colors={hasImage
-        ? ["transparent", "rgba(0,0,0,0.68)"]
-        : [PRIMARY_DEEP + "CC", PRIMARY_DARK + "EE"]}
+      colors={
+        hasImage
+          ? ["transparent", "rgba(0,0,0,0.68)"]
+          : [PRIMARY_DEEP + "CC", PRIMARY_DARK + "EE"]
+      }
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={cardSt.gradient}
@@ -125,20 +165,34 @@ function ProgramCard({
       </View>
 
       <View style={cardSt.bottom}>
-        <Text style={cardSt.title} numberOfLines={2}>{program.title}</Text>
+        <Text style={cardSt.title} numberOfLines={2}>
+          {program.title}
+        </Text>
         {program.description ? (
-          <Text style={cardSt.desc} numberOfLines={1}>{program.description}</Text>
+          <Text style={cardSt.desc} numberOfLines={1}>
+            {program.description}
+          </Text>
         ) : null}
 
         {/* Stats row */}
         <View style={cardSt.statsRow}>
           <View style={cardSt.statChip}>
-            <Ionicons name="calendar-outline" size={11} color="rgba(255,255,255,0.8)" />
+            <Ionicons
+              name="calendar-outline"
+              size={11}
+              color="rgba(255,255,255,0.8)"
+            />
             <Text style={cardSt.statText}>{program.totalDays} ngày</Text>
           </View>
           <View style={cardSt.statChip}>
-            <Ionicons name="time-outline" size={11} color="rgba(255,255,255,0.8)" />
-            <Text style={cardSt.statText}>~{program.avgDayMinutes} phút/ngày</Text>
+            <Ionicons
+              name="time-outline"
+              size={11}
+              color="rgba(255,255,255,0.8)"
+            />
+            <Text style={cardSt.statText}>
+              ~{program.avgDayMinutes} phút/ngày
+            </Text>
           </View>
         </View>
 
@@ -149,7 +203,9 @@ function ProgramCard({
               <View
                 style={[
                   cardSt.progressFill,
-                  { width: `${Math.round((progress.completedDays.length / program.totalDays) * 100)}%` },
+                  {
+                    width: `${Math.round((progress.completedDays.length / program.totalDays) * 100)}%`,
+                  },
                 ]}
               />
             </View>
@@ -201,7 +257,7 @@ const cardSt = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  imageBg:    { width: "100%", height: 180 },
+  imageBg: { width: "100%", height: 180 },
   imageStyle: { borderRadius: 18 },
   gradient: {
     flex: 1,
@@ -211,23 +267,35 @@ const cardSt = StyleSheet.create({
     justifyContent: "space-between",
   },
   badge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     alignSelf: "flex-start",
-    paddingHorizontal: 8, paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 20,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   badgeText: { fontSize: 11, fontWeight: "600", color: "#FFF" },
-  bottom:    { gap: 6 },
-  title:     { fontSize: 18, fontWeight: "700", color: "#FFF", lineHeight: 22 },
-  desc:      { fontSize: 12, color: "rgba(255,255,255,0.75)" },
-  statsRow:  { flexDirection: "row", gap: 8, marginTop: 2 },
-  statChip:  { flexDirection: "row", alignItems: "center", gap: 3 },
-  statText:  { fontSize: 11, color: "rgba(255,255,255,0.8)" },
-  progressWrap: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  bottom: { gap: 6 },
+  title: { fontSize: 18, fontWeight: "700", color: "#FFF", lineHeight: 22 },
+  desc: { fontSize: 12, color: "rgba(255,255,255,0.75)" },
+  statsRow: { flexDirection: "row", gap: 8, marginTop: 2 },
+  statChip: { flexDirection: "row", alignItems: "center", gap: 3 },
+  statText: { fontSize: 11, color: "rgba(255,255,255,0.8)" },
+  progressWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+  },
   progressTrack: {
-    flex: 1, height: 4, backgroundColor: "rgba(255,255,255,0.25)",
-    borderRadius: 2, overflow: "hidden",
+    flex: 1,
+    height: 4,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 2,
+    overflow: "hidden",
   },
   progressFill: { height: 4, backgroundColor: "#FFF", borderRadius: 2 },
   progressText: { fontSize: 11, color: "rgba(255,255,255,0.75)", minWidth: 28 },
@@ -239,7 +307,13 @@ function SectionTitle({ title }: { title: string }): React.JSX.Element {
   return <Text style={secSt.t}>{title}</Text>;
 }
 const secSt = StyleSheet.create({
-  t: { fontSize: 16, fontWeight: "700", color: TEXT, marginTop: 20, marginBottom: 10 },
+  t: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: TEXT,
+    marginTop: 20,
+    marginBottom: 10,
+  },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -252,12 +326,13 @@ export default function ExerciseListScreen(): React.JSX.Element {
 
   const streakQ = useQuery({
     queryKey: ["workout-sessions", "streak"],
-    queryFn:  getWorkoutStreakApi,
+    queryFn: getWorkoutStreakApi,
   });
 
   const programsQ = useQuery({
     queryKey: ["workout-programs", levelFilter],
-    queryFn:  () => listWorkoutProgramsApi(levelFilter === "all" ? undefined : levelFilter),
+    queryFn: () =>
+      listWorkoutProgramsApi(levelFilter === "all" ? undefined : levelFilter),
   });
 
   const streak = streakQ.data?.currentStreak ?? 0;
@@ -268,15 +343,17 @@ export default function ExerciseListScreen(): React.JSX.Element {
 
       {/* ── Gradient header ── */}
       <LinearGradient
-        colors={[PRIMARY_DEEP, PRIMARY_DARK]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
+        colors={[PRIMARY, PRIMARY_DARK]}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 0 }}
         style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerGreeting}>Luyện tập</Text>
-            <Text style={styles.headerSub}>Kiên trì mỗi ngày, kết quả đến tự nhiên</Text>
+            <Text style={styles.headerSub}>
+              Kiên trì mỗi ngày, kết quả đến tự nhiên
+            </Text>
           </View>
           {streak > 0 && (
             <View style={styles.streakBadge}>
@@ -290,7 +367,10 @@ export default function ExerciseListScreen(): React.JSX.Element {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 32 },
+        ]}
       >
         {/* Resume banner */}
         {store.isActive && store.sessionId && (
@@ -302,7 +382,9 @@ export default function ExerciseListScreen(): React.JSX.Element {
               dayNumber={store.dayNumber}
               onPress={() => {
                 if (store.programId && store.dayNumber != null) {
-                  router.push(`/(tabs)/exercises/session/${store.programId}/${store.dayNumber}` as never);
+                  router.push(
+                    `/(tabs)/exercises/session/${store.programId}/${store.dayNumber}` as never,
+                  );
                 }
               }}
             />
@@ -319,7 +401,11 @@ export default function ExerciseListScreen(): React.JSX.Element {
                 <ProgramCard
                   key={String(prog._id)}
                   program={prog}
-                  onPress={() => router.push(`/(tabs)/exercises/program/${String(prog._id)}` as never)}
+                  onPress={() =>
+                    router.push(
+                      `/(tabs)/exercises/program/${String(prog._id)}` as never,
+                    )
+                  }
                 />
               ))}
           </>
@@ -338,10 +424,18 @@ export default function ExerciseListScreen(): React.JSX.Element {
           {LEVEL_CHIPS.map((chip) => (
             <Pressable
               key={chip.id}
-              style={[styles.chip, levelFilter === chip.id && styles.chipActive]}
+              style={[
+                styles.chip,
+                levelFilter === chip.id && styles.chipActive,
+              ]}
               onPress={() => setLevelFilter(chip.id)}
             >
-              <Text style={[styles.chipText, levelFilter === chip.id && styles.chipTextActive]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  levelFilter === chip.id && styles.chipTextActive,
+                ]}
+              >
                 {chip.label}
               </Text>
             </Pressable>
@@ -350,7 +444,9 @@ export default function ExerciseListScreen(): React.JSX.Element {
 
         {programsQ.isLoading ? (
           <>
-            {[1, 2, 3].map((k) => <View key={k} style={styles.skeleton} />)}
+            {[1, 2, 3].map((k) => (
+              <View key={k} style={styles.skeleton} />
+            ))}
           </>
         ) : programsQ.data?.length === 0 ? (
           <View style={styles.emptyBox}>
@@ -361,7 +457,11 @@ export default function ExerciseListScreen(): React.JSX.Element {
             <ProgramCard
               key={String(prog._id)}
               program={prog}
-              onPress={() => router.push(`/(tabs)/exercises/program/${String(prog._id)}` as never)}
+              onPress={() =>
+                router.push(
+                  `/(tabs)/exercises/program/${String(prog._id)}` as never,
+                )
+              }
             />
           ))
         )}
@@ -381,37 +481,47 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
-  headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   headerGreeting: { fontSize: 22, fontWeight: "700", color: "#FFF" },
-  headerSub:      { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 3 },
+  headerSub: { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 3 },
 
   streakBadge: {
     backgroundColor: "rgba(0,0,0,0.22)",
     borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     alignItems: "center",
-    flexDirection: "row", gap: 4,
+    flexDirection: "row",
+    gap: 4,
   },
   streakFire: { fontSize: 18 },
-  streakNum:  { fontSize: 20, fontWeight: "700", color: "#FFF" },
-  streakLbl:  { fontSize: 11, color: "rgba(255,255,255,0.75)" },
+  streakNum: { fontSize: 20, fontWeight: "700", color: "#FFF" },
+  streakLbl: { fontSize: 11, color: "rgba(255,255,255,0.75)" },
 
   scroll: { paddingHorizontal: 16 },
 
-  chipsScroll:  { marginBottom: 12 },
+  chipsScroll: { marginBottom: 12 },
   chipsContent: { gap: 8, paddingVertical: 2 },
   chip: {
-    paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: "#F0F0F0",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: "#F0F0F0",
   },
-  chipActive:     { backgroundColor: PRIMARY_DARK },
-  chipText:       { fontSize: 13, fontWeight: "500", color: TEXT_SECONDARY },
+  chipActive: { backgroundColor: PRIMARY_DARK },
+  chipText: { fontSize: 13, fontWeight: "500", color: TEXT_SECONDARY },
   chipTextActive: { color: "#FFF", fontWeight: "600" },
 
   skeleton: {
-    height: 180, backgroundColor: "#F0F0F0",
-    borderRadius: 18, marginBottom: 12,
+    height: 180,
+    backgroundColor: "#F0F0F0",
+    borderRadius: 18,
+    marginBottom: 12,
   },
-  emptyBox:  { alignItems: "center", paddingVertical: 32 },
+  emptyBox: { alignItems: "center", paddingVertical: 32 },
   emptyText: { fontSize: 14, color: TEXT_SECONDARY },
 });
