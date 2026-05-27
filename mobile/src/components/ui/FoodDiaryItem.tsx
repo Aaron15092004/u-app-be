@@ -1,12 +1,6 @@
-import React, { useRef, useState } from 'react';
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface FoodDiaryItemProps {
   foodName: string;
@@ -57,10 +51,7 @@ export default function FoodDiaryItem({
   };
 
   return (
-    <View
-      style={styles.outer}
-      accessibilityLabel={`${foodName}, ${kcal} calo`}
-    >
+    <View style={styles.outer} accessibilityLabel={`${foodName}, ${kcal} calo`}>
       {/* Delete action layer (revealed on long press) */}
       {deleteVisible ? (
         <Pressable
@@ -75,9 +66,7 @@ export default function FoodDiaryItem({
       ) : null}
 
       {/* Content layer */}
-      <Animated.View
-        style={[styles.content, { transform: [{ translateX }] }]}
-      >
+      <Animated.View style={[styles.content, { transform: [{ translateX }] }]}>
         <Pressable
           onLongPress={handleLongPress}
           onPress={deleteVisible ? hideDelete : undefined}
@@ -86,7 +75,9 @@ export default function FoodDiaryItem({
           accessibilityRole="button"
         >
           <View style={styles.left}>
-            <Text style={styles.foodName} numberOfLines={1}>{foodName}</Text>
+            <Text style={styles.foodName} numberOfLines={1}>
+              {foodName}
+            </Text>
             <Text style={styles.timestamp}>{timestamp}</Text>
           </View>
           <View style={styles.right}>
@@ -101,39 +92,39 @@ export default function FoodDiaryItem({
 
 const styles = StyleSheet.create({
   outer: {
-    position: 'relative',
-    overflow: 'hidden',
+    position: "relative",
+    overflow: "hidden",
     marginHorizontal: 16,
     marginBottom: 8,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   deleteLayer: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     top: 0,
     bottom: 0,
     width: 80,
-    backgroundColor: '#EF5350',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#EF5350",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 1,
   },
   deleteText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginTop: 2,
   },
   content: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     zIndex: 2,
   },
   contentInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
   },
   left: {
@@ -142,27 +133,27 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#212121',
+    fontWeight: "700",
+    color: "#212121",
   },
   timestamp: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#BDBDBD',
+    fontWeight: "400",
+    color: "#BDBDBD",
     marginTop: 4,
   },
   right: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
   },
   kcalValue: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#4CAF50',
+    fontWeight: "700",
+    color: "#4CAF50",
   },
   kcalUnit: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#757575',
+    fontWeight: "400",
+    color: "#757575",
   },
 });

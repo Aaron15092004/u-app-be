@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { SURFACE, TEXT } from '../../constants/colors';
+import React from "react";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
+import { SURFACE, TEXT } from "../../constants/colors";
 
 interface HomeSectionProps {
   title: string;
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   section: {},
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     marginBottom: 12,
   },
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,

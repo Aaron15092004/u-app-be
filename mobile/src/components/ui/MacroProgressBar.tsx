@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { TEXT, TEXT_SECONDARY } from '../../constants/colors';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { TEXT, TEXT_SECONDARY } from "../../constants/colors";
 
 interface MacroProgressBarProps {
   label: string;
@@ -24,11 +24,17 @@ export default function MacroProgressBar({
       <View style={styles.labelRow}>
         <Text style={styles.label}>{label}</Text>
         <Text style={styles.value}>
-          {current}/{goal}{unit ?? 'g'}
+          {current}/{goal}
+          {unit ?? "g"}
         </Text>
       </View>
       <View style={styles.track}>
-        <View style={[styles.fill, { backgroundColor: color, width: `${fillPercent}%` }]} />
+        <View
+          style={[
+            styles.fill,
+            { backgroundColor: color, width: `${fillPercent}%` },
+          ]}
+        />
       </View>
     </View>
   );
@@ -37,25 +43,25 @@ export default function MacroProgressBar({
 const styles = StyleSheet.create({
   container: {},
   labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 4,
   },
   label: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT,
   },
   value: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT_SECONDARY,
   },
   track: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-    overflow: 'hidden',
+    backgroundColor: "#E0E0E0",
+    overflow: "hidden",
   },
   fill: {
     height: 8,

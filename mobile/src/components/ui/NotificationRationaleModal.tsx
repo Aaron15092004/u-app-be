@@ -1,21 +1,10 @@
-import React, { useState } from 'react';
-import {
-  Modal,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
-import PrimaryButton from './PrimaryButton';
-import { registerTokenApi } from '../../lib/api/notifications.api';
-import {
-  PRIMARY,
-  SURFACE,
-  TEXT,
-  STREAK_BADGE,
-} from '../../constants/colors';
+import React, { useState } from "react";
+import { Modal, Platform, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
+import PrimaryButton from "./PrimaryButton";
+import { registerTokenApi } from "../../lib/api/notifications.api";
+import { PRIMARY, SURFACE, TEXT, STREAK_BADGE } from "../../constants/colors";
 
 interface NotificationRationaleModalProps {
   visible: boolean;
@@ -35,9 +24,9 @@ export default function NotificationRationaleModal({
     try {
       const { granted } = await Notifications.requestPermissionsAsync();
       if (granted) {
-        if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('default', {
-            name: 'default',
+        if (Platform.OS === "android") {
+          await Notifications.setNotificationChannelAsync("default", {
+            name: "default",
             importance: Notifications.AndroidImportance.MAX,
           });
         }
@@ -45,12 +34,12 @@ export default function NotificationRationaleModal({
         if (tokenData?.data) {
           await registerTokenApi(
             tokenData.data,
-            Platform.OS === 'ios' ? 'ios' : 'android',
+            Platform.OS === "ios" ? "ios" : "android",
           );
         }
       }
     } catch (err) {
-      console.warn('[NotificationRationaleModal] permission flow error:', err);
+      console.warn("[NotificationRationaleModal] permission flow error:", err);
     } finally {
       setLoading(false);
       await onAccept();
@@ -86,9 +75,7 @@ export default function NotificationRationaleModal({
           </View>
           <View style={styles.bulletRow}>
             <Ionicons name="barbell-outline" size={16} color={PRIMARY} />
-            <Text style={styles.bulletText}>
-              Nhắc bắt đầu buổi tập của bạn
-            </Text>
+            <Text style={styles.bulletText}>Nhắc bắt đầu buổi tập của bạn</Text>
           </View>
           <View style={styles.bulletRow}>
             <Ionicons name="flame-outline" size={16} color={STREAK_BADGE} />
@@ -104,7 +91,9 @@ export default function NotificationRationaleModal({
             variant="filled"
             label="Bật thông báo"
             loading={loading}
-            onPress={() => { void handleEnable(); }}
+            onPress={() => {
+              void handleEnable();
+            }}
           />
           <View style={styles.ctaGap} />
           <PrimaryButton
@@ -125,28 +114,28 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingBottom: 32,
     backgroundColor: SURFACE,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   icon: {
     marginBottom: 24,
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 12,
   },
   bullets: {
-    width: '100%',
+    width: "100%",
     marginTop: 8,
   },
   bulletRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginBottom: 8,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   bulletText: {
     fontSize: 16,
@@ -154,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ctas: {
-    width: '100%',
+    width: "100%",
     marginTop: 32,
   },
   ctaGap: {

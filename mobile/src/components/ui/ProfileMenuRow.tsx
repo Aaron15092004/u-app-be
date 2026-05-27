@@ -1,7 +1,7 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { TEXT, TEXT_SECONDARY, BADGE_LOCKED } from '../../constants/colors';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { TEXT, TEXT_SECONDARY, BADGE_LOCKED } from "../../constants/colors";
 
 interface ProfileMenuRowProps {
   iconName: string;
@@ -18,14 +18,11 @@ export default function ProfileMenuRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.row,
-        pressed && styles.pressed,
-      ]}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={styles.left}>
         <Ionicons
-          name={iconName as React.ComponentProps<typeof Ionicons>['name']}
+          name={iconName as React.ComponentProps<typeof Ionicons>["name"]}
           size={20}
           color={TEXT_SECONDARY}
         />
@@ -40,21 +37,21 @@ const styles = StyleSheet.create({
   row: {
     height: 52,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   pressed: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   left: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   label: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT,
   },
 });

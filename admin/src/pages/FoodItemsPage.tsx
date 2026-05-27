@@ -32,7 +32,7 @@ const foodSchema = z.object({
 type FoodFormValues = z.infer<typeof foodSchema>;
 
 export function FoodItemsPage() {
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,7 +93,7 @@ export function FoodItemsPage() {
   function handleSearchChange(val: string) {
     setSearch(val);
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => setDebouncedSearch(val), 400);
+    searchTimer = setTimeout(() => { setDebouncedSearch(val); setPage(1); }, 400);
   }
 
   const columns: ColumnDef<FoodItem>[] = [
@@ -137,7 +137,12 @@ export function FoodItemsPage() {
       <Input placeholder="Tìm kiếm thực phẩm..." value={search}
         onChange={(e) => handleSearchChange(e.target.value)} className="max-w-sm" />
 
-      <DataTable columns={columns} data={data?.items ?? []} isLoading={isPending} />
+      <DataTable
+        columns={columns}
+        data={data?.items ?? []}
+        isLoading={isPending}
+        serverPagination={{ page, totalPages: data?.totalPages ?? 1, onPageChange: setPage }}
+      />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

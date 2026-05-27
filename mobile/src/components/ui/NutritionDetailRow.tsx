@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 interface NutritionDetailRowProps {
   label: string;
@@ -21,7 +21,8 @@ export default function NutritionDetailRow({
         <Text style={styles.label}>{label}</Text>
       </View>
       <Text style={styles.value}>
-        {value.toFixed(1)}{unit}
+        {value.toFixed(1)}
+        {unit}
       </Text>
     </View>
   );
@@ -29,15 +30,15 @@ export default function NutritionDetailRow({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
   },
   leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   colorBar: {
@@ -47,12 +48,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#212121',
+    fontWeight: "400",
+    color: "#212121",
   },
   value: {
     fontSize: 16,
-    fontWeight: '400',
-    color: '#757575',
+    fontWeight: "400",
+    color: "#757575",
   },
 });

@@ -1,6 +1,6 @@
-import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
-import { PRIMARY, TEXT, TEXT_SECONDARY } from '../../constants/colors';
+import React from "react";
+import { StyleSheet, Switch, Text, View } from "react-native";
+import { PRIMARY, TEXT, TEXT_SECONDARY } from "../../constants/colors";
 
 interface NotifToggleRowProps {
   label: string;
@@ -22,7 +22,7 @@ export default function NotifToggleRow({
         <Text style={styles.sublabel}>{sublabel}</Text>
       </View>
       <Switch
-        trackColor={{ false: '#E0E0E0', true: PRIMARY }}
+        trackColor={{ false: "#E0E0E0", true: PRIMARY }}
         thumbColor="#FFFFFF"
         value={value}
         onValueChange={onChange}
@@ -35,9 +35,9 @@ const styles = StyleSheet.create({
   row: {
     height: 64,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   left: {
     flex: 1,
@@ -45,12 +45,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
   },
   sublabel: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT_SECONDARY,
     marginTop: 2,
   },

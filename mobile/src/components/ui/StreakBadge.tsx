@@ -1,7 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { STREAK_BADGE, TEXT_SECONDARY, SURFACE } from '../../constants/colors';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { STREAK_BADGE, TEXT_SECONDARY, SURFACE } from "../../constants/colors";
 
 interface StreakBadgeProps {
   streakDays: number;
@@ -24,9 +24,9 @@ export default function StreakBadge({
 
 const styles = StyleSheet.create({
   badge: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: SURFACE,
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: STREAK_BADGE,
   },
   emptyText: {

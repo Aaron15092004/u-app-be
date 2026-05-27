@@ -1,8 +1,8 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { PRIMARY } from '../../constants/colors';
-import type { IHabitId } from '../../lib/api/types';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { PRIMARY } from "../../constants/colors";
+import type { IHabitId } from "../../lib/api/types";
 
 interface HabitRowProps {
   habit: { id: IHabitId; name: string; iconName: string };
@@ -24,7 +24,7 @@ export default function HabitRow({
       {/* Left: icon */}
       <View style={styles.iconWrapper}>
         <Ionicons
-          name={habit.iconName as React.ComponentProps<typeof Ionicons>['name']}
+          name={habit.iconName as React.ComponentProps<typeof Ionicons>["name"]}
           size={20}
           color={PRIMARY}
         />
@@ -49,7 +49,12 @@ export default function HabitRow({
             pressed && !isDisabled && styles.checkInBtnPressed,
           ]}
         >
-          <Text style={[styles.checkInLabel, isDisabled && styles.checkInLabelDisabled]}>
+          <Text
+            style={[
+              styles.checkInLabel,
+              isDisabled && styles.checkInLabelDisabled,
+            ]}
+          >
             Đánh dấu +1
           </Text>
         </Pressable>
@@ -60,8 +65,8 @@ export default function HabitRow({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     height: 72,
     paddingHorizontal: 16,
   },
@@ -69,23 +74,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(76,175,80,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(76,175,80,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
   },
   habitName: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '400',
-    color: '#212121',
+    fontWeight: "400",
+    color: "#212121",
     marginRight: 8,
   },
   checkInBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: 'rgba(76,175,80,0.1)',
+    backgroundColor: "rgba(76,175,80,0.1)",
   },
   checkInBtnDisabled: {
     opacity: 0.5,
@@ -95,7 +100,7 @@ const styles = StyleSheet.create({
   },
   checkInLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: PRIMARY,
   },
   checkInLabelDisabled: {

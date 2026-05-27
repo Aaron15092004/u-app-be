@@ -1,7 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import AchievementBadge from './AchievementBadge';
-import { TEXT } from '../../constants/colors';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import AchievementBadge from "./AchievementBadge";
+import { TEXT } from "../../constants/colors";
 
 const MILESTONES = [7, 14, 28, 60];
 
@@ -30,23 +30,23 @@ export default function AchievementBadgesRow({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     marginBottom: 12,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
   },
 });

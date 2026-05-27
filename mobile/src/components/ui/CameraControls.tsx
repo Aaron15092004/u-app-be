@@ -1,11 +1,6 @@
-import React from 'react';
-import {
-  View,
-  Pressable,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { View, Pressable, ActivityIndicator, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface CameraControlsProps {
   onGallery: () => void;
@@ -64,7 +59,7 @@ export default function CameraControls({
         ]}
       >
         <Ionicons
-          name={flashEnabled ? 'flash' : 'flash-outline'}
+          name={flashEnabled ? "flash" : "flash-outline"}
           size={24}
           color="#FFFFFF"
         />
@@ -75,41 +70,41 @@ export default function CameraControls({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 40,
   },
   sideButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   flashActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   flashInactive: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: "rgba(255,255,255,0.15)",
   },
   captureOuter: {
     width: 80,
     height: 80,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   captureInner: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#4CAF50",
+    alignItems: "center",
+    justifyContent: "center",
   },
   disabledBtn: {
     opacity: 0.4,

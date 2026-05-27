@@ -1,7 +1,7 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SURFACE, TEXT, TEXT_SECONDARY } from '../../constants/colors';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { SURFACE, TEXT, TEXT_SECONDARY } from "../../constants/colors";
 
 interface WaterLogItemProps {
   index: number;
@@ -11,8 +11,8 @@ interface WaterLogItemProps {
 
 function formatTime(isoString: string): string {
   const date = new Date(isoString);
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
   return `${hours}:${minutes}`;
 }
 
@@ -23,7 +23,12 @@ export default function WaterLogItem({
 }: WaterLogItemProps): React.JSX.Element {
   return (
     <View style={styles.row}>
-      <Ionicons name="water-outline" size={20} color="#64B5F6" style={styles.waterIcon} />
+      <Ionicons
+        name="water-outline"
+        size={20}
+        color="#64B5F6"
+        style={styles.waterIcon}
+      />
       <View style={styles.info}>
         <Text style={styles.title}>Ly {index}</Text>
         <Text style={styles.time}>{formatTime(loggedAt)}</Text>
@@ -44,8 +49,8 @@ export default function WaterLogItem({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: SURFACE,
     borderRadius: 8,
     padding: 12,
@@ -59,7 +64,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
   },
   time: {

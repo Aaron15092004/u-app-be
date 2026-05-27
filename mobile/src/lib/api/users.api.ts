@@ -8,14 +8,27 @@ export async function getProfileStatsApi(): Promise<IProfileStats> {
   return res.data.data;
 }
 
+export interface IUpdateProfileResponse {
+  name: string;
+  email: string;
+  profile: {
+    heightCm?: number;
+    weightKg?: number;
+    age?: number;
+    goalType?: 'lose' | 'maintain' | 'gain';
+    waterGoal?: number;
+  };
+}
+
 export async function updateProfileApi(body: {
   name?: string;
   heightCm?: number;
   weightKg?: number;
   goalType?: 'lose' | 'maintain' | 'gain';
   waterGoal?: number;
-}): Promise<{ name: string; email: string; profile: object }> {
-  const res = await apiClient.patch<{ success: boolean; data: { name: string; email: string; profile: object } }>(
+  age?: number;
+}): Promise<IUpdateProfileResponse> {
+  const res = await apiClient.patch<{ success: boolean; data: IUpdateProfileResponse }>(
     '/api/users/profile',
     body,
   );

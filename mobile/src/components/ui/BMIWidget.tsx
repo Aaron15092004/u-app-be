@@ -1,54 +1,38 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  BMI_NORMAL,
-  BMI_OBESE,
-  BMI_OVERWEIGHT,
-  BMI_UNDERWEIGHT,
-  PRIMARY,
-  SURFACE,
-  TEXT,
-  TEXT_SECONDARY,
-} from '../../constants/colors';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { PRIMARY, PRIMARY_DARK } from "../../constants/colors";
 
 interface BMIWidgetProps {
   bmi: { value: number; category: string } | null;
   onPress: () => void;
 }
 
-function getCategoryColor(category: string): string {
-  switch (category) {
-    case 'underweight':
-      return BMI_UNDERWEIGHT;
-    case 'normal':
-      return BMI_NORMAL;
-    case 'overweight':
-      return BMI_OVERWEIGHT;
-    case 'obese':
-      return BMI_OBESE;
-    default:
-      return BMI_NORMAL;
-  }
-}
-
 function getCategoryLabel(category: string): string {
   switch (category) {
-    case 'underweight':
-      return 'Thiếu cân';
-    case 'normal':
-      return 'Bình thường';
-    case 'overweight':
-      return 'Thừa cân';
-    case 'obese':
-      return 'Béo phì';
-    default:
-      return category;
+    case "underweight": return "Thiếu cân";
+    case "normal": return "Bình thường";
+    case "overweight": return "Thừa cân";
+    case "obese": return "Béo phì";
+    default: return category;
   }
 }
 
-export default function BMIWidget({ bmi, onPress }: BMIWidgetProps): React.JSX.Element {
-  const categoryColor = bmi ? getCategoryColor(bmi.category) : PRIMARY;
+function getCategoryMessage(category: string): string {
+  switch (category) {
+    case "underweight": return "Hãy bổ sung dinh dưỡng để đạt cân nặng lý tưởng";
+    case "normal": return "Bạn đang ở mức khỏe mạnh, hãy duy trì nhé!";
+    case "overweight": return "Tiếp tục vận động để cải thiện sức khỏe";
+    case "obese": return "Hãy tham khảo chuyên gia để có kế hoạch phù hợp";
+    default: return "";
+  }
+}
 
+export default function BMIWidget({
+  bmi,
+  onPress,
+}: BMIWidgetProps): React.JSX.Element {
   return (
     <Pressable
       onPress={onPress}
@@ -56,21 +40,37 @@ export default function BMIWidget({ bmi, onPress }: BMIWidgetProps): React.JSX.E
       accessibilityRole="button"
       accessibilityLabel="Chỉ số BMI"
     >
-      <Text style={styles.title}>Chỉ số BMI</Text>
+      <LinearGradient
+        colors={[PRIMARY_DARK, PRIMARY]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.title}>Chỉ số BMI</Text>
+          <Text style={styles.subtitle}>
+            {bmi ? "Cập nhật hôm nay" : "Chưa có dữ liệu"}
+          </Text>
+        </View>
+        <Ionicons name="pulse-outline" size={22} color="rgba(255,255,255,0.8)" />
+      </View>
+
       {bmi ? (
-        <View>
-          <Text style={[styles.bmiValue, { color: categoryColor }]}>
-            {bmi.value.toFixed(1)}
-          </Text>
-          <Text style={[styles.categoryLabel, { color: categoryColor }]}>
-            {getCategoryLabel(bmi.category)}
-          </Text>
-        </View>
+        <>
+          <View style={styles.valueRow}>
+            <Text style={styles.bmiValue}>{bmi.value.toFixed(1)}</Text>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryLabel}>
+                {getCategoryLabel(bmi.category)}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.message}>{getCategoryMessage(bmi.category)}</Text>
+        </>
       ) : (
-        <View>
-          <Text style={styles.emptyText}>Chưa có dữ liệu BMI</Text>
-          <Text style={styles.updateText}>Cập nhật ngay -{'>'}</Text>
-        </View>
+        <Text style={styles.updateText}>Nhấn để cập nhật BMI →</Text>
       )}
     </Pressable>
   );
@@ -78,41 +78,65 @@ export default function BMIWidget({ bmi, onPress }: BMIWidgetProps): React.JSX.E
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: SURFACE,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
+    overflow: "hidden",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
   },
   pressed: {
-    opacity: 0.95,
+    opacity: 0.92,
+  },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
   },
   title: {
     fontSize: 16,
-    fontWeight: '700',
-    color: TEXT,
-    marginBottom: 12,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 2,
   },
-  bmiValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 4,
+  subtitle: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.75)",
   },
-  categoryLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: TEXT_SECONDARY,
+  valueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     marginBottom: 8,
   },
+  bmiValue: {
+    fontSize: 40,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  categoryBadge: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  message: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 18,
+  },
   updateText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: PRIMARY,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 8,
   },
 });

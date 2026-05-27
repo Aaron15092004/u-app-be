@@ -1,87 +1,98 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import * as Linking from "expo-linking";
+import LogoSvg from "../../../assets/images/logo-svg.svg";
 
 interface ShopBannerProps {
   url: string | null;
   isLoading: boolean;
 }
 
-export default function ShopBanner({ url, isLoading }: ShopBannerProps): React.JSX.Element | null {
-  if (url === null && !isLoading) {
-    return null;
-  }
+export default function ShopBanner({
+  url,
+  isLoading,
+}: ShopBannerProps): React.JSX.Element | null {
+  if (url === null && !isLoading) return null;
 
   const handlePress = (): void => {
-    if (url) {
-      void Linking.openURL(url);
-    }
+    if (url) void Linking.openURL(url);
   };
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.85}
-      disabled={!url}
-      accessibilityRole="button"
-      accessibilityLabel="Mở Ủ Shop"
-      style={styles.wrapper}
-    >
-      <LinearGradient
-        colors={['#4CAF50', '#388E3C']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.banner}
-      >
-        <View style={styles.leftContent}>
-          <Ionicons name="storefront-outline" size={28} color="#FFFFFF" style={styles.icon} />
-          <View style={styles.textBlock}>
-            <Text style={styles.heading}>Ủ Shop</Text>
-            <Text style={styles.subtext}>Khám phá sản phẩm sức khỏe</Text>
-          </View>
+    <View style={styles.wrapper}>
+      <View style={styles.card}>
+        <View style={styles.left}>
+          <Text style={styles.title}>Ủ Shop</Text>
+          <Text style={styles.subtitle}>
+            Khám phá combo sữa hạt & nước detox
+          </Text>
+          <Pressable
+            onPress={handlePress}
+            disabled={!url}
+            style={({ pressed }) => [
+              styles.button,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Mua ngay tại Ủ Shop"
+          >
+            <Text style={styles.buttonText}>Mua ngay →</Text>
+          </Pressable>
         </View>
-        {!isLoading && url ? (
-          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-        ) : null}
-      </LinearGradient>
-    </TouchableOpacity>
+        <View style={styles.logoWrapper}>
+          <LogoSvg width={88} height={115} />
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
+    marginTop: 16,
+    marginBottom: 8,
   },
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
+  card: {
+    backgroundColor: "#F5F0E6",
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    overflow: "hidden",
   },
-  leftContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  left: {
     flex: 1,
+    paddingRight: 12,
   },
-  icon: {
-    marginRight: 12,
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#212121",
+    marginBottom: 4,
   },
-  textBlock: {
-    flex: 1,
+  subtitle: {
+    fontSize: 13,
+    color: "#757575",
+    lineHeight: 18,
+    marginBottom: 14,
   },
-  heading: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 2,
+  button: {
+    alignSelf: "flex-start",
+    backgroundColor: "#6C9A24",
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
-  subtext: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: 'rgba(255,255,255,0.85)',
+  buttonPressed: {
+    opacity: 0.82,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  logoWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

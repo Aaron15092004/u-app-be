@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { TEXT, TEXT_SECONDARY } from '../../constants/colors';
+import React, { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { TEXT, TEXT_SECONDARY } from "../../constants/colors";
 
 interface FAQItemProps {
   question: string;
@@ -19,21 +19,16 @@ export default function FAQItem({
       <Pressable
         onPress={() => setExpanded((prev) => !prev)}
         accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.header,
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) => [styles.header, pressed && styles.pressed]}
       >
         <Text style={styles.question}>{question}</Text>
         <Ionicons
-          name={expanded ? 'chevron-down' : 'chevron-forward'}
+          name={expanded ? "chevron-down" : "chevron-forward"}
           size={18}
           color={TEXT_SECONDARY}
         />
       </Pressable>
-      {expanded && (
-        <Text style={styles.answer}>{answer}</Text>
-      )}
+      {expanded && <Text style={styles.answer}>{answer}</Text>}
     </View>
   );
 }
@@ -43,9 +38,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 8,
   },
   pressed: {
@@ -53,14 +48,14 @@ const styles = StyleSheet.create({
   },
   question: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     flex: 1,
     marginRight: 8,
   },
   answer: {
     fontSize: 16,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT_SECONDARY,
     paddingTop: 8,
     paddingBottom: 8,

@@ -1,12 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { PRIMARY } from "../../constants/colors";
 
 const FRAME_SIZE = 260;
 const ARM_LENGTH = 40;
 const STROKE = 4;
 const CORNER_RADIUS = 8;
-const GREEN = '#4CAF50';
 
 export default function ScanFrame(): React.JSX.Element {
   return (
@@ -48,11 +48,11 @@ const styles = StyleSheet.create({
   frame: {
     width: FRAME_SIZE,
     height: FRAME_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   corner: {
-    position: 'absolute',
+    position: "absolute",
     width: ARM_LENGTH,
     height: ARM_LENGTH,
   },
@@ -73,12 +73,12 @@ const styles = StyleSheet.create({
     right: 0,
   },
   cornerHorizontal: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: ARM_LENGTH,
     height: STROKE,
-    backgroundColor: GREEN,
+    backgroundColor: PRIMARY,
     borderTopLeftRadius: CORNER_RADIUS,
   },
   horizontalBottom: {
@@ -88,12 +88,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: CORNER_RADIUS,
   },
   cornerVertical: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: STROKE,
     height: ARM_LENGTH,
-    backgroundColor: GREEN,
+    backgroundColor: PRIMARY,
     borderTopLeftRadius: CORNER_RADIUS,
   },
   verticalRight: {
@@ -103,14 +103,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: CORNER_RADIUS,
   },
   center: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   hint: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#FFFFFF',
-    textAlign: 'center',
+    fontWeight: "400",
+    color: "#FFFFFF",
+    textAlign: "center",
     paddingHorizontal: 16,
   },
 });

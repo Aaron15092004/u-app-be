@@ -1,50 +1,51 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { CartesianChart, Bar } from 'victory-native';
-import { TEXT_SECONDARY } from '../../constants/colors';
-import type { IBMIHistoryEntry } from '../../lib/api/types';
+// EXPO GO FALLBACK — victory-native requires @shopify/react-native-skia (native build only)
+// Restore CartesianChart/Bar implementation before EAS/production build
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { PRIMARY, TEXT_SECONDARY } from "../../constants/colors";
+import type { IBMIHistoryEntry } from "../../lib/api/types";
 
 interface BMIChartProps {
   records: IBMIHistoryEntry[];
 }
 
-type ChartDatum = { x: number; bmi: number };
-
-export default function BMIChart({ records }: BMIChartProps): React.JSX.Element {
+export default function BMIChart({
+  records,
+}: BMIChartProps): React.JSX.Element {
   if (records.length === 0) {
     return (
-      <Text
-        style={{
-          color: TEXT_SECONDARY,
-          textAlign: 'center',
-          padding: 24,
-          fontSize: 14,
-        }}
-      >
+      <Text style={styles.empty}>
         Chưa có dữ liệu BMI. Nhập số đo và nhấn Lưu số đo để bắt đầu theo dõi.
       </Text>
     );
   }
 
-  const data: ChartDatum[] = records.map((r, idx) => ({ x: idx, bmi: r.bmi }));
+  const max = Math.max(...records.map((r) => r.bmi), 30);
+  const last5 = records.slice(-5);
 
   return (
-    <View style={{ height: 220 }}>
-      <CartesianChart<ChartDatum, 'x', 'bmi'>
-        data={data}
-        xKey="x"
-        yKeys={['bmi']}
-        domainPadding={{ left: 16, right: 16, top: 8, bottom: 8 }}
-      >
-        {({ points, chartBounds }) => (
-          <Bar
-            points={points.bmi}
-            chartBounds={chartBounds}
-            color="#4CAF50"
-            roundedCorners={{ topLeft: 4, topRight: 4 }}
+    <View style={styles.container}>
+      {last5.map((r, idx) => (
+        <View key={idx} style={styles.row}>
+          <Text style={styles.label}>{r.bmi.toFixed(1)}</Text>
+          <View
+            style={[styles.bar, { width: `${(r.bmi / max) * 100}%` as any }]}
           />
-        )}
-      </CartesianChart>
+        </View>
+      ))}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  empty: {
+    color: TEXT_SECONDARY,
+    textAlign: "center",
+    padding: 24,
+    fontSize: 14,
+  },
+  container: { paddingVertical: 8, gap: 8 },
+  row: { flexDirection: "row", alignItems: "center", gap: 8 },
+  label: { width: 40, fontSize: 12, color: TEXT_SECONDARY, textAlign: "right" },
+  bar: { height: 20, backgroundColor: PRIMARY, borderRadius: 4, minWidth: 4 },
+});

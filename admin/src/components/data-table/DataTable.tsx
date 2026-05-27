@@ -16,11 +16,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
+interface ServerPagination {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pageSize?: number;
   isLoading?: boolean;
+  serverPagination?: ServerPagination;
 }
 
 export function DataTable<TData, TValue>({
@@ -28,14 +35,34 @@ export function DataTable<TData, TValue>({
   data,
   pageSize = 20,
   isLoading = false,
+  serverPagination,
 }: DataTableProps<TData, TValue>) {
+  const isServer = Boolean(serverPagination);
+
   const table = useReactTable({
     data,
     columns,
     initialState: { pagination: { pageSize } },
+    manualPagination: isServer,
+    pageCount: isServer ? serverPagination!.totalPages : undefined,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(isServer ? {} : { getPaginationRowModel: getPaginationRowModel() }),
   });
+
+  const currentPage = isServer ? serverPagination!.page : table.getState().pagination.pageIndex + 1;
+  const totalPages = isServer ? serverPagination!.totalPages : Math.max(1, table.getPageCount());
+  const canPrev = currentPage > 1;
+  const canNext = currentPage < totalPages;
+
+  function handlePrev() {
+    if (isServer) serverPagination!.onPageChange(currentPage - 1);
+    else table.previousPage();
+  }
+
+  function handleNext() {
+    if (isServer) serverPagination!.onPageChange(currentPage + 1);
+    else table.nextPage();
+  }
 
   return (
     <div className="space-y-4">
@@ -86,22 +113,12 @@ export function DataTable<TData, TValue>({
 
       <div className="flex items-center justify-end gap-2">
         <span className="text-sm text-muted-foreground">
-          Trang {table.getState().pagination.pageIndex + 1} / {Math.max(1, table.getPageCount())}
+          Trang {currentPage} / {totalPages}
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
+        <Button variant="outline" size="sm" onClick={handlePrev} disabled={!canPrev || isLoading}>
           Trước
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
+        <Button variant="outline" size="sm" onClick={handleNext} disabled={!canNext || isLoading}>
           Sau
         </Button>
       </div>

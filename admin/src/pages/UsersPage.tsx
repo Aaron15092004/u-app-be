@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 export function UsersPage() {
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { data, isPending } = useUsers(page, debouncedSearch);
@@ -43,7 +43,7 @@ export function UsersPage() {
   function handleSearchChange(val: string) {
     setSearch(val);
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => setDebouncedSearch(val), 400);
+    searchTimer = setTimeout(() => { setDebouncedSearch(val); setPage(1); }, 400);
   }
 
   const columns: ColumnDef<AdminUser>[] = [
@@ -113,7 +113,12 @@ export function UsersPage() {
       <Input placeholder="Tìm kiếm email..." value={search}
         onChange={(e) => handleSearchChange(e.target.value)} className="max-w-sm" />
 
-      <DataTable columns={columns} data={data?.items ?? []} isLoading={isPending} />
+      <DataTable
+        columns={columns}
+        data={data?.items ?? []}
+        isLoading={isPending}
+        serverPagination={{ page, totalPages: data?.totalPages ?? 1, onPageChange: setPage }}
+      />
     </div>
   );
 }

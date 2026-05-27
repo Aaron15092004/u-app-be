@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
+  StatusBar,
   View,
   Text,
   StyleSheet,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useAuthStore } from '../../../lib/auth/auth-store';
 import { saveBMIApi, getBMIHistoryApi } from '../../../lib/api/bmi.api';
+import { setCachedUser } from '../../../lib/storage/mmkv';
 import BMIResultCard from '../../../components/ui/BMIResultCard';
 import BMIChart from '../../../components/ui/BMIChart';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
@@ -50,9 +52,10 @@ const CATEGORY_ADVICE: Record<IBMICategory, string> = {
 // Screen
 // ---------------------------------------------------------------------------
 export default function BMIScreen(): React.JSX.Element {
+  const insets = useSafeAreaInsets();
   const auth = useAuth();
-  const profileHeight = (auth.user as any)?.profile?.heightCm ?? 170;
-  const profileWeight = (auth.user as any)?.profile?.weightKg ?? 65;
+  const profileHeight = auth.user?.profile?.heightCm ?? 170;
+  const profileWeight = auth.user?.profile?.weightKg ?? 65;
 
   const [heightCm, setHeightCm] = useState<number>(
     Math.max(100, Math.min(220, profileHeight)),
@@ -79,16 +82,19 @@ export default function BMIScreen(): React.JSX.Element {
       setToastVisible(true);
       setTimeout(() => setToastVisible(false), 2000);
       qc.invalidateQueries({ queryKey: ['bmi', 'history'] });
+      qc.invalidateQueries({ queryKey: ['home', 'summary'] });
       const currentUser = useAuthStore.getState().user;
       if (currentUser) {
-        useAuthStore.getState().setUser({
+        const updatedUser = {
           ...currentUser,
           profile: {
-            ...(currentUser as any).profile,
+            ...currentUser.profile,
             heightCm: result.user.heightCm,
             weightKg: result.user.weightKg,
           },
-        } as typeof currentUser);
+        };
+        useAuthStore.getState().setUser(updatedUser);
+        setCachedUser(updatedUser);
       }
     },
     onError: () => {
@@ -97,13 +103,16 @@ export default function BMIScreen(): React.JSX.Element {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
+      <View style={[styles.greenHeader, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.headerTitle}>Phân tích BMI</Text>
+        <Text style={styles.headerSubtitle}>Theo dõi chỉ số cơ thể của bạn</Text>
+      </View>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Heading */}
-        <Text style={styles.heading}>Phân tích BMI</Text>
 
         {/* BMI Result Card */}
         <View style={styles.resultCardWrapper}>
@@ -172,13 +181,12 @@ export default function BMIScreen(): React.JSX.Element {
         </View>
       </ScrollView>
 
-      {/* Toast */}
       {toastVisible && (
         <View style={styles.toast}>
           <Text style={styles.toastText}>Đã lưu!</Text>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -190,15 +198,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BACKGROUND,
   },
+  greenHeader: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
   scrollContent: {
     paddingBottom: 32,
-  },
-  heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: TEXT,
-    paddingHorizontal: 16,
-    marginTop: 16,
   },
   resultCardWrapper: {
     marginHorizontal: 16,

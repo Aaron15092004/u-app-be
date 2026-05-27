@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -6,30 +6,37 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import ScreenHeader from '../../../components/ui/ScreenHeader';
-import NotifToggleRow from '../../../components/ui/NotifToggleRow';
-import NotifTimeRow from '../../../components/ui/NotifTimeRow';
-import NotificationRationaleModal from '../../../components/ui/NotificationRationaleModal';
-import { updateNotificationsApi, getProfileStatsApi } from '../../../lib/api/users.api';
-import { getNotifAsked, setNotifAsked } from '../../../lib/storage/mmkv';
-import { TEXT_SECONDARY, SURFACE } from '../../../constants/colors';
+} from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
+import NotifToggleRow from "../../../components/ui/NotifToggleRow";
+import NotifTimeRow from "../../../components/ui/NotifTimeRow";
+import NotificationRationaleModal from "../../../components/ui/NotificationRationaleModal";
+import {
+  updateNotificationsApi,
+  getProfileStatsApi,
+} from "../../../lib/api/users.api";
+import { getNotifAsked, setNotifAsked } from "../../../lib/storage/mmkv";
+import { TEXT_SECONDARY, SURFACE } from "../../../constants/colors";
 
 export default function NotificationSettingsScreen(): React.JSX.Element {
   const qc = useQueryClient();
 
   // WARNING 3 FIX: initialise form state from server, not hardcoded defaults
   const profileStatsQuery = useQuery({
-    queryKey: ['users', 'profile', 'stats'],
+    queryKey: ["users", "profile", "stats"],
     queryFn: getProfileStatsApi,
   });
   const serverNotif = profileStatsQuery.data?.notifications;
 
   const [waterReminder, setWaterReminder] = useState<boolean | null>(null);
   const [workoutReminder, setWorkoutReminder] = useState<boolean | null>(null);
-  const [waterReminderTime, setWaterReminderTime] = useState<string | null>(null);
-  const [workoutReminderTime, setWorkoutReminderTime] = useState<string | null>(null);
+  const [waterReminderTime, setWaterReminderTime] = useState<string | null>(
+    null,
+  );
+  const [workoutReminderTime, setWorkoutReminderTime] = useState<string | null>(
+    null,
+  );
 
   // Seed local form state once the server data arrives — and only once (don't overwrite user-in-progress edits)
   useEffect(() => {
@@ -52,14 +59,16 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
   const mutation = useMutation({
     mutationFn: updateNotificationsApi,
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['users', 'profile', 'stats'] });
+      void qc.invalidateQueries({ queryKey: ["users", "profile", "stats"] });
     },
   });
 
   // Debounce timer for time PATCH (800ms per Pitfall 7)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const debouncedMutate = (body: Parameters<typeof updateNotificationsApi>[0]): void => {
+  const debouncedMutate = (
+    body: Parameters<typeof updateNotificationsApi>[0],
+  ): void => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
@@ -123,8 +132,8 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
               <View style={styles.separator} />
               <NotifTimeRow
                 label="Giờ nhắc uống nước"
-                sublabel={waterReminderTime ?? '08:00'}
-                time={waterReminderTime ?? '08:00'}
+                sublabel={waterReminderTime ?? "08:00"}
+                time={waterReminderTime ?? "08:00"}
                 onTimeChange={(newTime) => {
                   setWaterReminderTime(newTime);
                   debouncedMutate({ waterReminderTime: newTime });
@@ -152,8 +161,8 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
               <View style={styles.separator} />
               <NotifTimeRow
                 label="Giờ nhắc tập luyện"
-                sublabel={workoutReminderTime ?? '07:00'}
-                time={workoutReminderTime ?? '07:00'}
+                sublabel={workoutReminderTime ?? "07:00"}
+                time={workoutReminderTime ?? "07:00"}
                 onTimeChange={(newTime) => {
                   setWorkoutReminderTime(newTime);
                   debouncedMutate({ workoutReminderTime: newTime });
@@ -165,7 +174,8 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
 
         {/* Info text */}
         <Text style={styles.infoText}>
-          Streak alert sẽ tự động gửi lúc 20:00 mỗi ngày nếu bạn chưa hoàn thành thói quen.
+          Streak alert sẽ tự động gửi lúc 20:00 mỗi ngày nếu bạn chưa hoàn thành
+          thói quen.
         </Text>
       </ScrollView>
 
@@ -181,7 +191,7 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -189,28 +199,28 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     marginTop: 48,
-    alignItems: 'center',
+    alignItems: "center",
   },
   card: {
     backgroundColor: SURFACE,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     marginTop: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   separator: {
     height: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     marginHorizontal: 16,
   },
   infoText: {
     fontSize: 12,
     color: TEXT_SECONDARY,
     marginTop: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

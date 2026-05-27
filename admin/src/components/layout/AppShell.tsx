@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Dumbbell, Apple, Users, LogOut, LayoutDashboard, Ticket, Star } from 'lucide-react';
+import { Dumbbell, Apple, Users, LogOut, LayoutDashboard, BarChart2, ListChecks, Ticket, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/lib/auth-api';
 
 const NAV_ITEMS = [
+  { to: '/dashboard', icon: BarChart2, label: 'Tổng quan' },
   { to: '/exercises', icon: Dumbbell, label: 'Bài tập' },
+  { to: '/programs', icon: ListChecks, label: 'Chương trình' },
   { to: '/food-items', icon: Apple, label: 'Thực phẩm' },
   { to: '/campaigns', icon: Ticket, label: 'Mã scan AI' },
   { to: '/ratings', icon: Star, label: 'Đánh giá' },
@@ -45,6 +47,7 @@ export function AppShell() {
 
         <div className="p-2 border-t">
           <button
+            type="button"
             onClick={logout}
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           >

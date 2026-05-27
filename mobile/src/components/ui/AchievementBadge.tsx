@@ -1,12 +1,12 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   PRIMARY,
   BADGE_UNLOCKED_BG,
   BADGE_LOCKED,
   BADGE_LOCKED_BG,
-} from '../../constants/colors';
+} from "../../constants/colors";
 
 interface AchievementBadgeProps {
   milestone: number;
@@ -32,10 +32,7 @@ export default function AchievementBadge({
         />
       </View>
       <Text
-        style={[
-          styles.label,
-          { color: unlocked ? PRIMARY : BADGE_LOCKED },
-        ]}
+        style={[styles.label, { color: unlocked ? PRIMARY : BADGE_LOCKED }]}
       >
         {milestone} ngày
       </Text>
@@ -45,18 +42,18 @@ export default function AchievementBadge({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   circle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     marginTop: 6,
   },
 });

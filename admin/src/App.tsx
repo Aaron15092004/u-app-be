@@ -8,9 +8,11 @@ import { LoginPage } from '@/pages/LoginPage';
 // CRUD pages — implemented in Plan 04
 // Imported lazily here so Plan 03 compiles without them
 import { lazy, Suspense } from 'react';
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const ExercisesPage = lazy(() => import('@/pages/ExercisesPage').then((m) => ({ default: m.ExercisesPage })));
 const FoodItemsPage = lazy(() => import('@/pages/FoodItemsPage').then((m) => ({ default: m.FoodItemsPage })));
 const UsersPage = lazy(() => import('@/pages/UsersPage').then((m) => ({ default: m.UsersPage })));
+const ProgramsPage = lazy(() => import('@/pages/ProgramsPage').then((m) => ({ default: m.ProgramsPage })));
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage').then((m) => ({ default: m.CampaignsPage })));
 const RatingsPage = lazy(() => import('@/pages/RatingsPage').then((m) => ({ default: m.RatingsPage })));
 
@@ -22,7 +24,15 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
-              <Route index element={<Navigate to="/exercises" replace />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="dashboard"
+                element={
+                  <Suspense fallback={<div className="p-8 text-muted-foreground">Đang tải...</div>}>
+                    <DashboardPage />
+                  </Suspense>
+                }
+              />
               <Route
                 path="exercises"
                 element={
@@ -44,6 +54,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<div className="p-8 text-muted-foreground">Đang tải...</div>}>
                     <UsersPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="programs"
+                element={
+                  <Suspense fallback={<div className="p-8 text-muted-foreground">Đang tải...</div>}>
+                    <ProgramsPage />
                   </Suspense>
                 }
               />

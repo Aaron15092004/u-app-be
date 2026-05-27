@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   ActivityIndicator,
   SafeAreaView,
@@ -6,13 +6,13 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
-import { getExerciseApi } from '../../../../lib/api/exercises.api';
-import ScreenHeader from '../../../../components/ui/ScreenHeader';
-import PrimaryButton from '../../../../components/ui/PrimaryButton';
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { Ionicons } from "@expo/vector-icons";
+import { getExerciseApi } from "../../../../lib/api/exercises.api";
+import ScreenHeader from "../../../../components/ui/ScreenHeader";
+import PrimaryButton from "../../../../components/ui/PrimaryButton";
 import {
   BACKGROUND,
   DIFFICULTY_EASY,
@@ -21,30 +21,37 @@ import {
   SURFACE,
   TEXT,
   TEXT_SECONDARY,
-} from '../../../../constants/colors';
-import type { IExercise } from '../../../../lib/api/types';
+} from "../../../../constants/colors";
+import type { IExercise } from "../../../../lib/api/types";
 
 // Difficulty display mapping
 const DIFFICULTY_DISPLAY: Record<string, { label: string; color: string }> = {
-  easy: { label: 'Dễ', color: DIFFICULTY_EASY },
-  medium: { label: 'Trung bình', color: DIFFICULTY_MEDIUM },
-  hard: { label: 'Khó', color: DIFFICULTY_HARD },
+  easy: { label: "Dễ", color: DIFFICULTY_EASY },
+  medium: { label: "Trung bình", color: DIFFICULTY_MEDIUM },
+  hard: { label: "Khó", color: DIFFICULTY_HARD },
 };
 
 // Category icon mapping (D-42: no image)
-const CATEGORY_ICON: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
-  yoga: 'body-outline',
-  cardio: 'bicycle-outline',
-  weights: 'barbell-outline',
-  stretching: 'fitness-outline',
+const CATEGORY_ICON: Record<
+  string,
+  React.ComponentProps<typeof Ionicons>["name"]
+> = {
+  yoga: "body-outline",
+  cardio: "bicycle-outline",
+  weights: "barbell-outline",
+  stretching: "fitness-outline",
 };
 
-function ExerciseContent({ exercise }: { exercise: IExercise }): React.JSX.Element {
+function ExerciseContent({
+  exercise,
+}: {
+  exercise: IExercise;
+}): React.JSX.Element {
   const difficultyInfo = DIFFICULTY_DISPLAY[exercise.difficulty] ?? {
     label: exercise.difficulty,
     color: TEXT_SECONDARY,
   };
-  const iconName = CATEGORY_ICON[exercise.category] ?? 'fitness-outline';
+  const iconName = CATEGORY_ICON[exercise.category] ?? "fitness-outline";
 
   return (
     <>
@@ -58,12 +65,27 @@ function ExerciseContent({ exercise }: { exercise: IExercise }): React.JSX.Eleme
 
       {/* Metadata row */}
       <View style={styles.metaRow}>
-        <View style={[styles.difficultyPill, { backgroundColor: difficultyInfo.color }]}>
+        <View
+          style={[
+            styles.difficultyPill,
+            { backgroundColor: difficultyInfo.color },
+          ]}
+        >
           <Text style={styles.pillText}>{difficultyInfo.label}</Text>
         </View>
-        <Ionicons name="time-outline" size={16} color={TEXT_SECONDARY} style={styles.metaIcon} />
+        <Ionicons
+          name="time-outline"
+          size={16}
+          color={TEXT_SECONDARY}
+          style={styles.metaIcon}
+        />
         <Text style={styles.metaText}>{exercise.durationMinutes} phút</Text>
-        <Ionicons name="flame-outline" size={16} color={TEXT_SECONDARY} style={styles.metaIcon} />
+        <Ionicons
+          name="flame-outline"
+          size={16}
+          color={TEXT_SECONDARY}
+          style={styles.metaIcon}
+        />
         <Text style={styles.metaText}>{exercise.caloriesBurned} kcal</Text>
       </View>
 
@@ -85,7 +107,9 @@ function ExerciseContent({ exercise }: { exercise: IExercise }): React.JSX.Eleme
                 {step.order}. {step.instruction}
               </Text>
               {step.durationSeconds != null ? (
-                <Text style={styles.stepDuration}>{step.durationSeconds} giây</Text>
+                <Text style={styles.stepDuration}>
+                  {step.durationSeconds} giây
+                </Text>
               ) : null}
             </View>
           ))}
@@ -104,7 +128,7 @@ export default function ExerciseDetailScreen(): React.JSX.Element {
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ['exercise', id],
+    queryKey: ["exercise", id],
     queryFn: () => getExerciseApi(id),
     enabled: Boolean(id),
   });
@@ -151,13 +175,13 @@ const styles = StyleSheet.create({
   },
   centeredFill: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   errorText: {
     fontSize: 16,
     color: TEXT_SECONDARY,
-    textAlign: 'center',
+    textAlign: "center",
   },
   scrollContent: {
     paddingBottom: 96,
@@ -167,21 +191,21 @@ const styles = StyleSheet.create({
     height: 200,
     backgroundColor: SURFACE,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 12,
     marginBottom: 16,
   },
   exerciseName: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     marginBottom: 12,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 20,
   },
@@ -192,8 +216,8 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
   metaIcon: {
     marginLeft: 4,
@@ -207,7 +231,7 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     marginBottom: 10,
   },
@@ -233,7 +257,7 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
   },
   stickyBottom: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
@@ -242,6 +266,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingBottom: 24,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: "#E0E0E0",
   },
 });

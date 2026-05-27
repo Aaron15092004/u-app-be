@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { PRIMARY, TEXT, TEXT_SECONDARY, BADGE_LOCKED } from '../../constants/colors';
+import React, { useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import {
+  PRIMARY,
+  TEXT,
+  TEXT_SECONDARY,
+  BADGE_LOCKED,
+} from "../../constants/colors";
 
 function parseTimeString(timeStr: string): Date {
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours, minutes] = timeStr.split(":").map(Number);
   const d = new Date();
   d.setHours(hours ?? 8, minutes ?? 0, 0, 0);
   return d;
 }
 
 function formatTimeString(date: Date): string {
-  const h = date.getHours().toString().padStart(2, '0');
-  const m = date.getMinutes().toString().padStart(2, '0');
+  const h = date.getHours().toString().padStart(2, "0");
+  const m = date.getMinutes().toString().padStart(2, "0");
   return `${h}:${m}`;
 }
 
@@ -37,7 +42,7 @@ export default function NotifTimeRow({
   };
 
   const handleChange = (_: unknown, selectedDate?: Date): void => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowPicker(false);
     }
     if (selectedDate) {
@@ -50,10 +55,7 @@ export default function NotifTimeRow({
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.row,
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       >
         <View style={styles.left}>
           <Text style={styles.label}>{label}</Text>
@@ -69,7 +71,7 @@ export default function NotifTimeRow({
         <DateTimePicker
           value={parseTimeString(time)}
           mode="time"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          display={Platform.OS === "ios" ? "inline" : "default"}
           onChange={handleChange}
         />
       )}
@@ -81,12 +83,12 @@ const styles = StyleSheet.create({
   row: {
     height: 64,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   pressed: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   left: {
     flex: 1,
@@ -94,23 +96,23 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
   },
   sublabel: {
     fontSize: 12,
-    fontWeight: '400',
+    fontWeight: "400",
     color: TEXT_SECONDARY,
     marginTop: 2,
   },
   right: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   time: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: PRIMARY,
   },
 });

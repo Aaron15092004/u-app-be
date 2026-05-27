@@ -16,7 +16,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../providers/AuthProvider';
 import ScreenHeader from '../../../components/ui/ScreenHeader';
 import PrimaryButton from '../../../components/ui/PrimaryButton';
-import { updateProfileApi } from '../../../lib/api/users.api';
+import { updateProfileApi, type IUpdateProfileResponse } from '../../../lib/api/users.api';
+import { useAuthStore } from '../../../lib/auth/auth-store';
+import { setCachedUser } from '../../../lib/storage/mmkv';
 import { PRIMARY, SURFACE, TEXT, TEXT_SECONDARY } from '../../../constants/colors';
 
 type GoalType = 'lose' | 'maintain' | 'gain';
@@ -33,12 +35,14 @@ export default function EditProfileScreen(): React.JSX.Element {
   const qc = useQueryClient();
 
   const [name, setName] = useState<string>(auth.user?.name ?? '');
-  const [heightCm, setHeightCm] = useState<string>('');
-  const [weightKg, setWeightKg] = useState<string>('');
-  const [goalType, setGoalType] = useState<GoalType | null>(null);
-  const [waterGoal, setWaterGoal] = useState<number>(8);
+  const [heightCm, setHeightCm] = useState<string>(auth.user?.profile?.heightCm ? String(auth.user.profile.heightCm) : '');
+  const [weightKg, setWeightKg] = useState<string>(auth.user?.profile?.weightKg ? String(auth.user.profile.weightKg) : '');
+  const [goalType, setGoalType] = useState<GoalType | null>(auth.user?.profile?.goalType ?? null);
+  const [age, setAge] = useState<string>(auth.user?.profile?.age ? String(auth.user.profile.age) : '');
+  const [waterGoal, setWaterGoal] = useState<number>(auth.user?.profile?.waterGoal ?? 8);
 
   const [nameFocused, setNameFocused] = useState(false);
+  const [ageFocused, setAgeFocused] = useState(false);
   const [heightFocused, setHeightFocused] = useState(false);
   const [weightFocused, setWeightFocused] = useState(false);
 
@@ -50,8 +54,24 @@ export default function EditProfileScreen(): React.JSX.Element {
         weightKg: Number(weightKg) || undefined,
         goalType: goalType ?? undefined,
         waterGoal,
+        age: Number(age) || undefined,
       }),
-    onSuccess: () => {
+    onSuccess: (updated: IUpdateProfileResponse) => {
+      // Sync the in-memory auth store and MMKV cache so profile page reflects
+      // changes immediately (no /me endpoint — must update manually).
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          name: updated.name ?? currentUser.name,
+          profile: {
+            ...currentUser.profile,
+            ...updated.profile,
+          },
+        };
+        useAuthStore.setState({ user: updatedUser });
+        setCachedUser(updatedUser);
+      }
       void qc.invalidateQueries({ queryKey: ['home', 'summary'] });
       void qc.invalidateQueries({ queryKey: ['users', 'profile', 'stats'] });
       void qc.invalidateQueries({ queryKey: ['water', 'today'] });
@@ -92,6 +112,25 @@ export default function EditProfileScreen(): React.JSX.Element {
               returnKeyType="next"
               onFocus={() => setNameFocused(true)}
               onBlur={() => setNameFocused(false)}
+            />
+          </View>
+
+          {/* Tuổi */}
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Tuổi</Text>
+            <TextInput
+              style={[
+                styles.input,
+                ageFocused && styles.inputFocused,
+              ]}
+              value={age}
+              onChangeText={setAge}
+              placeholder="25"
+              placeholderTextColor={TEXT_SECONDARY}
+              keyboardType="numeric"
+              returnKeyType="next"
+              onFocus={() => setAgeFocused(true)}
+              onBlur={() => setAgeFocused(false)}
             />
           </View>
 

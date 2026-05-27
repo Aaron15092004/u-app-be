@@ -1,7 +1,13 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { PRIMARY, TEXT } from '../../constants/colors';
+import React from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { PRIMARY, TEXT } from "../../constants/colors";
 
 interface WaterControlsProps {
   count: number;
@@ -60,9 +66,9 @@ export default function WaterControls({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 24,
   },
   minusButton: {
@@ -71,16 +77,16 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     borderWidth: 1.5,
     borderColor: PRIMARY,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   plusButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
     backgroundColor: PRIMARY,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   disabledButton: {
     opacity: 0.4,
@@ -90,9 +96,9 @@ const styles = StyleSheet.create({
   },
   count: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: TEXT,
     minWidth: 48,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

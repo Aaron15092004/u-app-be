@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { Pressable, Text, StyleSheet } from "react-native";
 
 interface DatePillProps {
   label: string;
@@ -18,10 +18,7 @@ export default function DatePill({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: isActive }}
-      style={[
-        styles.pill,
-        isActive ? styles.pillActive : styles.pillInactive,
-      ]}
+      style={[styles.pill, isActive ? styles.pillActive : styles.pillInactive]}
     >
       <Text
         style={[
@@ -40,25 +37,25 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 16,
     borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 8,
   },
   pillActive: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   pillInactive: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
   },
   label: {
     fontSize: 14,
   },
   labelActive: {
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   labelInactive: {
-    fontWeight: '400',
-    color: '#212121',
+    fontWeight: "400",
+    color: "#212121",
   },
 });

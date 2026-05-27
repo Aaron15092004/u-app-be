@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -7,9 +7,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import type { IFoodItem } from '../../lib/api/types';
-import PrimaryButton from './PrimaryButton';
+} from "react-native";
+import type { IFoodItem } from "../../lib/api/types";
+import PrimaryButton from "./PrimaryButton";
 
 interface ServingSizeSheeetProps {
   visible: boolean;
@@ -24,22 +24,20 @@ export default function ServingSizeSheet({
   onClose,
   onAdd,
 }: ServingSizeSheeetProps): React.JSX.Element {
-  const [servingSize, setServingSize] = useState('100');
+  const [servingSize, setServingSize] = useState("100");
 
   const grams = parseInt(servingSize, 10) || 0;
-  const estimatedKcal = item
-    ? Math.round((item.kcalPer100g * grams) / 100)
-    : 0;
+  const estimatedKcal = item ? Math.round((item.kcalPer100g * grams) / 100) : 0;
 
   const handleAdd = (): void => {
     if (grams > 0) {
       onAdd(grams);
-      setServingSize('100');
+      setServingSize("100");
     }
   };
 
   const handleClose = (): void => {
-    setServingSize('100');
+    setServingSize("100");
     onClose();
   };
 
@@ -57,13 +55,18 @@ export default function ServingSizeSheet({
         accessibilityRole="button"
         accessibilityLabel="Đóng"
       >
-        <Pressable style={styles.sheet} onPress={() => {/* prevent dismiss on sheet tap */}}>
+        <Pressable
+          style={styles.sheet}
+          onPress={() => {
+            /* prevent dismiss on sheet tap */
+          }}
+        >
           {/* Handle bar */}
           <View style={styles.handleBar} />
 
           {/* Food name */}
           <Text style={styles.foodName} numberOfLines={2}>
-            {item?.name ?? ''}
+            {item?.name ?? ""}
           </Text>
 
           {/* Kcal per 100g */}
@@ -109,11 +112,11 @@ export default function ServingSizeSheet({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -122,53 +125,53 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     borderRadius: 2,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 16,
   },
   foodName: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
+    fontWeight: "700",
+    color: "#212121",
     marginBottom: 4,
   },
   kcalSub: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#757575',
+    fontWeight: "400",
+    color: "#757575",
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#212121',
+    fontWeight: "400",
+    color: "#212121",
     marginBottom: 8,
   },
   input: {
     height: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     paddingHorizontal: 12,
     fontSize: 16,
-    color: '#212121',
+    color: "#212121",
   },
   calcRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 12,
   },
   calcLabel: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#757575',
+    fontWeight: "400",
+    color: "#757575",
   },
   calcValue: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#4CAF50',
+    fontWeight: "700",
+    color: "#4CAF50",
   },
   buttonWrapper: {
     marginTop: 16,

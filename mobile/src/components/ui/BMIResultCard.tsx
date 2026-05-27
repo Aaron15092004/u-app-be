@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { PRIMARY, SURFACE, TEXT, TEXT_SECONDARY } from '../../constants/colors';
-import type { IBMICategory } from '../../lib/api/types';
-import BMIScaleBar from './BMIScaleBar';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { PRIMARY, SURFACE, TEXT, TEXT_SECONDARY } from "../../constants/colors";
+import type { IBMICategory } from "../../lib/api/types";
+import BMIScaleBar from "./BMIScaleBar";
 
 interface BMIResultCardProps {
   bmi: number;
@@ -10,13 +10,16 @@ interface BMIResultCardProps {
 }
 
 const CATEGORY_VI: Record<IBMICategory, string> = {
-  underweight: 'Thiếu cân',
-  normal: 'Bình thường',
-  overweight: 'Thừa cân',
-  obese: 'Béo phì',
+  underweight: "Thiếu cân",
+  normal: "Bình thường",
+  overweight: "Thừa cân",
+  obese: "Béo phì",
 };
 
-export default function BMIResultCard({ bmi, category }: BMIResultCardProps): React.JSX.Element {
+export default function BMIResultCard({
+  bmi,
+  category,
+}: BMIResultCardProps): React.JSX.Element {
   return (
     <View style={styles.card}>
       {/* Top row: BMI score + category */}
@@ -42,21 +45,21 @@ const styles = StyleSheet.create({
     backgroundColor: SURFACE,
     borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
   },
   topRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
     marginBottom: 16,
     gap: 12,
   },
   bmiScore: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     color: PRIMARY,
   },
   categoryLabel: {
@@ -64,8 +67,8 @@ const styles = StyleSheet.create({
     color: TEXT,
   },
   rangeLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 4,
   },
   rangeText: {

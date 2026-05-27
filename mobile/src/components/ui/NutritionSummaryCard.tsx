@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface NutritionSummaryCardProps {
   calories: number;
@@ -53,48 +53,48 @@ export default function NutritionSummaryCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     borderRadius: 16,
     padding: 16,
     marginHorizontal: 16,
     marginBottom: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cardLabel: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#FFFFFF',
+    fontWeight: "400",
+    color: "#FFFFFF",
   },
   cardValue: {
     fontSize: 36,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
     marginTop: 4,
   },
   cardUnit: {
     fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(255,255,255,0.8)',
+    fontWeight: "400",
+    color: "rgba(255,255,255,0.8)",
     marginTop: 2,
   },
   macroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
   macroColumn: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 4,
   },
   macroValue: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#212121',
+    fontWeight: "700",
+    color: "#212121",
   },
   macroLabel: {
     fontSize: 14,
-    fontWeight: '400',
-    color: '#757575',
+    fontWeight: "400",
+    color: "#757575",
   },
 });
