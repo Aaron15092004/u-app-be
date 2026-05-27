@@ -8,8 +8,15 @@ import { vietnamDayStart } from '../utils/date';
 
 async function dispatchWaterReminders(currentTime: string): Promise<void> {
   const users = await User.find({
-    'notifications.waterReminder': true,
-    'notifications.waterReminderTime': currentTime,
+    $and: [
+      { 'notifications.waterReminder': true },
+      {
+        $or: [
+          { 'notifications.waterReminderTimes': currentTime },
+          { 'notifications.waterReminderTime': currentTime },
+        ],
+      },
+    ],
   })
     .select('_id')
     .lean();

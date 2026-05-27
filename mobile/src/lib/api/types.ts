@@ -236,6 +236,7 @@ export interface IUserNotifications {
   workoutReminder: boolean;
   nutMilkReminder: boolean;
   waterReminderTime: string;
+  waterReminderTimes: string[];
   workoutReminderTime: string;
   nutMilkReminderTime: string;
 }

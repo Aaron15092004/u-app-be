@@ -20,6 +20,17 @@ import { getNotifAsked, setNotifAsked } from "../../../lib/storage/mmkv";
 import { syncReminderNotifications } from "../../../lib/notifications/reminders";
 import { TEXT_SECONDARY, SURFACE } from "../../../constants/colors";
 
+const DEFAULT_WATER_REMINDER_TIMES = [
+  "08:00",
+  "10:00",
+  "12:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "20:00",
+  "22:00",
+];
+
 export default function NotificationSettingsScreen(): React.JSX.Element {
   const qc = useQueryClient();
 
@@ -33,7 +44,7 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
   const [waterReminder, setWaterReminder] = useState<boolean | null>(null);
   const [workoutReminder, setWorkoutReminder] = useState<boolean | null>(null);
   const [nutMilkReminder, setNutMilkReminder] = useState<boolean | null>(null);
-  const [waterReminderTime, setWaterReminderTime] = useState<string | null>(
+  const [waterReminderTimes, setWaterReminderTimes] = useState<string[] | null>(
     null,
   );
   const [workoutReminderTime, setWorkoutReminderTime] = useState<string | null>(
@@ -49,7 +60,11 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
       setWaterReminder(serverNotif.waterReminder);
       setWorkoutReminder(serverNotif.workoutReminder);
       setNutMilkReminder(serverNotif.nutMilkReminder);
-      setWaterReminderTime(serverNotif.waterReminderTime);
+      setWaterReminderTimes(
+        serverNotif.waterReminderTimes?.length > 0
+          ? serverNotif.waterReminderTimes
+          : DEFAULT_WATER_REMINDER_TIMES,
+      );
       setWorkoutReminderTime(serverNotif.workoutReminderTime);
       setNutMilkReminderTime(serverNotif.nutMilkReminderTime);
       void syncReminderNotifications(serverNotif).catch((err) => {
@@ -88,6 +103,13 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
     debounceTimer.current = setTimeout(() => {
       mutation.mutate(body);
     }, 800);
+  };
+
+  const updateWaterReminderTime = (index: number, newTime: string): void => {
+    const nextTimes = [...(waterReminderTimes ?? DEFAULT_WATER_REMINDER_TIMES)];
+    nextTimes[index] = newTime;
+    setWaterReminderTimes(nextTimes);
+    debouncedMutate({ waterReminderTimes: nextTimes });
   };
 
   const handleAccept = async (): Promise<void> => {
@@ -134,7 +156,7 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
           {/* Water reminder toggle */}
           <NotifToggleRow
             label="Nhắc uống nước"
-            sublabel="Nhắc bạn uống nước mỗi ngày"
+            sublabel="Mặc định 8 lần/ngày, có thể chỉnh từng mốc"
             value={waterReminder ?? false}
             onChange={(v) => {
               setWaterReminder(v);
@@ -142,19 +164,23 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
             }}
           />
 
-          {/* Conditional water time row */}
           {waterReminder === true && (
             <>
-              <View style={styles.separator} />
-              <NotifTimeRow
-                label="Giờ nhắc uống nước"
-                sublabel={waterReminderTime ?? "08:00"}
-                time={waterReminderTime ?? "08:00"}
-                onTimeChange={(newTime) => {
-                  setWaterReminderTime(newTime);
-                  debouncedMutate({ waterReminderTime: newTime });
-                }}
-              />
+              {(waterReminderTimes ?? DEFAULT_WATER_REMINDER_TIMES).map(
+                (time, index) => (
+                  <React.Fragment key={`water-${index}`}>
+                    <View style={styles.separator} />
+                    <NotifTimeRow
+                      label={`Uống nước lần ${index + 1}`}
+                      sublabel={time}
+                      time={time}
+                      onTimeChange={(newTime) => {
+                        updateWaterReminderTime(index, newTime);
+                      }}
+                    />
+                  </React.Fragment>
+                ),
+              )}
             </>
           )}
 

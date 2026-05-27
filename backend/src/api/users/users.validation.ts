@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const hhmmSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ không hợp lệ (HH:MM)');
+
 // Strict whitelist — rejects role, email, passwordHash, etc. (mass assignment defence)
 // Only explicitly listed fields can be updated via PATCH /api/users/profile.
 
@@ -27,6 +29,11 @@ export const updateNotificationsSchema = z
     waterReminderTime: z
       .string()
       .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ không hợp lệ (HH:MM)')
+      .optional(),
+    waterReminderTimes: z
+      .array(hhmmSchema)
+      .min(1, 'Cần ít nhất 1 giờ nhắc uống nước')
+      .max(12, 'Tối đa 12 giờ nhắc uống nước mỗi ngày')
       .optional(),
     workoutReminderTime: z
       .string()

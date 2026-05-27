@@ -15,6 +15,17 @@ function makeError(message: string, statusCode: number): Error & { statusCode: n
   return err;
 }
 
+const DEFAULT_WATER_REMINDER_TIMES = [
+  '08:00',
+  '10:00',
+  '12:00',
+  '14:00',
+  '16:00',
+  '18:00',
+  '20:00',
+  '22:00',
+];
+
 // ---------------------------------------------------------------------------
 // IProfileStats response shape
 // NOTE: notifications block is included so mobile Plan 07 can initialise
@@ -30,6 +41,7 @@ export interface IProfileStats {
     workoutReminder: boolean;
     nutMilkReminder: boolean;
     waterReminderTime: string;
+    waterReminderTimes: string[];
     workoutReminderTime: string;
     nutMilkReminderTime: string;
   };
@@ -78,6 +90,11 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
 
   const prof = (userDoc as { profile?: { weightKg?: number; heightCm?: number; age?: number; goalType?: string }; notifications?: object } | null)?.profile;
   const dailyTargets = calculateDailyTargets(prof?.weightKg, prof?.heightCm, prof?.age, prof?.goalType);
+  const savedWaterTimes = userDoc?.notifications?.waterReminderTimes;
+  const waterReminderTimes =
+    Array.isArray(savedWaterTimes) && savedWaterTimes.length > 0
+      ? savedWaterTimes
+      : DEFAULT_WATER_REMINDER_TIMES;
 
   return {
     streakDays: streakResult.streakDays,
@@ -87,7 +104,8 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
       waterReminder: userDoc?.notifications?.waterReminder ?? true,
       workoutReminder: userDoc?.notifications?.workoutReminder ?? true,
       nutMilkReminder: userDoc?.notifications?.nutMilkReminder ?? true,
-      waterReminderTime: userDoc?.notifications?.waterReminderTime ?? '08:00',
+      waterReminderTime: userDoc?.notifications?.waterReminderTime ?? waterReminderTimes[0] ?? '08:00',
+      waterReminderTimes,
       workoutReminderTime: userDoc?.notifications?.workoutReminderTime ?? '07:00',
       nutMilkReminderTime: userDoc?.notifications?.nutMilkReminderTime ?? '20:00',
     },
@@ -144,6 +162,10 @@ export async function updateUserNotifications(
     update['notifications.nutMilkReminder'] = body.nutMilkReminder;
   if (body.waterReminderTime !== undefined)
     update['notifications.waterReminderTime'] = body.waterReminderTime;
+  if (body.waterReminderTimes !== undefined) {
+    update['notifications.waterReminderTimes'] = body.waterReminderTimes;
+    update['notifications.waterReminderTime'] = body.waterReminderTimes[0];
+  }
   if (body.workoutReminderTime !== undefined)
     update['notifications.workoutReminderTime'] = body.workoutReminderTime;
   if (body.nutMilkReminderTime !== undefined)

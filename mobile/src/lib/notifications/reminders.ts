@@ -4,6 +4,16 @@ import type { IUserNotifications } from "../api/types";
 
 const REMINDER_CHANNEL_ID = "daily-reminders";
 const REMINDER_DATA_KEY = "uReminderType";
+const DEFAULT_WATER_REMINDER_TIMES = [
+  "08:00",
+  "10:00",
+  "12:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "20:00",
+  "22:00",
+];
 
 type ReminderType = "water" | "workout" | "nut_milk";
 
@@ -79,15 +89,19 @@ export async function syncReminderNotifications(
   await configureReminderChannel();
   await cancelExistingReminderNotifications();
 
+  const waterTimes =
+    notifications.waterReminderTimes?.length > 0
+      ? notifications.waterReminderTimes
+      : DEFAULT_WATER_REMINDER_TIMES;
   const configs: ReminderConfig[] = [
-    {
-      type: "water",
+    ...waterTimes.map((time, index) => ({
+      type: "water" as const,
       enabled: notifications.waterReminder,
-      time: notifications.waterReminderTime,
-      fallbackTime: "08:00",
-      title: "Nhắc uống nước",
+      time,
+      fallbackTime: DEFAULT_WATER_REMINDER_TIMES[index] ?? "08:00",
+      title: `Nhắc uống nước lần ${index + 1}`,
       body: "Đến giờ uống nước rồi. Uống một ly để giữ nhịp chăm sóc sức khỏe nhé.",
-    },
+    })),
     {
       type: "workout",
       enabled: notifications.workoutReminder,
