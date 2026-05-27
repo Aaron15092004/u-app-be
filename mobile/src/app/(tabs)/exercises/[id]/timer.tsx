@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Alert, StyleSheet, AppState, AppStateStatus, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, Alert, StyleSheet, AppState, AppStateStatus, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTimerStore } from '../../../../stores/timerStore';

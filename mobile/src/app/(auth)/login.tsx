@@ -128,8 +128,15 @@ export default function LoginScreen(): React.JSX.Element {
                 router.replace("/(auth)/complete-profile");
               else router.replace("/(tabs)");
             } catch (err: any) {
-              if (err?.message !== "CANCELLED")
-                setServerError("Đăng nhập Google thất bại. Vui lòng thử lại.");
+              console.warn("[GoogleLogin]", {
+                code: err?.code,
+                message: err?.message,
+                response: err?.response?.data,
+              });
+              if (err?.code !== "SIGN_IN_CANCELLED")
+                setServerError(
+                  err?.message ?? "Đăng nhập Google thất bại. Vui lòng thử lại.",
+                );
             } finally {
               setOauthLoading(null);
             }

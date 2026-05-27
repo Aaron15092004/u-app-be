@@ -1,6 +1,7 @@
 // Screen 1 of 3 — "Chào mừng đến với Ủ"
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import PrimaryButton from "../../components/ui/PrimaryButton";
 import OnboardingDots from "../../components/ui/OnboardingDots";

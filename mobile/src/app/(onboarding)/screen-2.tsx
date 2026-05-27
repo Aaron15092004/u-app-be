@@ -1,6 +1,7 @@
 // Screen 2 of 3 — "Theo dõi sức khỏe hàng ngày"
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import PrimaryButton from "../../components/ui/PrimaryButton";
