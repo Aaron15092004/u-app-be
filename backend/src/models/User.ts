@@ -37,7 +37,7 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    email: { type: String, required: true, lowercase: true, trim: true },
     passwordHash: { type: String, default: null },
     name: { type: String, default: '', trim: true },
     avatar: { type: String, default: null },
@@ -72,6 +72,18 @@ const UserSchema = new Schema<IUser>(
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
+);
+
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index(
+  { 'authProviders.provider': 1, 'authProviders.providerId': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      'authProviders.provider': { $exists: true },
+      'authProviders.providerId': { $exists: true },
+    },
+  }
 );
 
 export default mongoose.model<IUser>('User', UserSchema);

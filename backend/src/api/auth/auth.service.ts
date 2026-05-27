@@ -92,6 +92,38 @@ function makeError(message: string, statusCode: number): Error & { statusCode: n
   return err;
 }
 
+function normalizeEmail(email: string): string {
+  return email
+    .normalize('NFC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { code?: number }).code === 11000;
+}
+
+function duplicateEmailError(): Error & { statusCode: number } {
+  return makeError('Email này đã được sử dụng. Đăng nhập hoặc dùng email khác', 409);
+}
+
+function findUserByEmail(email: string): Promise<IUser | null> {
+  return User.findOne({ email: normalizeEmail(email) }).collation({ locale: 'en', strength: 2 }).exec();
+}
+
+async function addAuthProviderIfMissing(
+  user: IUser,
+  provider: 'google' | 'apple',
+  providerId: string
+): Promise<void> {
+  const exists = user.authProviders.some((p) => p.provider === provider && p.providerId === providerId);
+  if (exists) return;
+
+  user.authProviders.push({ provider, providerId });
+  await user.save();
+}
+
 // ---------------------------------------------------------------------------
 // Exported service functions
 // ---------------------------------------------------------------------------
@@ -100,15 +132,21 @@ export async function registerWithEmail(
   email: string,
   password: string
 ): Promise<{ user: SafeUser; accessToken: string; refreshToken: string }> {
-  const normalizedEmail = email.toLowerCase().trim();
+  const normalizedEmail = normalizeEmail(email);
 
-  const existing = await User.findOne({ email: normalizedEmail });
+  const existing = await findUserByEmail(normalizedEmail);
   if (existing) {
-    throw makeError('Email này đã được sử dụng. Đăng nhập hoặc dùng email khác', 409);
+    throw duplicateEmailError();
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await User.create({ email: normalizedEmail, passwordHash, profileCompleted: false });
+  let user: IUser;
+  try {
+    user = await User.create({ email: normalizedEmail, passwordHash, profileCompleted: false });
+  } catch (err) {
+    if (isDuplicateKeyError(err)) throw duplicateEmailError();
+    throw err;
+  }
 
   const { accessToken, refreshToken } = await issueTokenPair(user);
 
@@ -119,8 +157,8 @@ export async function loginWithEmail(
   email: string,
   password: string
 ): Promise<{ user: SafeUser; accessToken: string; refreshToken: string }> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const user = await User.findOne({ email: normalizedEmail });
+  const normalizedEmail = normalizeEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
 
   if (!user || !user.passwordHash) {
     throw makeError('Email hoặc mật khẩu không đúng', 401);
@@ -171,8 +209,8 @@ export async function revokeRefreshToken(userId: string): Promise<void> {
 }
 
 export async function issuePasswordReset(email: string): Promise<void> {
-  const normalizedEmail = email.toLowerCase().trim();
-  const user = await User.findOne({ email: normalizedEmail });
+  const normalizedEmail = normalizeEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
 
   // Return early for unknown email — prevents user enumeration
   if (!user) return;
@@ -241,22 +279,31 @@ export async function googleSignIn(
   }
 
   const providerId = payload.sub;
-  const email = payload.email.toLowerCase();
+  const email = normalizeEmail(payload.email);
 
-  let user = await User.findOne({ 'authProviders.provider': 'google', 'authProviders.providerId': providerId });
+  let user = (await User.findOne({
+    'authProviders.provider': 'google',
+    'authProviders.providerId': providerId,
+  })) as IUser | null;
   if (!user) {
-    user = await User.findOne({ email });
+    user = await findUserByEmail(email);
     if (user) {
-      user.authProviders.push({ provider: 'google', providerId });
-      await user.save();
+      await addAuthProviderIfMissing(user, 'google', providerId);
     } else {
-      user = await User.create({
-        email,
-        name: payload.name ?? '',
-        avatar: payload.picture ?? null,
-        authProviders: [{ provider: 'google', providerId }],
-        profileCompleted: false,
-      });
+      try {
+        user = await User.create({
+          email,
+          name: payload.name ?? '',
+          avatar: payload.picture ?? null,
+          authProviders: [{ provider: 'google', providerId }],
+          profileCompleted: false,
+        });
+      } catch (err) {
+        if (!isDuplicateKeyError(err)) throw err;
+        user = await findUserByEmail(email);
+        if (!user) throw err;
+        await addAuthProviderIfMissing(user, 'google', providerId);
+      }
     }
   }
 
@@ -279,26 +326,35 @@ export async function appleSignIn(
   }
 
   const providerId = payload.sub;
-  const email = payload.email ?? null;
+  const email = payload.email ? normalizeEmail(payload.email) : null;
 
-  let user = await User.findOne({ 'authProviders.provider': 'apple', 'authProviders.providerId': providerId });
+  let user = (await User.findOne({
+    'authProviders.provider': 'apple',
+    'authProviders.providerId': providerId,
+  })) as IUser | null;
   if (!user) {
     if (email) {
-      user = await User.findOne({ email: email.toLowerCase() });
+      user = await findUserByEmail(email);
       if (user) {
-        user.authProviders.push({ provider: 'apple', providerId });
-        await user.save();
+        await addAuthProviderIfMissing(user, 'apple', providerId);
       }
     }
     if (!user) {
       // Apple may not provide email for returning users — use synthetic email
-      const syntheticEmail = email ? email.toLowerCase() : `${providerId}@apple.local`;
-      user = await User.create({
-        email: syntheticEmail,
-        name: '',
-        authProviders: [{ provider: 'apple', providerId }],
-        profileCompleted: false,
-      });
+      const syntheticEmail = email ?? normalizeEmail(`${providerId}@apple.local`);
+      try {
+        user = await User.create({
+          email: syntheticEmail,
+          name: '',
+          authProviders: [{ provider: 'apple', providerId }],
+          profileCompleted: false,
+        });
+      } catch (err) {
+        if (!isDuplicateKeyError(err)) throw err;
+        user = await findUserByEmail(syntheticEmail);
+        if (!user) throw err;
+        await addAuthProviderIfMissing(user, 'apple', providerId);
+      }
     }
   }
 

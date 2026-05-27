@@ -522,3 +522,46 @@ test('POST /api/auth/google - email matches existing user → 200, authProvider 
   assert.ok(dbUser!.authProviders.some((p: { provider: string; providerId: string }) => p.provider === 'google' && p.providerId === 'g-link-1'));
   assert.ok(dbUser!.passwordHash, 'original password hash should still be present');
 });
+
+// Test 25: POST /register after Google-created same email with different case → 409, no duplicate
+test('POST /api/auth/register - after Google same email different case → 409, no duplicate', async () => {
+  mockGoogleVerifier({ sub: 'g-case-1', email: 'CaseUser@example.com' });
+
+  await request(app)
+    .post('/api/auth/google')
+    .send({ idToken: 'fake-google-token' });
+
+  const res = await request(app)
+    .post('/api/auth/register')
+    .send({ email: 'caseuser@EXAMPLE.com', password: 'password123' });
+
+  assert.equal(res.status, 409);
+  assert.equal(res.body.success, false);
+  assert.ok(res.body.error.includes('Email này đã được sử dụng'));
+
+  const count = await User.countDocuments({ email: 'caseuser@example.com' });
+  assert.equal(count, 1, 'manual registration must not create duplicate after Google');
+});
+
+// Test 26: POST /api/auth/google links existing email/password user case-insensitively
+test('POST /api/auth/google - email match is case-insensitive → linked, no duplicate', async () => {
+  await request(app)
+    .post('/api/auth/register')
+    .send({ email: 'case-link@example.com', password: 'password123' });
+
+  mockGoogleVerifier({ sub: 'g-case-link-1', email: 'CASE-LINK@example.com' });
+
+  const res = await request(app)
+    .post('/api/auth/google')
+    .send({ idToken: 'fake-google-token' });
+
+  assert.equal(res.status, 200);
+  assert.equal(res.body.success, true);
+
+  const count = await User.countDocuments({ email: 'case-link@example.com' });
+  assert.equal(count, 1, 'Google login must link existing email/password user');
+
+  const dbUser = await User.findOne({ email: 'case-link@example.com' });
+  assert.ok(dbUser!.authProviders.some((p: { provider: string; providerId: string }) => p.provider === 'google' && p.providerId === 'g-case-link-1'));
+  assert.ok(dbUser!.passwordHash, 'linked user keeps password hash');
+});
