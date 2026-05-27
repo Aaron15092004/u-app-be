@@ -29,6 +29,16 @@ const GOAL_OPTIONS: { value: GoalType; label: string }[] = [
   { value: 'gain', label: 'Tăng cân' },
 ];
 
+function extractErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const resp = (err as { response?: { data?: { message?: string; error?: string } } }).response;
+    if (resp?.data?.message) return resp.data.message;
+    if (resp?.data?.error) return resp.data.error;
+  }
+  if (err instanceof Error) return err.message;
+  return 'Có lỗi xảy ra. Vui lòng thử lại.';
+}
+
 export default function EditProfileScreen(): React.JSX.Element {
   const auth = useAuth();
   const router = useRouter();
@@ -47,15 +57,21 @@ export default function EditProfileScreen(): React.JSX.Element {
   const [weightFocused, setWeightFocused] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      updateProfileApi({
-        name: name.trim() || undefined,
-        heightCm: Number(heightCm) || undefined,
-        weightKg: Number(weightKg) || undefined,
-        goalType: goalType ?? undefined,
-        waterGoal,
-        age: Number(age) || undefined,
-      }),
+    mutationFn: () => {
+      const payload: Parameters<typeof updateProfileApi>[0] = { waterGoal };
+      const trimmedName = name.trim();
+      const parsedHeight = Number(heightCm);
+      const parsedWeight = Number(weightKg);
+      const parsedAge = Number(age);
+
+      if (trimmedName) payload.name = trimmedName;
+      if (Number.isFinite(parsedHeight) && parsedHeight > 0) payload.heightCm = parsedHeight;
+      if (Number.isFinite(parsedWeight) && parsedWeight > 0) payload.weightKg = parsedWeight;
+      if (Number.isFinite(parsedAge) && parsedAge > 0) payload.age = parsedAge;
+      if (goalType) payload.goalType = goalType;
+
+      return updateProfileApi(payload);
+    },
     onSuccess: (updated: IUpdateProfileResponse) => {
       // Sync the in-memory auth store and MMKV cache so profile page reflects
       // changes immediately (no /me endpoint — must update manually).
@@ -79,8 +95,12 @@ export default function EditProfileScreen(): React.JSX.Element {
         { text: 'OK', onPress: () => router.back() },
       ]);
     },
-    onError: () => {
-      Alert.alert('Lỗi', 'Có lỗi xảy ra. Vui lòng thử lại.');
+    onError: (err) => {
+      console.warn('[EditProfile]', {
+        message: err instanceof Error ? err.message : undefined,
+        response: (err as { response?: { data?: unknown } })?.response?.data,
+      });
+      Alert.alert('Lỗi', extractErrorMessage(err));
     },
   });
 

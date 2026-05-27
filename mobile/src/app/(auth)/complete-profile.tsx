@@ -27,8 +27,9 @@ const GOALS: Array<{ label: string; iconName: string; value: GoalType }> = [
 
 function extractErrorMessage(err: unknown): string {
   if (err && typeof err === 'object' && 'response' in err) {
-    const resp = (err as { response?: { data?: { message?: string } } }).response;
+    const resp = (err as { response?: { data?: { message?: string; error?: string } } }).response;
     if (resp?.data?.message) return resp.data.message;
+    if (resp?.data?.error) return resp.data.error;
   }
   if (err instanceof Error) return err.message;
   return 'Đã xảy ra lỗi, vui lòng thử lại.';

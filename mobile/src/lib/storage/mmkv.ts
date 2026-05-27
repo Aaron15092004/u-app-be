@@ -1,22 +1,38 @@
-// EXPO GO MOCK — replaces react-native-mmkv with in-memory storage
-// Restore to real MMKV implementation before EAS/production build
+import { MMKV } from 'react-native-mmkv';
 
-const store = new Map<string, string | boolean | number>();
+let nativeStorage: MMKV | null = null;
+const fallbackStore = new Map<string, string | boolean | number>();
+
+try {
+  nativeStorage = new MMKV({ id: 'u-app-storage' });
+} catch (err) {
+  console.warn('[storage] MMKV unavailable, using in-memory fallback:', err);
+}
 
 const storage = {
   getBoolean: (key: string): boolean | undefined => {
-    const v = store.get(key);
+    if (nativeStorage) return nativeStorage.getBoolean(key);
+    const v = fallbackStore.get(key);
     return typeof v === 'boolean' ? v : undefined;
   },
   getString: (key: string): string | undefined => {
-    const v = store.get(key);
+    if (nativeStorage) return nativeStorage.getString(key);
+    const v = fallbackStore.get(key);
     return typeof v === 'string' ? v : undefined;
   },
   set: (key: string, value: string | boolean | number): void => {
-    store.set(key, value);
+    if (nativeStorage) {
+      nativeStorage.set(key, value);
+      return;
+    }
+    fallbackStore.set(key, value);
   },
   delete: (key: string): void => {
-    store.delete(key);
+    if (nativeStorage) {
+      nativeStorage.delete(key);
+      return;
+    }
+    fallbackStore.delete(key);
   },
 };
 
