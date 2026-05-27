@@ -9,7 +9,9 @@ export { statusCodes };
 // webClientId must match the Web client ID in Google Cloud Console
 // (same value the backend uses to verify idTokens).
 GoogleSignin.configure({
-  webClientId: '788882504008-5jp9p0njsl401qkqgn1fp7h597i25e6i.apps.googleusercontent.com',
+  webClientId:
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
+    '788882504008-5jp9p0njsl401qkqgn1fp7h597i25e6i.apps.googleusercontent.com',
   // TODO: add iosClientId once iOS OAuth client is created in Google Cloud Console
   // iosClientId: 'XXXX.apps.googleusercontent.com',
   offlineAccess: false,

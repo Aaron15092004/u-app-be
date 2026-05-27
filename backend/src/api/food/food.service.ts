@@ -8,7 +8,7 @@ import { saveFoodLogSchema } from './food.validation';
 import { z } from 'zod';
 import { lookupBarcodeProduct, BarcodeLookupResult } from './barcode-provider.service';
 
-const SCAN_DAILY_LIMIT = 20;
+const SCAN_DAILY_LIMIT = 2;
 const ENTITLEMENT_SCAN_DAILY_LIMIT = 30;
 
 // ---------------------------------------------------------------------------

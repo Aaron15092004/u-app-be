@@ -18,6 +18,45 @@ interface ApiResponse<T> {
   data: T;
 }
 
+const NUT_MILK_COPY: Record<string, { nameVi: string; positioningVi: string }> = {
+  rau_ma_sua_dua: {
+    nameVi: 'Rau má sữa dừa',
+    positioningVi: 'Thanh nhiệt và kiểm soát cân nặng',
+  },
+  rau_ma_hat_sen: {
+    nameVi: 'Rau má - Hạt sen',
+    positioningVi: 'Giảm stress và ngủ ngon sâu giấc',
+  },
+  gao_lut_me_den_hat_sen: {
+    nameVi: 'Gạo lứt - Mè đen - Hạt sen',
+    positioningVi: 'Duy trì vóc dáng và đẹp da, chống lão hóa',
+  },
+  gao_lut_oc_cho_hanh_nhan: {
+    nameVi: 'Gạo lứt - Óc chó - Hạnh nhân',
+    positioningVi: 'Bổ sung dinh dưỡng và tăng cường trí não',
+  },
+  hat_sen_oc_cho: {
+    nameVi: 'Hạt sen - Óc chó',
+    positioningVi: 'Phục hồi năng lượng và trí nhớ bền bỉ',
+  },
+};
+
+function normalizeNutMilkCopy(
+  data: IV2NutMilkRecommendationResponse,
+): IV2NutMilkRecommendationResponse {
+  return {
+    ...data,
+    disclaimer:
+      data.disclaimer.includes('Goi y')
+        ? 'Gợi ý sữa hạt là gợi ý sản phẩm theo sở thích và chỉ số cơ thể, không phải chẩn đoán hay điều trị y khoa.'
+        : data.disclaimer,
+    flavors: data.flavors.map((flavor) => ({
+      ...flavor,
+      ...(NUT_MILK_COPY[flavor.flavorId] ?? {}),
+    })),
+  };
+}
+
 export async function redeemCampaignCodeApi(
   body: IV2RedeemCampaignCodeRequest,
 ): Promise<IV2RedeemCampaignCodeResponse> {
@@ -51,7 +90,7 @@ export async function getNutMilkRecommendationsApi(params?: {
     '/api/recommendations/nut-milk',
     { params },
   );
-  return res.data.data;
+  return normalizeNutMilkCopy(res.data.data);
 }
 
 export async function selectNutMilkFlavorApi(

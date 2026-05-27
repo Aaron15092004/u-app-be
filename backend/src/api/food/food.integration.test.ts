@@ -113,13 +113,13 @@ test('POST /api/food/scan with auth but no image → 400 with Vietnamese error',
 });
 
 // ---------------------------------------------------------------------------
-// Test 3: POST /api/food/scan when daily AI count >= 20 → 429
+// Test 3: POST /api/food/scan when daily AI count >= 2 → 429
 // ---------------------------------------------------------------------------
-test('POST /api/food/scan when daily AI count >= 20 → 429 with Vietnamese rate limit message', async () => {
-  // Seed 20 scan attempts for today. The rate limiter counts AI attempts,
+test('POST /api/food/scan when daily AI count >= 2 → 429 with Vietnamese rate limit message', async () => {
+  // Seed 2 scan attempts for today. The rate limiter counts AI attempts,
   // not saved FoodLog documents.
   const now = new Date();
-  const attemptDocs = Array.from({ length: 20 }, () => ({
+  const attemptDocs = Array.from({ length: 2 }, () => ({
     userId: new mongoose.Types.ObjectId(userIdA),
     createdAt: now,
   }));
@@ -134,9 +134,9 @@ test('POST /api/food/scan when daily AI count >= 20 → 429 with Vietnamese rate
 
   assert.equal(res.status, 429);
   assert.equal(res.body.success, false);
-  assert.match(res.body.error, /Bạn đã dùng hết 20 lượt quét hôm nay/);
-  assert.equal(res.body.usedToday, 20);
-  assert.equal(res.body.limit, 20);
+  assert.match(res.body.error, /Bạn đã dùng hết 2 lượt quét hôm nay/);
+  assert.equal(res.body.usedToday, 2);
+  assert.equal(res.body.limit, 2);
 });
 
 // ---------------------------------------------------------------------------

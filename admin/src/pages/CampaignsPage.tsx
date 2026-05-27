@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { Download, PackagePlus, RotateCcw, Trash2 } from 'lucide-react';
+import { Download, FileSpreadsheet, PackagePlus, QrCode, RotateCcw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ function toIsoFromLocal(value: string) {
 }
 
 function downloadCsv(csv: string, fileName: string) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -72,7 +72,7 @@ const defaultGenerate: GenerateCampaignCodesInput = {
   batchLabel: '',
   codeLength: 12,
   codeExpiresAt: '',
-  redeemBaseUrl: 'https://u-app.vn/redeem',
+  redeemBaseUrl: 'https://u-app-be.onrender.com/redeem',
 };
 
 export function CampaignsPage() {
@@ -85,6 +85,12 @@ export function CampaignsPage() {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [campaignForm, setCampaignForm] = useState<CreateCampaignInput>(defaultCampaign);
   const [generateForm, setGenerateForm] = useState<GenerateCampaignCodesInput>(defaultGenerate);
+  const [lastExport, setLastExport] = useState<{
+    fileName: string;
+    csv: string;
+    quantity: number;
+    batchId: string;
+  } | null>(null);
 
   const { data, isPending } = useCampaigns(page, status);
   const { data: opsStats, isPending: opsPending } = useCampaignOpsStats();
@@ -128,9 +134,16 @@ export function CampaignsPage() {
         codeExpiresAt: generateForm.codeExpiresAt ? toIsoFromLocal(generateForm.codeExpiresAt) : undefined,
         redeemBaseUrl: generateForm.redeemBaseUrl || undefined,
       });
-      downloadCsv(result.csv, `${selectedCampaign.name}-${result.batchId}.csv`);
+      const fileName = `${selectedCampaign.name}-${result.batchId}-codes-qr.csv`;
+      downloadCsv(result.csv, fileName);
+      setLastExport({
+        fileName,
+        csv: result.csv,
+        quantity: result.quantity,
+        batchId: result.batchId,
+      });
       setGenerateOpen(false);
-      toast(`Đã tạo ${result.quantity} mã và tải CSV`);
+      toast(`Đã tạo ${result.quantity} mã và tải file Excel/CSV có QR`);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
       toast.error(e.response?.data?.error ?? 'Không thể tạo mã');
@@ -259,10 +272,40 @@ export function CampaignsPage() {
         <div>
           <h1 className="text-2xl font-bold">Campaign mã scan AI</h1>
           <p className="text-muted-foreground text-sm">
-            Tạo campaign, bulk code và tải CSV raw code cho vận hành chai sữa.
+            Tạo campaign, bulk code và tải file Excel/CSV có raw code, link QR cho vận hành chai sữa.
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>Tạo campaign</Button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-md border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <PackagePlus className="h-4 w-4" />
+            1. Chọn campaign
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Bấm vào tên campaign trong bảng để xem mã và tạo batch mới.
+          </p>
+        </div>
+        <div className="rounded-md border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileSpreadsheet className="h-4 w-4" />
+            2. Tạo file Excel/CSV
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Raw code chỉ tải được ngay sau khi tạo batch. Admin không lưu lại raw code để bảo mật.
+          </p>
+        </div>
+        <div className="rounded-md border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <QrCode className="h-4 w-4" />
+            3. In QR
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            File có cột QR text, link ảnh QR và công thức QR cho Excel/Google Sheets.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">
@@ -340,7 +383,9 @@ export function CampaignsPage() {
         <div className="flex items-center justify-between gap-4 border-t pt-6">
           <div>
             <h2 className="text-lg font-semibold">Mã của campaign</h2>
-            <p className="text-sm text-muted-foreground">{selectedName}</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedName} · Bảng này chỉ hiện prefix/trạng thái. Mã đầy đủ nằm trong file tải ngay khi tạo batch.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -360,10 +405,26 @@ export function CampaignsPage() {
             </select>
             <Button disabled={!selectedCampaign} onClick={() => setGenerateOpen(true)}>
               <Download className="mr-2 h-4 w-4" />
-              Generate CSV
+              Tạo mã + tải Excel/QR CSV
             </Button>
           </div>
         </div>
+        {lastExport && selectedCampaign && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm">
+            <div>
+              <p className="font-medium text-green-900">
+                Batch vừa tạo: {lastExport.quantity} mã · {lastExport.batchId}
+              </p>
+              <p className="text-green-700">
+                Nếu trình duyệt chưa tải file, bấm tải lại ngay trong phiên này.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => downloadCsv(lastExport.csv, lastExport.fileName)}>
+              <Download className="mr-2 h-4 w-4" />
+              Tải lại file
+            </Button>
+          </div>
+        )}
         <DataTable
           columns={codeColumns}
           data={codes?.items ?? []}
@@ -410,6 +471,14 @@ export function CampaignsPage() {
         <DialogContent className="max-w-xl">
           <DialogHeader><DialogTitle>Tạo batch mã</DialogTitle></DialogHeader>
           <form className="space-y-4" onSubmit={handleGenerateCodes}>
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">File tải xuống dùng thế nào?</p>
+              <p className="mt-1 text-muted-foreground">
+                Mở bằng Excel/Google Sheets. Cột "Mã kích hoạt" là mã user nhập trong app.
+                Cột "Link ảnh QR" dùng để in QR theo từng mã. Sau khi đóng hộp thoại này,
+                hệ thống không thể xuất lại raw code cũ.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="space-y-1 text-sm">Số lượng
                 <Input type="number" min={1} max={5000} value={generateForm.quantity}
@@ -433,7 +502,9 @@ export function CampaignsPage() {
             </p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setGenerateOpen(false)}>Hủy</Button>
-              <Button type="submit" disabled={!selectedCampaign || generateMutation.isPending}>Tạo và tải CSV</Button>
+              <Button type="submit" disabled={!selectedCampaign || generateMutation.isPending}>
+                {generateMutation.isPending ? 'Đang tạo mã...' : 'Tạo và tải Excel/QR CSV'}
+              </Button>
             </div>
           </form>
         </DialogContent>

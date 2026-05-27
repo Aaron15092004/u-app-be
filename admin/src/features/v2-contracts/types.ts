@@ -55,6 +55,9 @@ export interface AdminV2RedeemCodeMetadata {
 
 export interface AdminV2GeneratedRedeemCodeExportRow {
   rawCode: string;
+  qrText: string;
+  qrImageUrl: string;
+  qrExcelFormula: string;
   redeemUrl: string;
   codePrefix: string;
   campaignId: string;

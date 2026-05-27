@@ -95,8 +95,10 @@ test('admin creates campaign, generates transient CSV codes, and raw code is not
 
   assert.equal(res.status, 201);
   assert.equal(res.body.data.quantity, 2);
-  assert.match(res.body.data.csv, /rawCode,redeemUrl/);
+  assert.match(res.body.data.csv, /Ma kich hoat,Noi dung QR,Link anh QR/);
   assert.match(res.body.data.rows[0].redeemUrl, /^https:\/\/u-app\.vn\/redeem\?code=/);
+  assert.equal(res.body.data.rows[0].qrText, res.body.data.rows[0].rawCode);
+  assert.match(res.body.data.rows[0].qrImageUrl, /^https:\/\/api\.qrserver\.com\/v1\/create-qr-code\//);
 
   const persisted = await RedeemCode.findOne({ campaignId: campaign._id }).lean();
   assert.ok(persisted);

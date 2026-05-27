@@ -90,6 +90,14 @@ function generateRawCode(length: number): string {
   return out;
 }
 
+function buildQrImageUrl(value: string): string {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(value)}`;
+}
+
+function buildExcelQrFormula(qrImageUrl: string): string {
+  return `=IMAGE("${qrImageUrl}")`;
+}
+
 function toIso(value?: Date | null): string | null {
   return value ? value.toISOString() : null;
 }
@@ -229,6 +237,9 @@ export async function generateCampaignCodes(
 
   const rows: Array<{
     rawCode: string;
+    qrText: string;
+    qrImageUrl: string;
+    qrExcelFormula: string;
     redeemUrl: string;
     codePrefix: string;
     campaignId: string;
@@ -237,29 +248,55 @@ export async function generateCampaignCodes(
     expiresAt: string | null;
     entitlementDurationDays: number;
   }> = [];
-  const docs = [];
+  const docs: Array<{
+    campaignId: mongoose.Types.ObjectId;
+    batchId: string;
+    codeHash: string;
+    codePrefix: string;
+    codeLength: number;
+    status: 'unused';
+    expiresAt: Date | null;
+    createdBy: mongoose.Types.ObjectId;
+  }> = [];
+  const generated = new Map<string, { rawCode: string; codeHash: string }>();
 
-  for (let i = 0; i < input.quantity; i += 1) {
-    let rawCode = '';
-    let codeHash = '';
-    let collision = true;
+  for (let attempt = 0; generated.size < input.quantity && attempt < 10; attempt += 1) {
+    const candidateCount = Math.max(input.quantity - generated.size, 1);
+    const candidates = new Map<string, string>();
 
-    for (let attempt = 0; attempt < 5 && collision; attempt += 1) {
-      rawCode = generateRawCode(input.codeLength);
-      codeHash = hashRedeemCode(rawCode);
-      collision = Boolean(await RedeemCode.exists({ codeHash }));
+    while (candidates.size < candidateCount) {
+      const rawCode = generateRawCode(input.codeLength);
+      candidates.set(hashRedeemCode(rawCode), rawCode);
     }
 
-    if (collision) {
-      throw makeError('Khong the tao ma duy nhat, vui long thu lai', 500);
+    const existing = await RedeemCode.find({
+      codeHash: { $in: Array.from(candidates.keys()) },
+    }).select('codeHash').lean();
+    const existingHashes = new Set(existing.map((doc) => String(doc.codeHash)));
+
+    for (const [codeHash, rawCode] of candidates) {
+      if (!existingHashes.has(codeHash) && !generated.has(codeHash)) {
+        generated.set(codeHash, { rawCode, codeHash });
+      }
+      if (generated.size >= input.quantity) break;
     }
+  }
+
+  if (generated.size < input.quantity) {
+    throw makeError('Khong the tao du so ma duy nhat, vui long thu lai voi do dai ma lon hon', 500);
+  }
+
+  for (const { rawCode, codeHash } of generated.values()) {
+    const normalizedCode = normalizeRedeemCode(rawCode);
+    const redeemUrl = buildRedeemHttpsUrl(redeemBaseUrl, rawCode);
+    const qrImageUrl = buildQrImageUrl(rawCode);
 
     docs.push({
-      campaignId: campaign._id,
+      campaignId: campaign._id as mongoose.Types.ObjectId,
       batchId,
       codeHash,
-      codePrefix: normalizeRedeemCode(rawCode).slice(0, 4),
-      codeLength: normalizeRedeemCode(rawCode).length,
+      codePrefix: normalizedCode.slice(0, 4),
+      codeLength: normalizedCode.length,
       status: 'unused',
       expiresAt: codeExpiresAt,
       createdBy: new mongoose.Types.ObjectId(adminId),
@@ -267,8 +304,11 @@ export async function generateCampaignCodes(
 
     rows.push({
       rawCode,
-      redeemUrl: buildRedeemHttpsUrl(redeemBaseUrl, rawCode),
-      codePrefix: normalizeRedeemCode(rawCode).slice(0, 4),
+      qrText: rawCode,
+      qrImageUrl,
+      qrExcelFormula: buildExcelQrFormula(qrImageUrl),
+      redeemUrl,
+      codePrefix: normalizedCode.slice(0, 4),
       campaignId: String(campaign._id),
       campaignName: campaign.name,
       batchId,
@@ -283,14 +323,17 @@ export async function generateCampaignCodes(
   const csv = stringify(rows, {
     header: true,
     columns: [
-      'rawCode',
-      'redeemUrl',
-      'codePrefix',
-      'campaignId',
-      'campaignName',
-      'batchId',
-      'expiresAt',
-      'entitlementDurationDays',
+      { key: 'rawCode', header: 'Ma kich hoat' },
+      { key: 'qrText', header: 'Noi dung QR' },
+      { key: 'qrImageUrl', header: 'Link anh QR' },
+      { key: 'qrExcelFormula', header: 'Cong thuc QR trong Excel' },
+      { key: 'redeemUrl', header: 'Link redeem HTTPS' },
+      { key: 'codePrefix', header: 'Prefix hien thi trong admin' },
+      { key: 'campaignId', header: 'Campaign ID' },
+      { key: 'campaignName', header: 'Campaign' },
+      { key: 'batchId', header: 'Batch' },
+      { key: 'expiresAt', header: 'Het han ma' },
+      { key: 'entitlementDurationDays', header: 'So ngay kich hoat' },
     ],
   });
 

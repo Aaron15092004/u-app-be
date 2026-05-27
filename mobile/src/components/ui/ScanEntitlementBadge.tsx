@@ -23,7 +23,7 @@ export default function ScanEntitlementBadge({
   quotaMode,
 }: ScanEntitlementBadgeProps): React.JSX.Element {
   const active = Boolean(status?.hasActiveEntitlement || quotaMode === "entitlement_30_daily");
-  const dailyLimit = status?.quotaPolicy?.dailyLimit ?? limit ?? (active ? 30 : 20);
+  const dailyLimit = status?.quotaPolicy?.dailyLimit ?? limit ?? (active ? 30 : 2);
   const expiry = status?.activeUntil ? formatDate(status.activeUntil) : null;
 
   return (
