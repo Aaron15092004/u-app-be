@@ -254,6 +254,18 @@ export default function ResultScreen(): React.JSX.Element | null {
           </View>
         )}
 
+        {scanResult.commentVi ? (
+          <>
+            <SectionHeader title="Nhận xét nhanh" />
+            <View style={styles.commentCard}>
+              <View style={styles.commentIcon}>
+                <Ionicons name="chatbubble-ellipses-outline" size={18} color={PRIMARY_DARK} />
+              </View>
+              <Text style={styles.commentText}>{scanResult.commentVi}</Text>
+            </View>
+          </>
+        ) : null}
+
         {/* Dinh duong chinh */}
         <SectionHeader title="Dinh dưỡng chính" />
         <Card>
@@ -401,6 +413,30 @@ const styles = StyleSheet.create({
     height: 120,
     alignItems: "center",
     justifyContent: "center",
+  },
+  commentCard: {
+    flexDirection: "row",
+    gap: 10,
+    backgroundColor: "#F1F8E9",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#CDE8B5",
+  },
+  commentIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "#DFF2C9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  commentText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: TEXT,
   },
   foodRow: {
     flexDirection: "row",

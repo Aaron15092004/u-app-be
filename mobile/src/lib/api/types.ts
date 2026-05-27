@@ -198,6 +198,7 @@ export interface IScanFoodResponse {
   totals: { calories: number; protein: number; carbs: number; fat: number };
   aiProvider: 'logmeal' | 'gemini' | 'manual';
   imageUrl: string | null;
+  commentVi?: string;
   usedToday?: number;
   limit?: number;
   quotaMode?: 'standard_daily_limit' | 'entitlement_30_daily';

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -16,6 +16,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { getTodaySummaryApi, getShopUrlApi } from "../../lib/api/home.api";
 import { getProfileStatsApi } from "../../lib/api/users.api";
 import { logWaterApi } from "../../lib/api/water.api";
+import NotificationRationaleModal from "../../components/ui/NotificationRationaleModal";
 import TodaySummaryRow from "../../components/ui/TodaySummaryRow";
 import NutritionProgressCard from "../../components/ui/NutritionProgressCard";
 import BMIWidget from "../../components/ui/BMIWidget";
@@ -29,6 +30,7 @@ import {
   TEXT,
   TEXT_SECONDARY,
 } from "../../constants/colors";
+import { getNotifAsked, setNotifAsked } from "../../lib/storage/mmkv";
 
 // ─── Water card ──────────────────────────────────────────────────────────────
 
@@ -146,6 +148,24 @@ export default function HomeScreen(): React.JSX.Element {
   const auth = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
+  const [showNotificationRationale, setShowNotificationRationale] = useState(false);
+
+  useEffect(() => {
+    if (!getNotifAsked()) {
+      setShowNotificationRationale(true);
+    }
+  }, []);
+
+  const handleNotificationAccept = async (): Promise<void> => {
+    setNotifAsked(true);
+    setShowNotificationRationale(false);
+    router.push("/(tabs)/profile/notifications" as never);
+  };
+
+  const handleNotificationDismiss = (): void => {
+    setNotifAsked(true);
+    setShowNotificationRationale(false);
+  };
 
   const waterMutation = useMutation({
     mutationFn: () => logWaterApi(),
@@ -196,7 +216,7 @@ export default function HomeScreen(): React.JSX.Element {
             style={styles.bellButton}
             accessibilityLabel="Thông báo"
             accessibilityRole="button"
-            onPress={() => {}}
+            onPress={() => router.push("/(tabs)/profile/notifications" as never)}
           >
             <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
           </Pressable>
@@ -272,6 +292,11 @@ export default function HomeScreen(): React.JSX.Element {
           isLoading={shopUrlQuery.isLoading}
         />
       </ScrollView>
+      <NotificationRationaleModal
+        visible={showNotificationRationale}
+        onAccept={handleNotificationAccept}
+        onDismiss={handleNotificationDismiss}
+      />
     </View>
   );
 }

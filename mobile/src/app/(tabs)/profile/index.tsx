@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../providers/AuthProvider";
 import { getProfileStatsApi } from "../../../lib/api/users.api";
-import { getStreakApi } from "../../../lib/api/habits.api";
+import { getWorkoutStreakApi } from "../../../lib/api/workout-sessions.api";
 import {
   getNutMilkRecommendationsApi,
   getScanEntitlementsApi,
@@ -316,9 +316,9 @@ export default function ProfileScreen(): React.JSX.Element {
     queryKey: ["users", "profile", "stats"],
     queryFn: getProfileStatsApi,
   });
-  const streakQ = useQuery({
-    queryKey: ["habits", "streak"],
-    queryFn: getStreakApi,
+  const workoutStreakQ = useQuery({
+    queryKey: ["workout-sessions", "streak"],
+    queryFn: getWorkoutStreakApi,
   });
   const entitlementQ = useQuery({
     queryKey: ["v2", "scan-entitlements"],
@@ -349,7 +349,7 @@ export default function ProfileScreen(): React.JSX.Element {
   });
   const savedMilkId = milkQ.data?.currentPreference?.selectedFlavorId;
   const activeMilkId = milkSelectedId ?? savedMilkId;
-  const streakDays = streakQ.data?.streakDays ?? statsQ.data?.streakDays ?? 0;
+  const streakDays = workoutStreakQ.data?.currentStreak ?? statsQ.data?.streakDays ?? 0;
   const totalWork = statsQ.data?.totalWorkouts ?? 0;
   const totalKcal = statsQ.data?.totalKcalBurned ?? 0;
 
@@ -595,7 +595,7 @@ export default function ProfileScreen(): React.JSX.Element {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerTxt}>Ú App · Phiên bản 1.0.0</Text>
+          <Text style={styles.footerTxt}>Ủ App · Phiên bản 1.0.0</Text>
           <Text style={styles.footerTxt}>© 2026 Ú Health & Wellness</Text>
         </View>
       </ScrollView>

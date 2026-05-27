@@ -20,6 +20,7 @@ export interface NutritionResult {
   };
   aiProvider: "logmeal" | "gemini" | "manual";
   imageUrl: string | null;
+  commentVi: string;
 }
 
 const GEMINI_MODEL = "gemini-flash-latest";
@@ -50,14 +51,36 @@ const USER_PROMPT = `Bạn là chuyên gia dinh dưỡng. Phân tích ảnh bữ
       "tags": ["tag1"]
     }
   ],
-  "totals": { "calories": 250, "protein": 10, "carbs": 30, "fat": 8 }
+  "totals": { "calories": 250, "protein": 10, "carbs": 30, "fat": 8 },
+  "commentVi": "Nhận xét ngắn bằng tiếng Việt: món này tốt/không tốt ở điểm nào, có nên ăn nhiều không, và gợi ý điều chỉnh nếu cần."
 }
 Quy tắc quan trọng:
 - calories = kcal; protein/carbs/fat/fiber/sugar = gram
 - vitamins: đơn vị mg hoặc mcg tùy loại. Chỉ liệt kê vitamin có hàm lượng đáng kể (> 0). Các loại phổ biến: vitaminC, vitaminA, vitaminD, vitaminE, vitaminK, vitaminB1, vitaminB2, vitaminB3, vitaminB12, folate
 - minerals: đơn vị mg hoặc mcg tùy loại. Chỉ liệt kê khoáng chất có hàm lượng đáng kể (> 0). Các loại phổ biến: sodium, potassium, calcium, magnesium, phosphorus, iron, zinc, selenium
 - Nếu không có vitamin/khoáng chất đáng kể thì để: "vitamins": {}, "minerals": {}
+- commentVi: 1-3 câu tiếng Việt, dễ hiểu, tập trung vào lợi ích/rủi ro khi ăn nhiều và khuyến nghị thực tế cho bữa này
 - Ước tính dựa trên ảnh thực tế. Chỉ trả về JSON, không giải thích thêm.`;
+
+function buildFallbackComment(result: {
+  foods: Array<{ name: string; tags: string[] }>;
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+}): string {
+  const foodNames = result.foods.map((f) => f.name).slice(0, 3).join(", ");
+  const highCalories = result.totals.calories >= 700;
+  const highFat = result.totals.fat >= 25;
+  const lowProtein = result.totals.protein < 15;
+
+  if (highCalories || highFat) {
+    return `${foodNames || "Bữa ăn này"} khá nhiều năng lượng${highFat ? " và chất béo" : ""}. Bạn vẫn có thể ăn nhưng nên giảm khẩu phần hoặc cân bằng thêm rau, nước và vận động nếu ăn thường xuyên.`;
+  }
+
+  if (lowProtein) {
+    return `${foodNames || "Bữa ăn này"} tương đối nhẹ nhưng lượng đạm chưa cao. Có thể bổ sung thêm trứng, đậu, thịt nạc hoặc sữa hạt phù hợp để no lâu hơn.`;
+  }
+
+  return `${foodNames || "Bữa ăn này"} có mức dinh dưỡng khá cân bằng. Nên giữ khẩu phần vừa phải và ưu tiên thêm rau hoặc thực phẩm ít chế biến nếu ăn thường xuyên.`;
+}
 
 export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
   const apiKey = process.env.GEMINI_API_KEY ?? "";
@@ -136,7 +159,7 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     throw new Error("Gemini không trả về JSON. Vui lòng thử lại.");
   }
 
-  let raw: { foods?: Array<Record<string, unknown>>; totals?: Record<string, unknown> };
+  let raw: { foods?: Array<Record<string, unknown>>; totals?: Record<string, unknown>; commentVi?: unknown; comment?: unknown };
   try {
     raw = JSON.parse(jsonMatch[0]) as typeof raw;
   } catch (parseErr) {
@@ -197,5 +220,12 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     fat:      Number(rt.fat)      || foods.reduce((s, f) => s + f.fat, 0),
   };
 
-  return { foods, totals, aiProvider: "gemini", imageUrl: null };
+  const commentVi =
+    typeof raw.commentVi === "string" && raw.commentVi.trim().length > 0
+      ? raw.commentVi.trim()
+      : typeof raw.comment === "string" && raw.comment.trim().length > 0
+        ? raw.comment.trim()
+        : buildFallbackComment({ foods, totals });
+
+  return { foods, totals, aiProvider: "gemini", imageUrl: null, commentVi };
 }

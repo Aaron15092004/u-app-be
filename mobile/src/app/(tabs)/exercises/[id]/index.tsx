@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ActivityIndicator,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -52,12 +53,23 @@ function ExerciseContent({
     color: TEXT_SECONDARY,
   };
   const iconName = CATEGORY_ICON[exercise.category] ?? "fitness-outline";
+  const steps = [...(exercise.steps ?? [])].sort((a, b) => a.order - b.order);
 
   return (
     <>
-      {/* Thumbnail */}
-      <View style={styles.thumbnail}>
-        <Ionicons name={iconName} size={64} color={TEXT_SECONDARY} />
+      {/* Exercise media */}
+      <View style={styles.heroMedia}>
+        {exercise.imageUrl ? (
+          <Image
+            source={{ uri: exercise.imageUrl }}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.heroPlaceholder}>
+            <Ionicons name={iconName} size={72} color={TEXT_SECONDARY} />
+          </View>
+        )}
       </View>
 
       {/* Name */}
@@ -98,19 +110,22 @@ function ExerciseContent({
       ) : null}
 
       {/* Các động tác section */}
-      {exercise.steps && exercise.steps.length > 0 ? (
+      {steps.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Các động tác</Text>
-          {exercise.steps.map((step) => (
-            <View key={step.order} style={styles.step}>
-              <Text style={styles.stepInstruction}>
-                {step.order}. {step.instruction}
-              </Text>
-              {step.durationSeconds != null ? (
-                <Text style={styles.stepDuration}>
-                  {step.durationSeconds} giây
-                </Text>
-              ) : null}
+          <Text style={styles.sectionHeading}>Các bước thực hiện</Text>
+          {steps.map((step, index) => (
+            <View key={`${step.order}-${index}`} style={styles.step}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>{step.order || index + 1}</Text>
+              </View>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepInstruction}>{step.instruction}</Text>
+                {step.durationSeconds != null ? (
+                  <Text style={styles.stepDuration}>
+                    {step.durationSeconds} giây
+                  </Text>
+                ) : null}
+              </View>
             </View>
           ))}
         </View>
@@ -187,14 +202,23 @@ const styles = StyleSheet.create({
     paddingBottom: 96,
     paddingHorizontal: 16,
   },
-  thumbnail: {
-    height: 200,
+  heroMedia: {
+    width: "100%",
+    aspectRatio: 1,
     backgroundColor: SURFACE,
-    borderRadius: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: 12,
+    marginBottom: 18,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  heroPlaceholder: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 12,
-    marginBottom: 16,
   },
   exerciseName: {
     fontSize: 28,
@@ -245,6 +269,24 @@ const styles = StyleSheet.create({
     backgroundColor: SURFACE,
     borderRadius: 12,
     padding: 12,
+    flexDirection: "row",
+    gap: 10,
+  },
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#E8F5E9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumberText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2E7D32",
+  },
+  stepContent: {
+    flex: 1,
   },
   stepInstruction: {
     fontSize: 14,

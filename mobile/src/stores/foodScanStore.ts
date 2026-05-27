@@ -27,6 +27,7 @@ export type NutritionResult = {
   };
   aiProvider: 'logmeal' | 'gemini' | 'manual';
   imageUrl: string | null;
+  commentVi?: string;
 };
 
 interface FoodScanState {

@@ -232,6 +232,8 @@ export default function WorkoutSessionScreen(): React.JSX.Element {
         void qc.invalidateQueries({ queryKey: ["workout-programs"] });
         void qc.invalidateQueries({ queryKey: ["workout-sessions", "streak"] });
         void qc.invalidateQueries({ queryKey: ["workouts", "stats", "weekly"] });
+        void qc.invalidateQueries({ queryKey: ["users", "profile", "stats"] });
+        void qc.invalidateQueries({ queryKey: ["home", "summary"] });
       });
 
       setShowCompletion(true);

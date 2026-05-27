@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 import WorkoutSession from '../../models/WorkoutSession';
 import UserProgramProgress from '../../models/UserProgramProgress';
 import WorkoutProgram from '../../models/WorkoutProgram';
+import WorkoutLog from '../../models/WorkoutLog';
+import HabitLog from '../../models/HabitLog';
+import { vietnamDayStart } from '../../utils/date';
 
 export interface CreateSessionInput {
   programId?: string;
@@ -73,6 +76,37 @@ export async function completeSession(
   session.completedAt = now;
   session.totalDurationSeconds = totalDurationSeconds;
   await session.save();
+
+  const plannedDurationSeconds = session.exercises.reduce(
+    (sum, exercise) => sum + Math.max(0, exercise.durationSeconds ?? 0),
+    0,
+  );
+  const effectiveDurationSeconds = Math.max(totalDurationSeconds, plannedDurationSeconds);
+  const durationMinutes = Math.max(1, Math.round(effectiveDurationSeconds / 60));
+  const estimatedCaloriesBurned = Math.max(1, Math.round(durationMinutes * 5));
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const dateBucket = vietnamDayStart(now);
+
+  await Promise.all([
+    WorkoutLog.create({
+      userId: userObjectId,
+      sourceSessionId: session._id,
+      exerciseName: session.dayTitle,
+      date: dateBucket,
+      durationMinutes,
+      caloriesBurned: estimatedCaloriesBurned,
+      completedAt: now,
+    }),
+    HabitLog.findOneAndUpdate(
+      {
+        userId: userObjectId,
+        date: dateBucket,
+        habitId: 'exercise',
+      },
+      { $setOnInsert: { checkedAt: now } },
+      { upsert: true, new: true },
+    ),
+  ]);
 
   // Advance UserProgramProgress if this session belongs to a program
   if (session.programId && session.dayNumber !== undefined) {

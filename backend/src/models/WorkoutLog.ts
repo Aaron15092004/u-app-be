@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IWorkoutLog extends Document {
   userId: mongoose.Types.ObjectId;
   exerciseId?: mongoose.Types.ObjectId;
+  sourceSessionId?: mongoose.Types.ObjectId;
   exerciseName: string;
   date: Date;
   durationMinutes: number;
@@ -16,6 +17,7 @@ const WorkoutLogSchema = new Schema<IWorkoutLog>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     exerciseId: { type: Schema.Types.ObjectId, ref: 'Exercise' },
+    sourceSessionId: { type: Schema.Types.ObjectId, ref: 'WorkoutSession' },
     exerciseName: { type: String, required: true },
     date: { type: Date, required: true },
     durationMinutes: { type: Number, required: true },
@@ -26,5 +28,6 @@ const WorkoutLogSchema = new Schema<IWorkoutLog>(
 );
 
 WorkoutLogSchema.index({ userId: 1, date: -1 });
+WorkoutLogSchema.index({ sourceSessionId: 1 }, { sparse: true });
 
 export default mongoose.model<IWorkoutLog>('WorkoutLog', WorkoutLogSchema);

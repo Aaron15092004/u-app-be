@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import User from '../../models/User';
 import WorkoutLog from '../../models/WorkoutLog';
+import WorkoutSession from '../../models/WorkoutSession';
 import { getStreak } from '../habits/habits.service';
 import { updateProfileSchema, updateNotificationsSchema } from './users.validation';
 import { z } from 'zod';
@@ -78,7 +79,7 @@ function calculateDailyTargets(
 export async function getProfileStats(userId: string): Promise<IProfileStats> {
   const userObjId = new mongoose.Types.ObjectId(userId);
 
-  const [streakResult, count, kcalAgg, userDoc] = await Promise.all([
+  const [streakResult, count, kcalAgg, userDoc, loggedSessionIds] = await Promise.all([
     getStreak(userId),
     WorkoutLog.countDocuments({ userId: userObjId }),
     WorkoutLog.aggregate([
@@ -86,7 +87,33 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
       { $group: { _id: null, total: { $sum: '$caloriesBurned' } } },
     ]),
     User.findById(userObjId).select('notifications profile').lean(),
+    WorkoutLog.distinct('sourceSessionId', {
+      userId: userObjId,
+      sourceSessionId: { $exists: true, $ne: null },
+    }),
   ]);
+
+  const legacyCompletedSessions = await WorkoutSession.find(
+    {
+      userId: userObjId,
+      status: 'completed',
+      _id: { $nin: loggedSessionIds },
+    },
+    { totalDurationSeconds: 1, exercises: 1 },
+  ).lean();
+  const legacyWorkoutCount = legacyCompletedSessions.length;
+  const legacyKcal = legacyCompletedSessions.reduce((sum, session) => {
+    const plannedDurationSeconds = (session.exercises ?? []).reduce(
+      (inner, exercise) => inner + Math.max(0, exercise.durationSeconds ?? 0),
+      0,
+    );
+    const effectiveDurationSeconds = Math.max(
+      session.totalDurationSeconds ?? 0,
+      plannedDurationSeconds,
+    );
+    const durationMinutes = Math.max(1, Math.round(effectiveDurationSeconds / 60));
+    return sum + Math.max(1, Math.round(durationMinutes * 5));
+  }, 0);
 
   const prof = (userDoc as { profile?: { weightKg?: number; heightCm?: number; age?: number; goalType?: string }; notifications?: object } | null)?.profile;
   const dailyTargets = calculateDailyTargets(prof?.weightKg, prof?.heightCm, prof?.age, prof?.goalType);
@@ -98,8 +125,8 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
 
   return {
     streakDays: streakResult.streakDays,
-    totalWorkouts: count,
-    totalKcalBurned: (kcalAgg[0]?.total as number) ?? 0,
+    totalWorkouts: count + legacyWorkoutCount,
+    totalKcalBurned: ((kcalAgg[0]?.total as number) ?? 0) + legacyKcal,
     notifications: {
       waterReminder: userDoc?.notifications?.waterReminder ?? true,
       workoutReminder: userDoc?.notifications?.workoutReminder ?? true,
