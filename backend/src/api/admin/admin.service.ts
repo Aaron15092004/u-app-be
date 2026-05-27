@@ -1,7 +1,87 @@
 import Exercise, { IExercise } from '../../models/Exercise';
 import FoodItem, { IFoodItem } from '../../models/FoodItem';
 import User from '../../models/User';
+import BMIRecord from '../../models/BMIRecord';
+import FoodLog from '../../models/FoodLog';
+import WorkoutLog from '../../models/WorkoutLog';
 import { uploadImage } from '../../services/cloudinary.service';
+
+// ---- Dashboard Stats ----
+
+export interface DashboardStats {
+  totalUsers: number;
+  activeUsers: number;
+  bannedUsers: number;
+  totalExercises: number;
+  totalFoodItems: number;
+  totalWorkouts: number;
+  newUsersLast7Days: Array<{ date: string; count: number }>;
+  bmiDistribution: Array<{ category: string; count: number }>;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const now = new Date();
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+
+  const [
+    totalUsers,
+    activeUsers,
+    totalExercises,
+    totalFoodItems,
+    totalWorkouts,
+    newUsersCounts,
+    bmiDist,
+  ] = await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ isActive: true }),
+    Exercise.countDocuments(),
+    FoodItem.countDocuments(),
+    WorkoutLog.countDocuments(),
+    Promise.all(
+      days.map(async (d) => {
+        const next = new Date(d);
+        next.setDate(next.getDate() + 1);
+        const count = await User.countDocuments({ createdAt: { $gte: d, $lt: next } });
+        return {
+          date: d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+          count,
+        };
+      }),
+    ),
+    BMIRecord.aggregate([
+      { $sort: { userId: 1, recordedAt: -1 } },
+      { $group: { _id: '$userId', category: { $first: '$category' } } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const categoryLabels: Record<string, string> = {
+    underweight: 'Thiếu cân',
+    normal: 'Bình thường',
+    overweight: 'Thừa cân',
+    obese: 'Béo phì',
+  };
+
+  return {
+    totalUsers,
+    activeUsers,
+    bannedUsers: totalUsers - activeUsers,
+    totalExercises,
+    totalFoodItems,
+    totalWorkouts,
+    newUsersLast7Days: newUsersCounts,
+    bmiDistribution: bmiDist.map((d: { _id: string; count: number }) => ({
+      category: categoryLabels[d._id] ?? d._id,
+      count: d.count,
+    })),
+  };
+}
 
 // ---- Upload ----
 

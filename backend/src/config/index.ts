@@ -34,7 +34,7 @@ export const config = {
   FIREBASE_CLIENT_EMAIL: required('FIREBASE_CLIENT_EMAIL'),
   FIREBASE_PRIVATE_KEY: required('FIREBASE_PRIVATE_KEY'),
   LOGMEAL_API_KEY: optional('LOGMEAL_API_KEY'),
-  OPENAI_API_KEY: optional('OPENAI_API_KEY'),
+  GEMINI_API_KEY: optional('GEMINI_API_KEY'),
   ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || 'http://localhost:19006').split(','),
 };
 

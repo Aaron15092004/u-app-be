@@ -31,6 +31,29 @@ export interface IProfileStats {
     waterReminderTime: string;
     workoutReminderTime: string;
   };
+  dailyTargets: { kcal: number; protein: number; carbs: number; fat: number };
+}
+
+// ---------------------------------------------------------------------------
+// calculateDailyTargets — Mifflin-St Jeor BMR → TDEE → macro split
+// ---------------------------------------------------------------------------
+
+function calculateDailyTargets(
+  weightKg?: number, heightCm?: number, age?: number, goalType?: string,
+): { kcal: number; protein: number; carbs: number; fat: number } {
+  if (!weightKg) return { kcal: 2000, protein: 100, carbs: 250, fat: 67 };
+  const h = heightCm ?? 165;
+  const a = age ?? 25;
+  const bmr = 10 * weightKg + 6.25 * h - 5 * a + 5;
+  const tdee = bmr * 1.55;
+  const kcal = Math.round(
+    goalType === 'lose' ? tdee - 500 : goalType === 'gain' ? tdee + 300 : tdee,
+  );
+  const safe = Math.max(1200, kcal);
+  const protein = Math.round(weightKg * 1.8);
+  const fat = Math.round(safe * 0.28 / 9);
+  const carbs = Math.max(50, Math.round((safe - protein * 4 - fat * 9) / 4));
+  return { kcal: safe, protein, carbs, fat };
 }
 
 // ---------------------------------------------------------------------------
@@ -48,8 +71,11 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
       { $match: { userId: userObjId } },
       { $group: { _id: null, total: { $sum: '$caloriesBurned' } } },
     ]),
-    User.findById(userObjId).select('notifications').lean(),
+    User.findById(userObjId).select('notifications profile').lean(),
   ]);
+
+  const prof = (userDoc as { profile?: { weightKg?: number; heightCm?: number; age?: number; goalType?: string }; notifications?: object } | null)?.profile;
+  const dailyTargets = calculateDailyTargets(prof?.weightKg, prof?.heightCm, prof?.age, prof?.goalType);
 
   return {
     streakDays: streakResult.streakDays,
@@ -61,6 +87,7 @@ export async function getProfileStats(userId: string): Promise<IProfileStats> {
       waterReminderTime: userDoc?.notifications?.waterReminderTime ?? '08:00',
       workoutReminderTime: userDoc?.notifications?.workoutReminderTime ?? '07:00',
     },
+    dailyTargets,
   };
 }
 
@@ -81,6 +108,7 @@ export async function updateUserProfile(
   if (body.weightKg !== undefined) update['profile.weightKg'] = body.weightKg;
   if (body.goalType !== undefined) update['profile.goalType'] = body.goalType;
   if (body.waterGoal !== undefined) update['profile.waterGoal'] = body.waterGoal;
+  if (body.age !== undefined) update['profile.age'] = body.age;
 
   const user = await User.findByIdAndUpdate(userObjId, update, {
     new: true,

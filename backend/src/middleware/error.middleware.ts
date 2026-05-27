@@ -18,6 +18,12 @@ export function errorMiddleware(
 ): void {
   console.error(err);
 
+  const status = (err as { statusCode?: number }).statusCode;
+  if (typeof status === 'number') {
+    res.status(status).json({ success: false, error: err.message });
+    return;
+  }
+
   if ((err as MongooseValidationError).name === 'ValidationError') {
     res.status(400).json({ success: false, error: err.message });
     return;

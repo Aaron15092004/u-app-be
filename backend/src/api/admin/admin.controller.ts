@@ -13,6 +13,18 @@ import {
   listQuerySchema,
 } from './admin.validation';
 
+// ---- Dashboard Stats ----
+
+export async function getDashboardStats(_req: Request, res: Response): Promise<void> {
+  try {
+    const stats = await adminService.getDashboardStats();
+    success(res, stats);
+  } catch (err: unknown) {
+    const e = err as { message?: string };
+    error(res, e.message ?? 'Lỗi server', 500);
+  }
+}
+
 // ---- Upload ----
 
 export async function uploadImage(req: Request, res: Response): Promise<void> {

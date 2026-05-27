@@ -1,5 +1,3 @@
-import OpenAI from 'openai';
-
 export interface NutritionResult {
   foods: Array<{
     name: string;
@@ -10,9 +8,9 @@ export interface NutritionResult {
     fat: number;
     fiber: number;
     sugar: number;
-    sodium: number;      // D-60
-    vitaminC: number;    // D-60
-    tags: string[];      // D-60
+    vitamins: Record<string, number>; // { vitaminC: 15, vitaminA: 80, ... }
+    minerals: Record<string, number>; // { sodium: 350, potassium: 200, ... }
+    tags: string[];
   }>;
   totals: {
     calories: number;
@@ -20,108 +18,184 @@ export interface NutritionResult {
     carbs: number;
     fat: number;
   };
-  aiProvider: 'logmeal' | 'openai' | 'manual';
-  imageUrl: string | null;   // null in Phase 4 (D-62)
+  aiProvider: "logmeal" | "gemini" | "manual";
+  imageUrl: string | null;
 }
 
-/**
- * Analyze a food image using GPT-4o-mini vision.
- * Returns a NutritionResult with all 10 nutritional fields + tags per food item.
- * Instantiates OpenAI client at call time (not module scope) to allow test env override (T-04-02-03).
- */
-export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
-  // Instantiate at call time — never at module scope — so test environments
-  // can set process.env.OPENAI_API_KEY before this function runs (T-04-02-03).
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-  const base64 = imageBuffer.toString('base64');
-  const dataUrl = `data:image/jpeg;base64,${base64}`;
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    response_format: { type: 'json_object' },
-    messages: [
-      {
-        role: 'system',
-        content: `Bạn là chuyên gia dinh dưỡng. Phân tích ảnh bữa ăn và trả về JSON với cấu trúc:
+const USER_PROMPT = `Bạn là chuyên gia dinh dưỡng. Phân tích ảnh bữa ăn này và trả về ONLY một JSON object (không có markdown, không có text khác) với cấu trúc sau:
 {
-  "foods": [{
-    "name": "string (tên món ăn tiếng Việt)",
-    "weightG": number,
-    "calories": number,
-    "protein": number,
-    "carbs": number,
-    "fat": number,
-    "fiber": number,
-    "sugar": number,
-    "sodium": number,
-    "vitaminC": number,
-    "tags": ["string"]
-  }],
-  "totals": { "calories": number, "protein": number, "carbs": number, "fat": number }
-}
-Tất cả giá trị dinh dưỡng tính theo gram (ngoại trừ calories = kcal). Ước tính số lượng thực tế trong ảnh.`,
+  "foods": [
+    {
+      "name": "tên món ăn tiếng Việt",
+      "weightG": 150,
+      "calories": 250,
+      "protein": 10,
+      "carbs": 30,
+      "fat": 8,
+      "fiber": 3,
+      "sugar": 5,
+      "vitamins": {
+        "vitaminC": 15.0,
+        "vitaminA": 80.0
       },
+      "minerals": {
+        "sodium": 350.0,
+        "potassium": 200.0,
+        "calcium": 80.0,
+        "iron": 2.5
+      },
+      "tags": ["tag1"]
+    }
+  ],
+  "totals": { "calories": 250, "protein": 10, "carbs": 30, "fat": 8 }
+}
+Quy tắc quan trọng:
+- calories = kcal; protein/carbs/fat/fiber/sugar = gram
+- vitamins: đơn vị mg hoặc mcg tùy loại. Chỉ liệt kê vitamin có hàm lượng đáng kể (> 0). Các loại phổ biến: vitaminC, vitaminA, vitaminD, vitaminE, vitaminK, vitaminB1, vitaminB2, vitaminB3, vitaminB12, folate
+- minerals: đơn vị mg hoặc mcg tùy loại. Chỉ liệt kê khoáng chất có hàm lượng đáng kể (> 0). Các loại phổ biến: sodium, potassium, calcium, magnesium, phosphorus, iron, zinc, selenium
+- Nếu không có vitamin/khoáng chất đáng kể thì để: "vitamins": {}, "minerals": {}
+- Ước tính dựa trên ảnh thực tế. Chỉ trả về JSON, không giải thích thêm.`;
+
+export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
+  const apiKey = process.env.GEMINI_API_KEY ?? "";
+  if (!apiKey) throw new Error("GEMINI_API_KEY chưa được cấu hình");
+
+  const base64 = imageBuffer.toString("base64");
+  const url = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent`;
+
+  // No responseMimeType — JSON mode breaks vision requests on some model versions.
+  // Instead we embed the instruction directly in the prompt.
+  const body = {
+    contents: [
       {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Phân tích các món ăn trong ảnh và trả về thông tin dinh dưỡng theo định dạng JSON đã yêu cầu.',
-          },
-          {
-            type: 'image_url',
-            image_url: { url: dataUrl },
-          },
+        parts: [
+          { inline_data: { mime_type: "image/jpeg", data: base64 } },
+          { text: USER_PROMPT },
         ],
       },
     ],
-    max_tokens: 1000,
+    generationConfig: { maxOutputTokens: 4096, temperature: 0.1 },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
+    body: JSON.stringify(body),
   });
 
-  const content = response.choices[0].message.content;
-  if (!content) throw new Error('OpenAI trả về kết quả rỗng');
-
-  // Parse and validate JSON response (T-04-02-02: normalize to prevent NaN/undefined)
-  const raw = JSON.parse(content) as {
-    foods?: Array<Record<string, unknown>>;
-    totals?: Record<string, unknown>;
-  };
-
-  // Validate: foods array must be non-empty
-  if (!raw.foods || raw.foods.length === 0) {
-    throw new Error('Không nhận dạng được thức ăn trong ảnh');
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API lỗi ${response.status}: ${errText.slice(0, 300)}`);
   }
 
-  // Normalize each food item — coerce numeric fields via Number() || 0 (Pitfall 5)
-  const foods = raw.foods.map((item) => ({
-    name: String(item.name ?? ''),
-    weightG: Number(item.weightG) || 0,
-    calories: Number(item.calories) || 0,
-    protein: Number(item.protein) || 0,
-    carbs: Number(item.carbs) || 0,
-    fat: Number(item.fat) || 0,
-    fiber: Number(item.fiber) || 0,
-    sugar: Number(item.sugar) || 0,
-    sodium: Number(item.sodium) || 0,
-    vitaminC: Number(item.vitaminC) || 0,
-    // Ensure tags is always an array of strings
-    tags: Array.isArray(item.tags) ? (item.tags as unknown[]).map(String) : [],
-  }));
+  const json = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      finishReason?: string;
+    }>;
+    promptFeedback?: { blockReason?: string };
+  };
 
-  // Normalize totals — recalculate from foods if any totals field is missing
-  const rawTotals = raw.totals ?? {};
+  // Surface prompt-level blocks (e.g. SAFETY)
+  if (json.promptFeedback?.blockReason) {
+    throw new Error(`Gemini từ chối ảnh: ${json.promptFeedback.blockReason}`);
+  }
+
+  const candidate = json.candidates?.[0];
+
+  // Surface candidate-level blocks
+  if (
+    candidate?.finishReason &&
+    candidate.finishReason !== "STOP" &&
+    candidate.finishReason !== "MAX_TOKENS"
+  ) {
+    throw new Error(`Gemini dừng bất thường: ${candidate.finishReason}`);
+  }
+
+  // Gemini may split output across multiple parts — join them all.
+  const rawText = (candidate?.content?.parts ?? [])
+    .map((p: { text?: string }) => p.text ?? "")
+    .join("");
+
+  if (!rawText.trim()) {
+    console.error("[Gemini] empty response. Full API response:", JSON.stringify(json, null, 2));
+    throw new Error("Gemini trả về kết quả rỗng");
+  }
+
+  console.log("[Gemini] raw text (first 500 chars):", rawText.slice(0, 500));
+
+  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error("[Gemini] no JSON object found in response:", rawText);
+    throw new Error("Gemini không trả về JSON. Vui lòng thử lại.");
+  }
+
+  let raw: { foods?: Array<Record<string, unknown>>; totals?: Record<string, unknown> };
+  try {
+    raw = JSON.parse(jsonMatch[0]) as typeof raw;
+  } catch (parseErr) {
+    console.error("[Gemini] JSON.parse failed on:", jsonMatch[0].slice(0, 300), parseErr);
+    throw new Error("Không đọc được kết quả từ Gemini. Vui lòng thử lại.");
+  }
+
+  if (!raw.foods || raw.foods.length === 0) {
+    throw new Error("Không nhận dạng được thức ăn trong ảnh");
+  }
+
+  const foods = raw.foods.map((item) => {
+    // Accept nested vitamins/minerals objects from new prompt format.
+    // Also handle legacy flat fields (vitaminC, sodium) in case Gemini ignores the new format.
+    const rawVitamins = (item.vitamins && typeof item.vitamins === "object" && !Array.isArray(item.vitamins)
+      ? item.vitamins
+      : {}) as Record<string, unknown>;
+    const rawMinerals = (item.minerals && typeof item.minerals === "object" && !Array.isArray(item.minerals)
+      ? item.minerals
+      : {}) as Record<string, unknown>;
+
+    // Fallback: promote legacy flat fields into nested objects
+    if (!rawVitamins.vitaminC && item.vitaminC) rawVitamins.vitaminC = item.vitaminC;
+    if (!rawMinerals.sodium && item.sodium) rawMinerals.sodium = item.sodium;
+
+    const vitamins: Record<string, number> = {};
+    for (const [k, v] of Object.entries(rawVitamins)) {
+      const n = Number(v);
+      if (n > 0) vitamins[k] = n;
+    }
+
+    const minerals: Record<string, number> = {};
+    for (const [k, v] of Object.entries(rawMinerals)) {
+      const n = Number(v);
+      if (n > 0) minerals[k] = n;
+    }
+
+    return {
+      name: String(item.name ?? "Món ăn"),
+      weightG: Number(item.weightG) || 0,
+      calories: Number(item.calories) || 0,
+      protein: Number(item.protein) || 0,
+      carbs: Number(item.carbs) || 0,
+      fat: Number(item.fat) || 0,
+      fiber: Number(item.fiber) || 0,
+      sugar: Number(item.sugar) || 0,
+      vitamins,
+      minerals,
+      tags: Array.isArray(item.tags) ? (item.tags as unknown[]).map(String) : [],
+    };
+  });
+
+  const rt = (raw.totals ?? {}) as Record<string, unknown>;
   const totals = {
-    calories: Number((rawTotals as Record<string, unknown>).calories) || foods.reduce((s, f) => s + f.calories, 0),
-    protein: Number((rawTotals as Record<string, unknown>).protein) || foods.reduce((s, f) => s + f.protein, 0),
-    carbs: Number((rawTotals as Record<string, unknown>).carbs) || foods.reduce((s, f) => s + f.carbs, 0),
-    fat: Number((rawTotals as Record<string, unknown>).fat) || foods.reduce((s, f) => s + f.fat, 0),
+    calories: Number(rt.calories) || foods.reduce((s, f) => s + f.calories, 0),
+    protein:  Number(rt.protein)  || foods.reduce((s, f) => s + f.protein, 0),
+    carbs:    Number(rt.carbs)    || foods.reduce((s, f) => s + f.carbs, 0),
+    fat:      Number(rt.fat)      || foods.reduce((s, f) => s + f.fat, 0),
   };
 
-  return {
-    foods,
-    totals,
-    aiProvider: 'openai',
-    imageUrl: null,  // D-62: never store image in Phase 4
-  };
+  return { foods, totals, aiProvider: "gemini", imageUrl: null };
 }

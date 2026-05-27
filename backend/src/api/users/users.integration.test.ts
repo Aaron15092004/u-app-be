@@ -12,11 +12,9 @@ process.env.CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET ?? 'test';
 process.env.FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID ?? 'test';
 process.env.FIREBASE_CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL ?? 'test@test.com';
 process.env.FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY ?? 'test-key';
-// IMPORTANT: Use a literal test key — NEVER the real OPENAI_API_KEY.
-// This prevents "OpenAI API key is required" error when food service is imported.
-// The real key is only in backend/.env (gitignored). Tests must mock analyzeImage()
-// and never call the real OpenAI API.
-process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? 'test-key';
+// IMPORTANT: Use a literal test key — NEVER the real GEMINI_API_KEY.
+// The real key is only in backend/.env (gitignored).
+process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? 'test-key';
 
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';

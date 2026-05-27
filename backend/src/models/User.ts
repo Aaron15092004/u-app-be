@@ -14,6 +14,7 @@ export interface IUser extends Document {
     weightKg?: number;
     goalType?: 'lose' | 'maintain' | 'gain';
     waterGoal?: number;
+    age?: number;
   };
   notifications: {
     waterReminder: boolean;
@@ -46,6 +47,7 @@ const UserSchema = new Schema<IUser>(
       weightKg: Number,
       goalType: { type: String, enum: ['lose', 'maintain', 'gain'] },
       waterGoal: { type: Number, default: 8 },
+      age: { type: Number, min: 10, max: 120 },
     },
     notifications: {
       waterReminder: { type: Boolean, default: true },

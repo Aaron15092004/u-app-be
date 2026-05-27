@@ -15,6 +15,7 @@ export const updateProfileSchema = z
       .min(1, 'Số ly tối thiểu là 1')
       .max(20, 'Số ly tối đa là 20')
       .optional(),
+    age: z.number().int().min(10, 'Tuổi không hợp lệ').max(120, 'Tuổi không hợp lệ').optional(),
   })
   .strict();
 
