@@ -77,7 +77,7 @@
 
 ### Validated
 
-(None yet — ship to validate)
+- v2.0 Phase 3 complete: manual campaign-code redeem hardening, barcode scanner/cache/review flow, admin operations dashboards, native store review gating, exercise media filename mapping/audit, and automated release verification passed.
 
 ### Active
 
@@ -179,4 +179,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-26 after starting milestone v2.0*
+*Last updated: 2026-05-27 after completing v2.0 Phase 3*
