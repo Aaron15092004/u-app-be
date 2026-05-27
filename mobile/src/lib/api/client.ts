@@ -26,8 +26,8 @@ export const authEvents = {
 // Axios instance
 // ---------------------------------------------------------------------------
 const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000',
-  timeout: 10000,
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://u-app-be.onrender.com',
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
