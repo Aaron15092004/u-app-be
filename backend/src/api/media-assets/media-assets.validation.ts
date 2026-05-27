@@ -29,6 +29,18 @@ export const updateMediaAssetSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const batchMediaAssetSchema = z.object({
+  batchId: z.string().trim().min(1).max(120).optional(),
+  assets: z.array(createMediaAssetUploadSchema.extend({
+    originalFilename: z.string().trim().min(1).max(255).optional(),
+  })).min(1).max(500),
+});
+
+export const mediaBatchSchema = z.object({
+  batchId: z.string().trim().min(1).max(120),
+});
+
 export type ListMediaAssetsInput = z.infer<typeof listMediaAssetsSchema>;
 export type CreateMediaAssetUploadInput = z.infer<typeof createMediaAssetUploadSchema>;
 export type UpdateMediaAssetInput = z.infer<typeof updateMediaAssetSchema>;
+export type BatchMediaAssetInput = z.infer<typeof batchMediaAssetSchema>;

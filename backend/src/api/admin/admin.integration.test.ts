@@ -11,6 +11,7 @@ import FoodItem from '../../models/FoodItem';
 import Campaign from '../../models/Campaign';
 import RedeemCode from '../../models/RedeemCode';
 import AppRating from '../../models/AppRating';
+import MediaAsset from '../../models/MediaAsset';
 
 let mongod: MongoMemoryServer;
 let adminToken: string;
@@ -174,6 +175,64 @@ describe('requireAdmin guard', () => {
     assert.equal(res.body.data.total >= 2, true);
     assert.equal(res.body.data.distribution.find((item: { stars: number }) => item.stars === 5).count >= 1, true);
     assert.equal(res.body.data.recentComments[0].comment, 'Rất tốt');
+  });
+
+  it('maps exercise media batch by exact filename and records audit metadata', async () => {
+    const exercise = await Exercise.create({
+      name: 'Jumping Jack',
+      category: 'cardio',
+      difficulty: 'easy',
+      durationMinutes: 5,
+      caloriesBurned: 30,
+      imageUrl: null,
+      steps: [],
+      isActive: true,
+    });
+
+    const missing = await supertest(app)
+      .get('/api/admin/media-assets/missing-exercises')
+      .set('Authorization', `Bearer ${adminToken}`);
+    assert.equal(missing.status, 200);
+    assert.equal(missing.body.data.items.some((item: { _id: string }) => item._id === String(exercise._id)), true);
+
+    const batch = await supertest(app)
+      .post('/api/admin/media-assets/batch')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        batchId: 'batch-images',
+        assets: [{
+          source: 'bulk_import',
+          publicId: 'jumping-jack',
+          url: 'https://cdn.example.com/jumping-jack.jpg',
+          mimeType: 'image/jpeg',
+          originalFilename: 'jumping-jack.jpg',
+        }],
+      });
+    assert.equal(batch.status, 201);
+
+    const match = await supertest(app)
+      .post('/api/admin/media-assets/match')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ batchId: 'batch-images' });
+    assert.equal(match.status, 200);
+    assert.equal(match.body.data.exactMatches, 1);
+
+    const applied = await supertest(app)
+      .post('/api/admin/media-assets/apply-exact')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ batchId: 'batch-images' });
+    assert.equal(applied.status, 200);
+    assert.equal(applied.body.data.applied.length, 1);
+
+    const updatedExercise = await Exercise.findById(exercise._id).lean();
+    assert.equal(updatedExercise?.imageUrl, 'https://cdn.example.com/jumping-jack.jpg');
+    assert.ok(updatedExercise?.imageAssetId);
+
+    const asset = await MediaAsset.findOne({ batchId: 'batch-images' }).lean();
+    assert.equal(asset?.status, 'assigned');
+    assert.equal(String(asset?.assignedExerciseId), String(exercise._id));
+    assert.equal(asset?.metadata?.matchedExerciseName, 'Jumping Jack');
+    assert.ok(asset?.metadata?.appliedAt);
   });
 });
 
