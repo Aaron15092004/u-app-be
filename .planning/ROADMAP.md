@@ -14,7 +14,7 @@
 
 - [x] **Phase 1: v2 Data Foundation** — Shared models, indexes, validation, contracts, and package additions for v2.0 features. (completed 2026-05-26)
 - [ ] **Phase 2: MVP Fast Release Pack** — Ship the minimum commercial release: bulk campaign codes, manual redeem, high scan quota, external barcode lookup, saved Ủ milk preference, and internal rating.
-- [ ] **Phase 3: Post-MVP Hardening** — Add scanner polish, external barcode fallback/cache, advanced admin operations, store review prompt, full media audit, and release-quality edge cases after MVP launch.
+- [x] **Phase 3: Post-MVP Hardening** — Add scanner polish, external barcode fallback/cache, advanced admin operations, store review prompt, full media audit, and release-quality edge cases after MVP launch. (completed 2026-05-27)
 
 ---
 
@@ -110,7 +110,7 @@
 |-------|------|----------------|--------|-----------|
 | 1 | v2 Data Foundation | 5/5 | Complete   | 2026-05-26 |
 | 2 | MVP Fast Release Pack | 0/TBD | Pending | — |
-| 3 | Post-MVP Hardening | 0/6 | Ready to execute | — |
+| 3 | Post-MVP Hardening | 6/6 | Complete    | 2026-05-27 |
 
 ---
 

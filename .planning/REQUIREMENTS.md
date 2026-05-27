@@ -7,7 +7,7 @@
 
 ### Campaign Codes & Scan Entitlements
 
-- [ ] **CODE-01**: Admin can create a campaign with name, description, active window, redemption expiry policy, scan entitlement duration, and status.
+- [x] **CODE-01**: Admin can create a campaign with name, description, active window, redemption expiry policy, scan entitlement duration, and status.
 - [ ] **CODE-02**: Admin can generate bulk single-use redeem codes for a campaign with configurable quantity and human-readable labels.
 - [ ] **CODE-03**: Admin can export generated codes as CSV containing code, campaign metadata, expiry, and QR/deep-link payload for bottle printing.
 - [ ] **CODE-04**: Admin can search and filter codes by campaign, status, created date, redeemed user, and expiry state.
@@ -18,43 +18,43 @@
 - [ ] **CODE-09**: User with an active entitlement can use AI food scan beyond the normal daily scan limit until the entitlement expires.
 - [ ] **CODE-10**: User can view current scan entitlement status and exact active-until time in the app.
 - [x] **CODE-11**: Backend stores redeem codes hashed at rest and redeems them atomically so the same code cannot be reused.
-- [ ] **CODE-12**: Backend applies anti-abuse controls for redemption attempts and fair-use protection for "unlimited" AI scan traffic.
+- [x] **CODE-12**: Backend applies anti-abuse controls for redemption attempts and fair-use protection for "unlimited" AI scan traffic.
 
 ### Barcode Food Scan
 
-- [ ] **BAR-01**: User can open barcode scan mode from the food scan flow.
+- [x] **BAR-01**: User can open barcode scan mode from the food scan flow.
 - [ ] **BAR-02**: User can scan packaged-food barcodes with the existing camera infrastructure.
 - [ ] **BAR-03**: Backend can look up barcode products from the local food database before calling an external fallback.
 - [ ] **BAR-04**: Backend can query and cache Open Food Facts barcode results with normalized Vietnamese-compatible nutrition fields.
 - [ ] **BAR-05**: User can review and edit barcode nutrition data before saving it as a food log.
 - [ ] **BAR-06**: User can fall back to manual food search or AI image scan when barcode data is missing or incomplete.
-- [ ] **BAR-07**: Food logs created from barcode preserve source/provenance for later support and data-quality review.
+- [x] **BAR-07**: Food logs created from barcode preserve source/provenance for later support and data-quality review.
 
 ### Ủ Milk Recommendation
 
-- [ ] **MILK-01**: Backend exposes deterministic Ủ milk recommendation rules based on BMI category and optional need signals.
+- [x] **MILK-01**: Backend exposes deterministic Ủ milk recommendation rules based on BMI category and optional need signals.
 - [ ] **MILK-02**: User can see recommended Ủ milk flavors after BMI calculation or from the BMI screen.
 - [ ] **MILK-03**: Recommendation UI explains the suggestion in Vietnamese using product-preference wording, not medical treatment claims.
 - [ ] **MILK-04**: User can choose and save one preferred Ủ milk flavor from the recommendation result.
 - [ ] **MILK-05**: User's saved milk preference persists across app restarts and remains visible in profile/BMI context.
-- [ ] **MILK-06**: BMI rule boundaries are explicit and tested: BMI < 18.5, BMI 18.5-22.9, BMI > 23, plus any-BMI lifestyle options.
+- [x] **MILK-06**: BMI rule boundaries are explicit and tested: BMI < 18.5, BMI 18.5-22.9, BMI > 23, plus any-BMI lifestyle options.
 
 ### Exercise Media Operations
 
-- [ ] **MEDIA-01**: Admin can view exercises missing images in a dedicated queue or filter.
+- [x] **MEDIA-01**: Admin can view exercises missing images in a dedicated queue or filter.
 - [ ] **MEDIA-02**: Admin can upload multiple exercise images through the existing signed backend upload flow.
 - [ ] **MEDIA-03**: Admin can map uploaded images to exercises by deterministic filename or manual selection with preview before applying.
 - [ ] **MEDIA-04**: Admin can confirm a batch image assignment and update exercise records without breaking existing `imageUrl` mobile compatibility.
 - [ ] **MEDIA-05**: Admin can see image assignment status, upload errors, and batch audit metadata.
-- [ ] **MEDIA-06**: Backend prevents deletion or replacement from orphaning exercise images without an explicit safe path.
+- [x] **MEDIA-06**: Backend prevents deletion or replacement from orphaning exercise images without an explicit safe path.
 
 ### App Feedback & Ratings
 
-- [ ] **RATE-01**: User is prompted for app feedback only after meaningful feature usage, not on first launch or after an error.
+- [x] **RATE-01**: User is prompted for app feedback only after meaningful feature usage, not on first launch or after an error.
 - [ ] **RATE-02**: User can submit a star rating and optional comment from inside the mobile app.
 - [ ] **RATE-03**: User can dismiss the prompt and will not be repeatedly prompted within the cooldown window.
 - [ ] **RATE-04**: Admin can view feedback entries with user, rating, comment, feature context, created date, and app version.
-- [ ] **RATE-05**: App can optionally trigger the native store review prompt after positive internal feedback when the platform supports it.
+- [x] **RATE-05**: App can optionally trigger the native store review prompt after positive internal feedback when the platform supports it.
 
 ## Future Requirements
 
@@ -104,7 +104,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CODE-01 | Phase 2 | Pending |
+| CODE-01 | Phase 2 | Complete |
 | CODE-02 | Phase 2 | Pending |
 | CODE-03 | Phase 2 | Pending |
 | CODE-04 | Phase 2 | Pending |
@@ -115,31 +115,31 @@
 | CODE-09 | Phase 2 | Pending |
 | CODE-10 | Phase 2 | Pending |
 | CODE-11 | Phase 1 | Complete |
-| CODE-12 | Phase 2 | Pending |
-| BAR-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| CODE-12 | Phase 2 | Complete |
+| BAR-01 | Phase 2 MVP, Phase 3 hardening | Complete |
 | BAR-02 | Phase 2 MVP, Phase 3 hardening | Pending |
 | BAR-03 | Phase 2 MVP, Phase 3 hardening | Pending |
 | BAR-04 | Phase 2 MVP, Phase 3 hardening | Pending |
 | BAR-05 | Phase 2 MVP, Phase 3 hardening | Pending |
 | BAR-06 | Phase 2 MVP, Phase 3 hardening | Pending |
-| BAR-07 | Phase 2 MVP, Phase 3 hardening | Pending |
-| MILK-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| BAR-07 | Phase 2 MVP, Phase 3 hardening | Complete |
+| MILK-01 | Phase 2 MVP, Phase 3 hardening | Complete |
 | MILK-02 | Phase 2 MVP, Phase 3 hardening | Pending |
 | MILK-03 | Phase 2 MVP, Phase 3 hardening | Pending |
 | MILK-04 | Phase 2 MVP, Phase 3 hardening | Pending |
 | MILK-05 | Phase 2 MVP, Phase 3 hardening | Pending |
-| MILK-06 | Phase 2 MVP, Phase 3 hardening | Pending |
-| MEDIA-01 | Phase 3 hardening | Pending |
+| MILK-06 | Phase 2 MVP, Phase 3 hardening | Complete |
+| MEDIA-01 | Phase 3 hardening | Complete |
 | MEDIA-02 | Phase 3 hardening | Pending |
 | MEDIA-03 | Phase 3 hardening | Pending |
 | MEDIA-04 | Phase 3 hardening | Pending |
 | MEDIA-05 | Phase 3 hardening | Pending |
-| MEDIA-06 | Phase 3 hardening | Pending |
-| RATE-01 | Phase 2 MVP, Phase 3 hardening | Pending |
+| MEDIA-06 | Phase 3 hardening | Complete |
+| RATE-01 | Phase 2 MVP, Phase 3 hardening | Complete |
 | RATE-02 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-03 | Phase 2 MVP, Phase 3 hardening | Pending |
 | RATE-04 | Phase 2 MVP, Phase 3 hardening | Pending |
-| RATE-05 | Phase 3 hardening | Pending |
+| RATE-05 | Phase 3 hardening | Complete |
 
 **Coverage:**
 - v2.0 requirements: 36 total
