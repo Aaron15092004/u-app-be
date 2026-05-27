@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import type {
   AdminV2Campaign,
+  AdminV2CampaignOpsStats,
   AdminV2CampaignStatus,
   AdminV2GeneratedRedeemCodeExportRow,
   AdminV2RedeemCodeMetadata,
@@ -49,6 +50,18 @@ export function useCampaigns(page = 1, status?: AdminV2CampaignStatus | 'all') {
       if (status && status !== 'all') params.set('status', status);
       const { data } = await apiClient.get<{ success: true; data: ListResponse<AdminV2Campaign> }>(
         `/api/admin/campaigns?${params}`,
+      );
+      return data.data;
+    },
+  });
+}
+
+export function useCampaignOpsStats() {
+  return useQuery({
+    queryKey: ['admin', 'campaigns', 'stats'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ success: true; data: AdminV2CampaignOpsStats }>(
+        '/api/admin/campaigns/stats',
       );
       return data.data;
     },

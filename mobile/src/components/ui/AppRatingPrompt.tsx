@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Linking, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
-import { submitAppRatingApi } from "../../lib/api/v2-contracts.api";
+import * as StoreReview from "expo-store-review";
+import { dismissRatingPromptApi, submitAppRatingApi } from "../../lib/api/v2-contracts.api";
 import type { IV2RatingTrigger } from "../../lib/api/types";
 import { PRIMARY_DARK, SURFACE, TEXT, TEXT_SECONDARY } from "../../constants/colors";
+import { APP_STORE_URL, PLAY_STORE_URL } from "../../constants/config";
 import PrimaryButton from "./PrimaryButton";
 
 interface AppRatingPromptProps {
@@ -29,15 +31,25 @@ export default function AppRatingPrompt({
       stars,
       comment: [contextNote, comment.trim()].filter(Boolean).join("\n\n") || undefined,
       trigger,
-      platform: "unknown",
-      storeReviewRequested: false,
+      platform: Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "unknown",
+      storeReviewRequested: stars >= 4,
       deviceInfo: { source: "post_redeem_prompt" },
     }),
-    onSuccess: onClose,
+    onSuccess: async () => {
+      if (stars >= 4) {
+        await requestStoreReviewOrFallback();
+      }
+      onClose();
+    },
     onError: (err: unknown) => {
       const e = err as { response?: { data?: { error?: string } }; message?: string };
       setError(e.response?.data?.error ?? e.message ?? "Không thể gửi đánh giá.");
     },
+  });
+
+  const dismissMutation = useMutation({
+    mutationFn: () => dismissRatingPromptApi(trigger),
+    onSettled: onClose,
   });
 
   return (
@@ -71,7 +83,7 @@ export default function AppRatingPrompt({
             onPress={() => mutation.mutate()}
             loading={mutation.isPending}
           />
-          <Pressable style={styles.skip} onPress={onClose}>
+          <Pressable style={styles.skip} onPress={() => dismissMutation.mutate()} disabled={dismissMutation.isPending}>
             <Text style={styles.skipText}>Để sau</Text>
           </Pressable>
         </View>
@@ -111,3 +123,30 @@ const styles = StyleSheet.create({
   skip: { alignItems: "center", paddingVertical: 8 },
   skipText: { color: PRIMARY_DARK, fontWeight: "700" },
 });
+
+async function requestStoreReviewOrFallback(): Promise<void> {
+  try {
+    if (await StoreReview.hasAction()) {
+      if (await StoreReview.isAvailableAsync()) {
+        await StoreReview.requestReview();
+        return;
+      }
+    }
+  } catch {
+    // Fall through to public store URL fallback.
+  }
+
+  const expoStoreUrl = StoreReview.storeUrl();
+  const configuredStoreUrl = Platform.select({
+    ios: APP_STORE_URL,
+    android: PLAY_STORE_URL,
+    default: "",
+  });
+  const url = expoStoreUrl || configuredStoreUrl;
+  if (url) {
+    const supported = await Linking.canOpenURL(url).catch(() => false);
+    if (supported) {
+      await Linking.openURL(url).catch(() => undefined);
+    }
+  }
+}

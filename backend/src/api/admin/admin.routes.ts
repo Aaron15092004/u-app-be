@@ -7,12 +7,13 @@ import {
   createCampaignHandler,
   exportCampaignCodesCsvHandler,
   generateCampaignCodesHandler,
+  getCampaignOpsStatsHandler,
   listCampaignCodesHandler,
   listCampaignsHandler,
   revokeCampaignHandler,
   revokeCodeHandler,
 } from '../campaigns/campaigns.controller';
-import { listAppRatings } from '../ratings/ratings.controller';
+import { getRatingsDashboardHandler, listAppRatings } from '../ratings/ratings.controller';
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.post('/upload', uploadSingle, adminController.uploadImage);
 // v2 campaign code MVP (Phase 2)
 router.get('/campaigns', listCampaignsHandler);
 router.post('/campaigns', createCampaignHandler);
+router.get('/campaigns/stats', getCampaignOpsStatsHandler);
 router.patch('/campaigns/:id/revoke', revokeCampaignHandler);
 router.post('/campaigns/:id/codes/generate', generateCampaignCodesHandler);
 router.get('/campaigns/:id/codes', listCampaignCodesHandler);
@@ -40,6 +42,7 @@ router.patch('/campaigns/codes/:codeId/revoke', revokeCodeHandler);
 
 // v2 internal feedback ratings (Phase 2 MVP)
 router.get('/ratings', listAppRatings);
+router.get('/ratings/stats', getRatingsDashboardHandler);
 
 // v2 media asset scaffolds (Phase 5)
 router.use('/media-assets', mediaAssetsRouter);

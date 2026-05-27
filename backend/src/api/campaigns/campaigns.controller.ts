@@ -14,6 +14,7 @@ import {
   createCampaign,
   generateCampaignCodes,
   getMyScanEntitlements as getMyScanEntitlementsService,
+  getCampaignOpsStats,
   listCampaignCodes,
   listCampaigns,
   redeemCampaignCode as redeemCampaignCodeService,
@@ -82,6 +83,16 @@ export const listCampaignsHandler = async (req: Request, res: Response): Promise
   } catch (err: unknown) {
     const e = err as { statusCode?: number; message?: string };
     error(res, e.message ?? 'Loi lay campaign', e.statusCode ?? 500);
+  }
+};
+
+export const getCampaignOpsStatsHandler = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await getCampaignOpsStats();
+    success(res, result);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Loi lay thong ke campaign', e.statusCode ?? 500);
   }
 };
 

@@ -10,6 +10,7 @@ import type {
   IV2SubmitAppRatingRequest,
   IV2AppRating,
   IV2NutMilkPreference,
+  IV2RatingTrigger,
 } from './types';
 
 interface ApiResponse<T> {
@@ -72,5 +73,10 @@ export async function submitAppRatingApi(
   body: IV2SubmitAppRatingRequest,
 ): Promise<IV2AppRating> {
   const res = await apiClient.post<ApiResponse<IV2AppRating>>('/api/ratings', body);
+  return res.data.data;
+}
+
+export async function dismissRatingPromptApi(trigger: IV2RatingTrigger = 'manual'): Promise<IV2FeedbackPromptStatus> {
+  const res = await apiClient.post<ApiResponse<IV2FeedbackPromptStatus>>('/api/ratings/dismiss', { trigger });
   return res.data.data;
 }

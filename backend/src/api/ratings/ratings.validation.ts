@@ -19,6 +19,10 @@ export const submitAppRatingSchema = z.object({
   storeReviewRequested: z.boolean().optional(),
 });
 
+export const dismissRatingPromptSchema = z.object({
+  trigger: ratingTriggerSchema.default('manual'),
+});
+
 export const feedbackPromptStatusSchema = z.object({
   promptKey: z.literal('app_rating'),
   status: z.enum(['eligible', 'dismissed', 'submitted', 'cooldown']),
@@ -32,4 +36,5 @@ export const listRatingsSchema = z.object({
 });
 
 export type SubmitAppRatingInput = z.infer<typeof submitAppRatingSchema>;
+export type DismissRatingPromptInput = z.infer<typeof dismissRatingPromptSchema>;
 export type ListRatingsInput = z.infer<typeof listRatingsSchema>;

@@ -8,6 +8,9 @@ import app from '../../app';
 import User from '../../models/User';
 import Exercise from '../../models/Exercise';
 import FoodItem from '../../models/FoodItem';
+import Campaign from '../../models/Campaign';
+import RedeemCode from '../../models/RedeemCode';
+import AppRating from '../../models/AppRating';
 
 let mongod: MongoMemoryServer;
 let adminToken: string;
@@ -75,9 +78,11 @@ describe('requireAdmin guard', () => {
   it('keeps v2 campaign, rating, and media scaffolds behind requireAdmin', async () => {
     const guardedEndpoints = [
       ['get', '/api/admin/campaigns'],
+      ['get', '/api/admin/campaigns/stats'],
       ['post', '/api/admin/campaigns'],
       ['post', '/api/admin/campaigns/000000000000000000000000/codes/generate'],
       ['get', '/api/admin/ratings'],
+      ['get', '/api/admin/ratings/stats'],
       ['get', '/api/admin/media-assets'],
       ['post', '/api/admin/media-assets/upload'],
     ] as const;
@@ -100,6 +105,75 @@ describe('requireAdmin guard', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.success, true);
     assert.ok(Array.isArray(res.body.data.items));
+  });
+
+  it('returns campaign ops dashboard stats for admins', async () => {
+    const now = new Date();
+    const campaign = await Campaign.create({
+      name: 'Stats Campaign',
+      status: 'active',
+      startsAt: new Date(now.getTime() - 60_000),
+      endsAt: new Date(now.getTime() + 5 * 86400000),
+      entitlementDurationDays: 30,
+      highQuotaDailyLimit: 30,
+      codeCount: 2,
+      redeemedCount: 1,
+      createdBy: new mongoose.Types.ObjectId(),
+    });
+    await RedeemCode.create({
+      campaignId: campaign._id,
+      batchId: 'batch',
+      codeHash: 'hash-1',
+      codePrefix: 'ABCD',
+      codeLength: 12,
+      status: 'redeemed',
+    });
+    await RedeemCode.create({
+      campaignId: campaign._id,
+      batchId: 'batch',
+      codeHash: 'hash-2',
+      codePrefix: 'EFGH',
+      codeLength: 12,
+      status: 'unused',
+    });
+
+    const res = await supertest(app)
+      .get('/api/admin/campaigns/stats')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.totalCodes, 2);
+    assert.equal(res.body.data.redeemedCodes, 1);
+    assert.equal(res.body.data.activeCampaigns >= 1, true);
+    assert.equal(res.body.data.nearExpiryCampaigns[0].name, 'Stats Campaign');
+  });
+
+  it('returns rating feedback dashboard stats for admins', async () => {
+    const user = await User.findOne({ email: 'user@test.com' });
+    assert.ok(user);
+    await AppRating.create({
+      userId: user._id,
+      stars: 5,
+      comment: 'Rất tốt',
+      trigger: 'food_scan_saved',
+      platform: 'ios',
+      appVersion: '1.0.0',
+    });
+    await AppRating.create({
+      userId: user._id,
+      stars: 3,
+      trigger: 'manual',
+      platform: 'android',
+    });
+
+    const res = await supertest(app)
+      .get('/api/admin/ratings/stats')
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.data.total >= 2, true);
+    assert.equal(res.body.data.distribution.find((item: { stars: number }) => item.stars === 5).count >= 1, true);
+    assert.equal(res.body.data.recentComments[0].comment, 'Rất tốt');
   });
 });
 

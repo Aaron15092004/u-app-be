@@ -12,6 +12,7 @@ import {
   CreateCampaignInput,
   GenerateCampaignCodesInput,
   useCampaignCodes,
+  useCampaignOpsStats,
   useCampaigns,
   useCreateCampaign,
   useGenerateCampaignCodes,
@@ -86,6 +87,7 @@ export function CampaignsPage() {
   const [generateForm, setGenerateForm] = useState<GenerateCampaignCodesInput>(defaultGenerate);
 
   const { data, isPending } = useCampaigns(page, status);
+  const { data: opsStats, isPending: opsPending } = useCampaignOpsStats();
   const { data: codes, isPending: codesPending } = useCampaignCodes(
     selectedCampaign?._id ?? null,
     codePage,
@@ -261,6 +263,52 @@ export function CampaignsPage() {
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>Tạo campaign</Button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="rounded-md border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Tổng campaign</p>
+          <p className="mt-1 text-2xl font-semibold">{opsPending ? '-' : opsStats?.campaignCount ?? 0}</p>
+        </div>
+        <div className="rounded-md border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Tổng mã</p>
+          <p className="mt-1 text-2xl font-semibold">{opsPending ? '-' : opsStats?.totalCodes ?? 0}</p>
+        </div>
+        <div className="rounded-md border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Tỷ lệ redeemed</p>
+          <p className="mt-1 text-2xl font-semibold">
+            {opsPending ? '-' : `${Math.round((opsStats?.redeemedRate ?? 0) * 100)}%`}
+          </p>
+          <p className="text-xs text-muted-foreground">{opsStats?.redeemedCodes ?? 0} mã đã dùng</p>
+        </div>
+        <div className="rounded-md border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Đang chạy</p>
+          <p className="mt-1 text-2xl font-semibold">{opsPending ? '-' : opsStats?.activeCampaigns ?? 0}</p>
+        </div>
+      </div>
+
+      <div className="rounded-md border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold">Campaign gần hết hạn</h2>
+          <span className="text-xs text-muted-foreground">14 ngày tới</span>
+        </div>
+        {opsStats?.nearExpiryCampaigns?.length ? (
+          <div className="grid gap-2 md:grid-cols-2">
+            {opsStats.nearExpiryCampaigns.map((campaign) => (
+              <div key={campaign._id} className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-sm">
+                <div>
+                  <p className="font-medium">{campaign.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {campaign.redeemedCount}/{campaign.codeCount} redeemed
+                  </p>
+                </div>
+                <span>{new Date(campaign.endsAt).toLocaleDateString('vi-VN')}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Không có campaign sắp hết hạn.</p>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

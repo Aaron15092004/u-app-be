@@ -21,6 +21,21 @@ export interface AdminV2Campaign {
   updatedAt: string;
 }
 
+export interface AdminV2CampaignOpsStats {
+  campaignCount: number;
+  totalCodes: number;
+  redeemedCodes: number;
+  redeemedRate: number;
+  activeCampaigns: number;
+  nearExpiryCampaigns: Array<{
+    _id: string;
+    name: string;
+    endsAt: string;
+    codeCount: number;
+    redeemedCount: number;
+  }>;
+}
+
 export interface AdminV2RedeemCodeMetadata {
   _id: string;
   campaignId: string;
@@ -111,6 +126,13 @@ export interface AdminV2AppRating {
   storeReviewEligible?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AdminV2RatingsDashboard {
+  total: number;
+  averageStars: number;
+  distribution: Array<{ stars: number; count: number }>;
+  recentComments: AdminV2AppRating[];
 }
 
 export interface AdminV2FeedbackPromptState {

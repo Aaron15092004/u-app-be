@@ -140,6 +140,45 @@ export async function listCampaigns(filters: CampaignListFilters): Promise<objec
   };
 }
 
+export async function getCampaignOpsStats(): Promise<object> {
+  const now = new Date();
+  const nearExpiryUntil = new Date(now.getTime() + 14 * 86400000);
+
+  const [
+    totalCodes,
+    redeemedCodes,
+    activeCampaigns,
+    nearExpiryCampaigns,
+    campaignCount,
+  ] = await Promise.all([
+    RedeemCode.countDocuments({}),
+    RedeemCode.countDocuments({ status: 'redeemed' }),
+    Campaign.countDocuments({
+      status: 'active',
+      startsAt: { $lte: now },
+      endsAt: { $gte: now },
+    }),
+    Campaign.find({
+      status: 'active',
+      endsAt: { $gte: now, $lte: nearExpiryUntil },
+    })
+      .sort({ endsAt: 1 })
+      .limit(5)
+      .select('name endsAt codeCount redeemedCount')
+      .lean(),
+    Campaign.countDocuments({}),
+  ]);
+
+  return {
+    campaignCount,
+    totalCodes,
+    redeemedCodes,
+    redeemedRate: totalCodes > 0 ? redeemedCodes / totalCodes : 0,
+    activeCampaigns,
+    nearExpiryCampaigns,
+  };
+}
+
 export async function listCampaignCodes(
   campaignId: string,
   filters: CodeListFilters,

@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Ủ",
+    "slug": "u-app-health",
+    "version": "1.0.0",
+    "scheme": "uapp",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4CAF50"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.uapp.health",
+      "appStoreUrl": "https://apps.apple.com/app/idREPLACE_WITH_APP_ID",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Ủ to take photos for food recognition.",
+        "NSPhotoLibraryUsageDescription": "Allow Ủ to access your photos for food logging."
+      }
+    },
+    "android": {
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.uapp.health",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#4CAF50"
+      },
+      "package": "com.uapp.health",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.YOUR_IOS_CLIENT_ID"
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Ủ to access your photos for food logging.",
+          "cameraPermission": "Allow Ủ to take photos for food recognition."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#4CAF50"
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

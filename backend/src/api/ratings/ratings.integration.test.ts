@@ -62,7 +62,9 @@ test('user submits internal rating and admin can list it', async () => {
   const prompt = await request(app)
     .get('/api/ratings/status')
     .set('Authorization', `Bearer ${userToken}`);
-  assert.equal(prompt.body.data.status, 'submitted');
+  assert.equal(prompt.body.data.status, 'cooldown');
+  assert.ok(prompt.body.data.cooldownUntil);
+  assert.equal(submitted.body.data.storeReviewEligible, true);
 
   const adminList = await request(app)
     .get('/api/admin/ratings')
@@ -70,4 +72,36 @@ test('user submits internal rating and admin can list it', async () => {
   assert.equal(adminList.status, 200);
   assert.equal(adminList.body.data.total, 1);
   assert.equal(adminList.body.data.items[0].comment, 'Redeem ok');
+});
+
+test('dismissing rating prompt sets a 14-day cooldown', async () => {
+  const dismissed = await request(app)
+    .post('/api/ratings/dismiss')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({ trigger: 'food_scan_saved' });
+
+  assert.equal(dismissed.status, 200);
+  assert.equal(dismissed.body.data.status, 'dismissed');
+  assert.ok(dismissed.body.data.cooldownUntil);
+
+  const prompt = await request(app)
+    .get('/api/ratings/status')
+    .set('Authorization', `Bearer ${userToken}`);
+
+  assert.equal(prompt.status, 200);
+  assert.equal(prompt.body.data.status, 'cooldown');
+});
+
+test('store review eligibility is only returned for positive internal ratings', async () => {
+  const low = await request(app)
+    .post('/api/ratings')
+    .set('Authorization', `Bearer ${userToken}`)
+    .send({
+      stars: 3,
+      trigger: 'manual',
+      platform: 'unknown',
+    });
+
+  assert.equal(low.status, 201);
+  assert.equal(low.body.data.storeReviewEligible, false);
 });
