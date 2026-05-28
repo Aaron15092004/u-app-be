@@ -38,6 +38,15 @@ export async function getPromptStatus(userId: string): Promise<object> {
     };
   }
 
+  if (state.status === 'dismissed') {
+    return {
+      ...state,
+      status: 'eligible',
+      cooldownUntil: null,
+      message: 'Co the nhac danh gia lai sau cooldown',
+    };
+  }
+
   return state;
 }
 

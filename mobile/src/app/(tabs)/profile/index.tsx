@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -18,6 +18,7 @@ import { getProfileStatsApi } from "../../../lib/api/users.api";
 import { getWorkoutStreakApi } from "../../../lib/api/workout-sessions.api";
 import {
   getNutMilkRecommendationsApi,
+  getRatingPromptStatusApi,
   getScanEntitlementsApi,
   selectNutMilkFlavorApi,
 } from "../../../lib/api/v2-contracts.api";
@@ -324,6 +325,10 @@ export default function ProfileScreen(): React.JSX.Element {
     queryKey: ["v2", "scan-entitlements"],
     queryFn: getScanEntitlementsApi,
   });
+  const ratingStatusQ = useQuery({
+    queryKey: ["v2", "rating-prompt-status"],
+    queryFn: getRatingPromptStatusApi,
+  });
 
   const user = auth.user;
   const profile = user?.profile;
@@ -352,6 +357,15 @@ export default function ProfileScreen(): React.JSX.Element {
   const streakDays = workoutStreakQ.data?.currentStreak ?? statsQ.data?.streakDays ?? 0;
   const totalWork = statsQ.data?.totalWorkouts ?? 0;
   const totalKcal = statsQ.data?.totalKcalBurned ?? 0;
+
+  useEffect(() => {
+    if (
+      entitlementQ.data?.hasActiveEntitlement === true &&
+      ratingStatusQ.data?.status === "eligible"
+    ) {
+      setRatingVisible(true);
+    }
+  }, [entitlementQ.data?.hasActiveEntitlement, ratingStatusQ.data?.status]);
 
   const fmtKcal =
     totalKcal >= 1000 ? `${(totalKcal / 1000).toFixed(1)}k` : String(totalKcal);
@@ -602,7 +616,10 @@ export default function ProfileScreen(): React.JSX.Element {
       <AppRatingPrompt
         visible={ratingVisible}
         contextNote="Đánh giá sau khi kích hoạt mã scan AI thành công."
-        onClose={() => setRatingVisible(false)}
+        onClose={() => {
+          setRatingVisible(false);
+          void queryClient.invalidateQueries({ queryKey: ["v2", "rating-prompt-status"] });
+        }}
       />
     </View>
   );

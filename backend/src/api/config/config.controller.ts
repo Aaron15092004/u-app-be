@@ -4,6 +4,6 @@ import { Request, Response } from 'express';
 import { success } from '../../utils/response';
 
 export const getShopUrl = (_req: Request, res: Response): void => {
-  const url = process.env.SHOP_URL || 'https://u-app.vn/shop';
+  const url = process.env.SHOP_URL || 'https://www.facebook.com/profile.php?id=61589742576832';
   success(res, { url });
 };
