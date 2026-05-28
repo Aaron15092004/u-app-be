@@ -159,7 +159,7 @@ export default function HomeScreen(): React.JSX.Element {
   const handleNotificationAccept = async (): Promise<void> => {
     setNotifAsked(true);
     setShowNotificationRationale(false);
-    router.push("/(tabs)/profile/notifications" as never);
+    router.push("/(tabs)/profile/notifications?returnTo=profile" as never);
   };
 
   const handleNotificationDismiss = (): void => {

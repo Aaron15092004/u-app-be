@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ScreenHeader from "../../../components/ui/ScreenHeader";
 import NotifToggleRow from "../../../components/ui/NotifToggleRow";
@@ -33,6 +34,15 @@ const DEFAULT_WATER_REMINDER_TIMES = [
 
 export default function NotificationSettingsScreen(): React.JSX.Element {
   const qc = useQueryClient();
+  const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const handleBack = (): void => {
+    if (returnTo === "profile") {
+      router.replace("/(tabs)/profile" as never);
+      return;
+    }
+    router.back();
+  };
 
   // WARNING 3 FIX: initialise form state from server, not hardcoded defaults
   const profileStatsQuery = useQuery({
@@ -130,7 +140,7 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <ScreenHeader title="Cài đặt thông báo" showBack />
+          <ScreenHeader title="Cài đặt thông báo" showBack onBack={handleBack} />
           <View style={styles.loadingContainer}>
             <ActivityIndicator color="#4CAF50" size="small" />
           </View>
@@ -150,7 +160,7 @@ export default function NotificationSettingsScreen(): React.JSX.Element {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title="Cài đặt thông báo" showBack />
+        <ScreenHeader title="Cài đặt thông báo" showBack onBack={handleBack} />
 
         <View style={styles.card}>
           {/* Water reminder toggle */}
