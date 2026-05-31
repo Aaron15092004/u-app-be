@@ -59,6 +59,7 @@ import {
   errorMessage,
   forgotPassword,
   getEntitlement,
+  getBmiHistory,
   getFoodLogs,
   getFoodLogsRange,
   getHabitsToday,
@@ -1347,69 +1348,160 @@ function TrashIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 
+function BmiScaleBar({ bmi }: { bmi: number }) {
+  const percent = Math.min(100, Math.max(0, ((bmi - 15) / 25) * 100));
+  return (
+    <div className="bm-scale">
+      <div className="bm-scale-bar">
+        <div className="bm-segment" style={{ backgroundColor: '#FFC107' }} />
+        <div className="bm-segment" style={{ backgroundColor: '#4CAF50' }} />
+        <div className="bm-segment" style={{ backgroundColor: '#FF9800' }} />
+        <div className="bm-segment" style={{ backgroundColor: '#EF5350' }} />
+      </div>
+      <div className="bm-dot" style={{ left: `calc(${percent}% - 8px)` }} />
+    </div>
+  );
+}
+
 function BmiMilk({ user, setUser }: { user: AuthUser; setUser: (u: AuthUser) => void }) {
   const [height, setHeight] = useState(user.profile?.heightCm || 160);
   const [weight, setWeight] = useState(user.profile?.weightKg || 50);
-  const bmi = Number((Number(weight) / (Number(height) / 100) ** 2).toFixed(1));
-  const milk = useAsync(() => getMilkRecommendations({ bmi }), [bmi]);
-  const [selected, setSelected] = useState('');
   const [msg, setMsg] = useState('');
-  const recommended = milk.data?.flavors.find((f) => f.bmiRule === milk.data?.bmiRule) || milk.data?.flavors[0];
+  const [toast, setToast] = useState(false);
+  const [err, setErr] = useState('');
+  const bmi = Number((Number(weight) / (Number(height) / 100) ** 2).toFixed(1));
+  const category = bmi < 18.5 ? 'underweight' : bmi < 25 ? 'normal' : bmi < 30 ? 'overweight' : 'obese';
+  const categoryVi = { underweight: 'Thiếu cân', normal: 'Bình thường', overweight: 'Thừa cân', obese: 'Béo phì' }[category];
+  const advice = {
+    underweight: 'Hãy tăng cường dinh dưỡng và tập thể dục để đạt cân nặng khỏe mạnh.',
+    normal: 'Duy trì thói quen tốt và tiếp tục phát huy!',
+    overweight: 'Tăng cường vận động và điều chỉnh chế độ ăn uống để cải thiện sức khỏe.',
+    obese: 'Nên tham khảo ý kiến bác sĩ để có kế hoạch giảm cân an toàn.',
+  }[category];
 
-  useEffect(() => {
-    setSelected(milk.data?.currentPreference?.selectedFlavorId || recommended?.flavorId || '');
-  }, [milk.data?.currentPreference?.selectedFlavorId, recommended?.flavorId]);
+  const milkData = useAsync(() => getMilkRecommendations({ bmi }), [bmi]);
+  const recommended = milkData.data?.flavors.find((f: any) => f.bmiRule === milkData.data?.bmiRule) || milkData.data?.flavors?.[0];
+  const historyData = useAsync(getBmiHistory, [toast]);
 
   async function saveStats() {
-    await saveBmi(Number(height), Number(weight));
-    const profile = await updateProfile({ heightCm: Number(height), weightKg: Number(weight) });
-    const next = { ...user, name: profile.name, profile: profile.profile };
-    updateStoredUser(next);
-    setUser(next);
-    setMsg('Đã cập nhật BMI.');
+    setErr('');
+    try {
+      await saveBmi(Number(height), Number(weight));
+      const profile = await updateProfile({ heightCm: Number(height), weightKg: Number(weight) });
+      const next = { ...user, name: profile.name, profile: profile.profile };
+      updateStoredUser(next);
+      setUser(next);
+      setToast(true);
+      setTimeout(() => setToast(false), 2000);
+    } catch {
+      setErr('Không thể lưu chỉ số BMI. Kiểm tra kết nối và thử lại.');
+    }
   }
 
   async function saveMilk() {
-    if (!selected) return;
-    await selectMilk({ selectedFlavorId: selected, recommendedFlavorId: recommended?.flavorId, bmi, source: 'manual_profile' });
-    setMsg('Đã lưu lựa chọn sữa Ủ.');
-    void milk.reload();
+    if (!recommended) return;
+    await selectMilk({
+      selectedFlavorId: recommended.flavorId,
+      recommendedFlavorId: recommended.flavorId,
+      bmi,
+      source: 'bmi_recommendation',
+    });
+    setMsg('Đã lưu');
+    setTimeout(() => setMsg(''), 2000);
+    void milkData.reload();
   }
 
+  const records = (historyData.data ?? []) as Array<{ bmi: number }>;
+  const maxBmi = Math.max(...records.map((r) => r.bmi), 30);
+  const last5 = records.slice(-5);
+
   return (
-    <div className="screen">
-      <div className="sub-gradient-header">
-        <h1><BarChart3 size={24} /> Phân tích BMI</h1>
+    <div className="screen bm-screen">
+      <div className="bm-header">
+        <h1>Phân tích BMI</h1>
         <p>Theo dõi chỉ số cơ thể của bạn</p>
       </div>
-      <section className="bmi-result">
-        <span>BMI hiện tại</span>
-        <strong>{bmi}</strong>
-        <small>{bmi < 18.5 ? 'Thiếu cân' : bmi < 25 ? 'Bình thường' : bmi < 30 ? 'Thừa cân' : 'Béo phì'}</small>
-      </section>
-      <section className="card">
-        <h2><Ruler size={20} /> Cập nhật số đo</h2>
-        <div className="grid2">
-          <Field label="Chiều cao (cm)" value={height} onChange={(v) => setHeight(Number(v))} type="number" />
-          <Field label="Cân nặng (kg)" value={weight} onChange={(v) => setWeight(Number(v))} type="number" />
+      <div className="bm-body">
+        {/* BMI result card */}
+        <div className="bm-result-card">
+          <div className="bm-top-row">
+            <span className="bm-score">{bmi}</span>
+            <span className="bm-category">{categoryVi}</span>
+          </div>
+          <BmiScaleBar bmi={bmi} />
+          <div className="bm-range-labels">
+            <span>15</span>
+            <span>40</span>
+          </div>
         </div>
-        <Button onClick={saveStats}>Lưu BMI</Button>
-        {msg && <p className="success">{msg}</p>}
-      </section>
-      <section className="card">
-        <h2><Leaf size={20} /> Sữa Ủ phù hợp</h2>
-        <h3>{recommended?.nameVi || 'Đang tải...'}</h3>
-        <p>{recommended?.positioningVi}</p>
-        <div className="milk-list">
-          {(milk.data?.flavors || []).map((flavor) => (
-            <button key={flavor.flavorId} className={classNames('milk-card', selected === flavor.flavorId && 'active')} onClick={() => setSelected(flavor.flavorId)}>
-              <strong>{flavor.nameVi}</strong>
-              <small>{flavor.positioningVi}</small>
-            </button>
-          ))}
+
+        {/* Sliders card */}
+        <div className="bm-card">
+          <span className="bm-section-title">Cập nhật số đo</span>
+          <div className="bm-slider-row">
+            <span>Chiều cao</span>
+            <span className="bm-slider-val">{height} cm</span>
+          </div>
+          <input type="range" min={100} max={220} value={height} onChange={(e) => setHeight(Number(e.target.value))} className="bm-range" />
+          <div className="bm-slider-row" style={{ marginTop: 16 }}>
+            <span>Cân nặng</span>
+            <span className="bm-slider-val">{weight} kg</span>
+          </div>
+          <input type="range" min={30} max={200} value={weight} onChange={(e) => setWeight(Number(e.target.value))} className="bm-range" />
         </div>
-        <Button onClick={saveMilk} disabled={!selected}>Lưu lựa chọn</Button>
-      </section>
+
+        {/* Save button */}
+        <div className="bm-btn-wrap">
+          <button className="bm-btn" onClick={saveStats}>Lưu số đo</button>
+          {err && <p className="scan-msg error" style={{ margin: '8px 0 0', fontSize: 13, textAlign: 'center' }}>{err}</p>}
+        </div>
+
+        {/* Advice */}
+        <div className="bm-card">
+          <span className="bm-section-title">Lời khuyên</span>
+          <p className="bm-advice">{advice}</p>
+        </div>
+
+        {/* Milk card */}
+        {recommended && (
+          <div className="bm-milk-card">
+            <div className="bm-milk-head">
+              <div className="bm-milk-icon">
+                <Leaf size={20} />
+              </div>
+              <div>
+                <span className="bm-milk-title">Sữa Ủ phù hợp</span>
+                <span className="bm-milk-sub">Gợi ý theo BMI hiện tại của bạn</span>
+              </div>
+            </div>
+            <span className="bm-milk-name">{recommended.nameVi}</span>
+            <p className="bm-milk-copy">{recommended.positioningVi}</p>
+            <p className="bm-milk-disclaimer">{milkData.data?.disclaimer ?? 'Gợi ý sản phẩm theo sở thích và thể trạng, không phải tư vấn y khoa.'}</p>
+            <button className="bm-milk-save" onClick={saveMilk}>{msg || 'Lưu lựa chọn này'}</button>
+          </div>
+        )}
+
+        {/* Chart */}
+        <div className="bm-chart-section">
+          <span className="bm-section-title">Lịch sử 30 ngày</span>
+          <div className="bm-chart-card">
+            {last5.length === 0 ? (
+              <p className="bm-chart-empty">Chưa có dữ liệu BMI. Nhập số đo và nhấn Lưu số đo để bắt đầu theo dõi.</p>
+            ) : (
+              <div className="bm-chart">
+                {last5.map((r, idx) => (
+                  <div className="bm-chart-row" key={idx}>
+                    <span className="bm-chart-label">{r.bmi.toFixed(1)}</span>
+                    <div className="bm-chart-bar" style={{ width: `${(r.bmi / maxBmi) * 100}%` }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {toast && <div className="bm-toast">Đã lưu!</div>}
     </div>
   );
 }
