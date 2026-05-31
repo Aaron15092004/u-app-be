@@ -201,14 +201,14 @@ api.interceptors.response.use(
     original.__isRetry = true;
     try {
       const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
-      const data = res.data.data as { accessToken: string; refreshToken: string; user: AuthUser };
-      storeAuth(data);
+      const data = res.data.data as { accessToken: string; refreshToken: string };
+      localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
       processQueue(data.accessToken, null);
       original.headers.Authorization = `Bearer ${data.accessToken}`;
       return api(original);
     } catch (refreshErr) {
       processQueue(null, refreshErr);
-      clearAuth();
       return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;
@@ -217,9 +217,15 @@ api.interceptors.response.use(
 );
 
 export function getStoredAuth(): AuthState {
-  const rawUser = localStorage.getItem(USER_KEY);
+  let user: AuthUser | null = null;
+  try {
+    const rawUser = localStorage.getItem(USER_KEY);
+    if (rawUser) user = JSON.parse(rawUser) as AuthUser;
+  } catch {
+    localStorage.removeItem(USER_KEY);
+  }
   return {
-    user: rawUser ? (JSON.parse(rawUser) as AuthUser) : null,
+    user,
     accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),
     refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY),
   };
