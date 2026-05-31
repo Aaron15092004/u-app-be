@@ -681,34 +681,50 @@ function ShopBannerWeb({ url, isLoading }: { url: string | null; isLoading: bool
 }
 
 function ScanScreen() {
-  const [mode, setMode] = useState<'camera' | 'gallery'>('camera');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
   const [result, setResult] = useState<ScanResult | null>(null);
   const [barcode, setBarcode] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasImage = !!preview;
 
   useEffect(() => {
-    if (mode !== 'camera') return;
     let cancelled = false;
     async function start() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        });
         if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch {
-        setMessage('Không thể truy cập camera. Vui lòng dùng chế độ thư viện.');
-        setMode('gallery');
+        setCameraError(true);
       }
     }
     start();
     return () => { cancelled = true; stopStream(); };
-  }, [mode]);
+  }, []);
+
+  function toggleFlash() {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    const capabilities = track.getCapabilities() as Record<string, unknown>;
+    if (!capabilities.torch) return;
+    setFlash((prev) => {
+      const next = !prev;
+      track.applyConstraints({ advanced: [{ torch: next }] as unknown as MediaTrackConstraintSet[] }).catch(() => {});
+      return next;
+    });
+  }
 
   function stopStream() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -736,28 +752,21 @@ function ScanScreen() {
     setPreview(next ? URL.createObjectURL(next) : '');
   }
 
-  function switchMode(m: 'camera' | 'gallery') {
-    if (m === mode) return;
-    stopStream();
-    setPreview('');
-    setFile(null);
-    setMode(m);
-  }
-
   function retake() {
     setPreview('');
     setFile(null);
     setResult(null);
     setMessage('');
-    if (mode === 'camera') {
+    if (!cameraError) {
       async function restart() {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+          });
           streamRef.current = stream;
           if (videoRef.current) videoRef.current.srcObject = stream;
         } catch {
-          setMessage('Không thể truy cập camera.');
-          setMode('gallery');
+          setCameraError(true);
         }
       }
       restart();
@@ -784,7 +793,7 @@ function ScanScreen() {
       await saveFoodLog(result);
       setMessage('Đã lưu bữa ăn.');
       setResult(null);
-      pick(null);
+      retake();
     } catch (error) {
       setMessage(errorMessage(error));
     } finally {
@@ -826,52 +835,111 @@ function ScanScreen() {
     }
   }
 
-  const hasImage = !!preview;
-
   return (
     <div className="screen scan-screen">
-      <section className="scan-camera">
-        <div className="scan-topbar">
-          <button type="button"><ChevronLeft size={26} /></button>
+      <div className="scan-view">
+        {cameraError ? (
+          <div className="scan-fallback-bg" />
+        ) : (
+          <video ref={videoRef} autoPlay playsInline muted className="scan-video-bg" />
+        )}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+        <div className="scan-overlay-header">
+          <button type="button" className="scan-back-btn"><ChevronLeft size={24} /></button>
           <div>
             <h1>Quét bữa ăn</h1>
-            <p>Chụp ảnh để phân tích dinh dưỡng</p>
+            <p>{cameraError ? 'Chọn ảnh từ thư viện' : 'Chụp ảnh để phân tích dinh dưỡng'}</p>
           </div>
         </div>
-        <div className="scan-mode-tabs">
-          <button type="button" className={mode === 'camera' ? 'active' : ''} onClick={() => switchMode('camera')} disabled={hasImage}><Camera size={16} /> Camera</button>
-          <button type="button" className={mode === 'gallery' ? 'active' : ''} onClick={() => switchMode('gallery')} disabled={hasImage}><ImageUp size={16} /> Thư viện</button>
-        </div>
-        <div className="scan-frame">
-          {hasImage ? (
-            <img className="meal-preview" src={preview} alt="Ảnh món ăn" />
-          ) : mode === 'camera' ? (
-            <video ref={videoRef} autoPlay playsInline muted className="camera-live" />
-          ) : (
-            <span><Camera size={52} /></span>
-          )}
-        </div>
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
-        {!hasImage && mode === 'camera' && (
-          <Button onClick={capture} disabled={busy}><Camera size={18} /> Chụp ảnh</Button>
+
+        {cameraError && !hasImage && (
+          <div className="scan-fallback-card">
+            <Camera size={56} />
+            <h2>Không thể truy cập camera</h2>
+            <p>Vui lòng chọn ảnh từ thư viện để phân tích</p>
+            <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0] || null)} />
+            <button className="scan-fallback-btn" onClick={() => fileInputRef.current?.click()}>
+              <ImageUp size={20} /> Chọn từ thư viện
+            </button>
+          </div>
         )}
-        {!hasImage && mode === 'gallery' && (
-          <>
-            <h1>Upload ảnh để AI phân tích</h1>
-            <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0] || null)} />
-          </>
+
+        {!cameraError && !hasImage && (
+          <div className="scan-frame-overlay">
+            <div className="scan-frame-brackets">
+              <div className="bracket tl" />
+              <div className="bracket tr" />
+              <div className="bracket bl" />
+              <div className="bracket br" />
+            </div>
+            <div className="scan-frame-center">
+              <Camera size={36} />
+              <span>Căn chỉnh bữa ăn vào khung</span>
+            </div>
+            {busy && (
+              <div className="scan-scanning-badge">
+                <RefreshCw size={16} /> Đang phân tích...
+              </div>
+            )}
+          </div>
         )}
+
         {hasImage && (
-          <div className="scan-actions">
-            <Button variant="soft" onClick={retake} disabled={busy}><RefreshCw size={18} /> Chụp lại</Button>
-            <Button onClick={runScan} disabled={busy}>{busy ? <><RefreshCw size={18} /> Đang phân tích...</> : <><Sparkles size={18} /> Phân tích ảnh</>}</Button>
+          <div className="scan-preview-wrap">
+            <img className="scan-preview-img" src={preview} alt="" />
+            <div className="scan-preview-actions">
+              <button className="scan-action-btn soft" onClick={retake} disabled={busy}>
+                <RefreshCw size={18} /> Chụp lại
+              </button>
+              <button className="scan-action-btn primary" onClick={runScan} disabled={busy}>
+                {busy ? <><RefreshCw size={18} /> Đang phân tích...</> : <><Sparkles size={18} /> Phân tích ảnh</>}
+              </button>
+            </div>
           </div>
         )}
-        <div className="divider" />
-        <Field label="Tra barcode thủ công" value={barcode} onChange={setBarcode} placeholder="Nhập mã vạch" />
-        <Button variant="soft" onClick={barcodeLookup} disabled={busy}><QrCode size={18} /> Tra mã vạch</Button>
-        {message && <p className={message.includes('Đã') ? 'success' : 'error'}>{message}</p>}
-      </section>
+
+        <div className="scan-bottom">
+          <div className="scan-barcode-card">
+            <div className="scan-barcode-header">
+              <span className="scan-barcode-title">Tra cứu bằng mã vạch</span>
+            </div>
+            <div className="scan-barcode-row">
+              <input
+                className="scan-barcode-input"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                placeholder="Nhập barcode"
+              />
+              <button className="scan-barcode-btn" onClick={barcodeLookup} disabled={busy}>
+                {busy ? 'Đang tìm' : 'Xem'}
+              </button>
+            </div>
+          </div>
+
+          <p className="scan-hint">Nhấn nút chụp hoặc chọn từ thư viện</p>
+
+          {!cameraError && !hasImage && (
+            <div className="scan-controls">
+              <button className="scan-control-btn" onClick={() => fileInputRef.current?.click()} disabled={busy}>
+                <ImageUp size={22} />
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0] || null)} />
+              <div className="scan-capture-outer">
+                <button className="scan-capture-inner" onClick={capture} disabled={busy}>
+                  {busy ? <RefreshCw size={28} /> : <Camera size={28} />}
+                </button>
+              </div>
+              <button className="scan-control-btn" onClick={toggleFlash} disabled={busy}>
+                <Flashlight size={22} />
+              </button>
+            </div>
+          )}
+
+          {message && <p className={message.includes('Đã') ? 'scan-msg success' : 'scan-msg error'}>{message}</p>}
+        </div>
+      </div>
+
       <section className="card result-card">
         <h2>Kết quả</h2>
         {result ? <FoodResult result={result} onSave={save} busy={busy} /> : <p className="muted">Kết quả phân tích sẽ hiển thị tại đây.</p>}
