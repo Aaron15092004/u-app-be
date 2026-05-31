@@ -8,6 +8,7 @@ import {
   Camera,
   CheckCircle2,
   ChevronLeft,
+  ChevronRight,
   Circle,
   Clock,
   Dumbbell,
@@ -15,6 +16,7 @@ import {
   Flame,
   Flashlight,
   Heart,
+  HelpCircle,
   Home as HomeIcon,
   ImageUp,
   Leaf,
@@ -23,8 +25,10 @@ import {
   Minus,
   Moon,
   PersonStanding,
+  Plus,
   QrCode,
   RefreshCw,
+  Ribbon,
   Ruler,
   Scale,
   Settings,
@@ -98,7 +102,7 @@ import { Button, Field, IconActionCard, Metric, Toggle, classNames } from './com
 import { IntroOnboarding } from './pages/IntroOnboarding';
 import './styles.css';
 
-type Page = 'home' | 'scan' | 'food' | 'bmi' | 'workouts' | 'habits' | 'profile' | 'notifications';
+type Page = 'home' | 'scan' | 'food' | 'bmi' | 'workouts' | 'habits' | 'profile' | 'notifications' | 'help';
 type LoadState = 'idle' | 'loading' | 'error';
 type AuthMode = 'login' | 'register' | 'forgot' | 'reset';
 type FoodPeriod = 'day' | 'week' | 'month';
@@ -2003,114 +2007,257 @@ function Habits() {
   );
 }
 
+const MILESTONES = [
+  { days: 7, icon: TrendingUp },
+  { days: 14, icon: Ribbon },
+  { days: 28, icon: Star },
+  { days: 60, icon: Trophy },
+];
+
+const GOAL_LABEL: Record<string, string> = {
+  lose: 'Giảm cân',
+  maintain: 'Giữ cân nặng',
+  gain: 'Tăng cân',
+};
+
+function MilestoneBadge({ days, Icon, state }: { days: number; Icon: React.ElementType; state: 'active' | 'done' | 'locked' }) {
+  return (
+    <div className="p-milestone">
+      <div className={`p-milestone-circle ${state === 'active' ? 'p-milestone-active' : state === 'done' ? 'p-milestone-done' : 'p-milestone-locked'}`}>
+        <Icon size={22} />
+      </div>
+      <span className="p-milestone-lbl">{days} ngày</span>
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value, action, onAction, last }: { icon: React.ReactNode; label: string; value: string; action?: string; onAction?: () => void; last?: boolean }) {
+  return (
+    <div className={`p-info-row ${last ? 'p-info-last' : ''}`}>
+      <span className="p-info-icon">{icon}</span>
+      <div className="p-info-mid">
+        <small>{label}</small>
+        <strong>{value}</strong>
+      </div>
+      {action && <button className="p-info-action" onClick={onAction}>{action}</button>}
+    </div>
+  );
+}
+
+function SettingsRow({ icon, label, onPress, danger, last }: { icon: React.ReactNode; label: string; onPress: () => void; danger?: boolean; last?: boolean }) {
+  return (
+    <button className={`p-sett-row ${last ? 'p-sett-last' : ''}`} onClick={onPress}>
+      <span className="p-sett-icon" style={danger ? { color: '#EF5350' } : undefined}>{icon}</span>
+      <span className="p-sett-label" style={danger ? { color: '#EF5350' } : undefined}>{label}</span>
+      <ChevronRight size={16} className="p-sett-chev" />
+    </button>
+  );
+}
+
+function SectionTitle({ title }: { title: string }) {
+  return <span className="p-section-title">{title}</span>;
+}
+
 function Profile({ user, setUser, setPage, onLogout }: { user: AuthUser; setUser: (u: AuthUser) => void; setPage: (p: Page) => void; onLogout: () => void }) {
-  const [name, setName] = useState(user.name);
-  const [age, setAge] = useState(user.profile?.age || 22);
-  const [height, setHeight] = useState(user.profile?.heightCm || 160);
-  const [weight, setWeight] = useState(user.profile?.weightKg || 50);
-  const [goalType, setGoalType] = useState<GoalType>(user.profile?.goalType || 'maintain');
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState(user.name);
+  const [editAge, setEditAge] = useState(user.profile?.age || 22);
+  const [editHeight, setEditHeight] = useState(user.profile?.heightCm || 160);
+  const [editWeight, setEditWeight] = useState(user.profile?.weightKg || 50);
+  const [editGoal, setEditGoal] = useState<GoalType>(user.profile?.goalType || 'maintain');
+  const [editWater, setEditWater] = useState(user.profile?.waterGoal || 8);
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [milkSelected, setMilkSelected] = useState('');
   const stats = useAsync(getProfileStats, []);
   const entitlement = useAsync(getEntitlement, []);
   const rating = useAsync(getRatingStatus, []);
+  const bmi = user.profile?.heightCm && user.profile?.weightKg
+    ? Number((Number(user.profile.weightKg) / (Number(user.profile.heightCm) / 100) ** 2).toFixed(1))
+    : undefined;
+  const milkData = useAsync(() => getMilkRecommendations({ bmi }), [bmi]);
+
+  const savedMilkId = milkData.data?.currentPreference?.selectedFlavorId;
+  const activeMilkId = milkSelected || savedMilkId;
+  const streakDays = stats.data?.streakDays ?? 0;
+  const totalWorkouts = stats.data?.totalWorkouts ?? 0;
+  const totalKcal = stats.data?.totalKcalBurned ?? 0;
+  const fmtKcal = totalKcal >= 1000 ? `${(totalKcal / 1000).toFixed(1)}k` : String(totalKcal);
+
+  const achievementTitle = streakDays >= 60 ? 'Người bất khuất'
+    : streakDays >= 28 ? 'Người kiên trì'
+    : streakDays >= 14 ? 'Người chăm chỉ'
+    : streakDays >= 7 ? 'Người mới bắt đầu'
+    : 'Đang xây dựng thói quen';
+
+  function getMilestoneState(days: number): 'active' | 'done' | 'locked' {
+    if (streakDays < days) return 'locked';
+    const nextIdx = MILESTONES.findIndex((m) => m.days > streakDays);
+    const topIdx = nextIdx === -1 ? MILESTONES.length - 1 : nextIdx - 1;
+    return MILESTONES[topIdx]?.days === days ? 'active' : 'done';
+  }
 
   useEffect(() => {
     if (entitlement.data?.hasActiveEntitlement && rating.data?.status === 'eligible') setRatingOpen(true);
   }, [entitlement.data?.hasActiveEntitlement, rating.data?.status]);
 
   async function saveProfile() {
-    const profile = await updateProfile({ name, age: Number(age), heightCm: Number(height), weightKg: Number(weight), goalType });
+    const profile = await updateProfile({ name: editName, age: Number(editAge), heightCm: Number(editHeight), weightKg: Number(editWeight), goalType: editGoal, waterGoal: editWater });
     const next = { ...user, name: profile.name, profile: profile.profile };
     updateStoredUser(next);
     setUser(next);
     setMsg('Đã lưu hồ sơ.');
+    setTimeout(() => setMsg(''), 2000);
   }
 
   async function redeem() {
-    const res = await redeemCode(code);
-    setMsg(res.message || 'Đã kích hoạt mã.');
+    await redeemCode(code);
     setCode('');
     setRatingOpen(true);
     void entitlement.reload();
   }
 
+  async function saveMilk() {
+    if (!activeMilkId) return;
+    await selectMilk({
+      selectedFlavorId: activeMilkId,
+      recommendedFlavorId: milkData.data?.flavors?.[0]?.flavorId,
+      bmi,
+      source: 'manual_profile',
+    });
+    void milkData.reload();
+  }
+
+  const confirmLogout = () => {
+    if (window.confirm('Bạn có chắc muốn đăng xuất không?')) onLogout();
+  };
+
   return (
-    <div className="screen profile-screen">
-      <div className="profile-header">
-        <div className="avatarCircle"><User size={36} /></div>
+    <div className="screen p-screen">
+      <div className="p-header">
+        <div className="p-avatar"><User size={36} /></div>
         <h1>{user.name}</h1>
         <p>{user.email}</p>
-        <div className="metric-grid compact">
-          <Metric label="Ngày streak" value={stats.data?.streakDays || 0} />
-          <Metric label="Bài tập" value={stats.data?.totalWorkouts || 0} />
-          <Metric label="Calo đốt" value={stats.data?.totalKcalBurned || 0} />
+        <div className="p-stats">
+          <div className="p-stat"><strong>{streakDays}</strong><span>Ngày streak</span></div>
+          <div className="p-stat"><strong>{totalWorkouts}</strong><span>Bài tập</span></div>
+          <div className="p-stat"><strong>{fmtKcal}</strong><span>Calo đốt</span></div>
         </div>
       </div>
-      <section className="card">
-        <h2><User size={20} /> Thông tin cá nhân</h2>
-        <div className="info-list">
-          <InfoRow icon={<Mail size={18} />} label="Email" value={user.email} />
-          <InfoRow icon={<CalendarDays size={18} />} label="Tuổi" value={`${age || '—'} tuổi`} />
-          <InfoRow icon={<Ruler size={18} />} label="Chiều cao" value={`${height || '—'} cm`} />
-          <InfoRow icon={<Scale size={18} />} label="Cân nặng" value={`${weight || '—'} kg`} />
-          <InfoRow icon={<Trophy size={18} />} label="Mục tiêu" value={goalLabel[goalType]} />
-        </div>
-        <details className="edit-profile-panel">
-          <summary>Cập nhật thông tin</summary>
-          <div className="grid2">
-            <Field label="Tên" value={name} onChange={setName} />
-            <Field label="Tuổi" value={age} onChange={(v) => setAge(Number(v))} type="number" />
-            <Field label="Chiều cao" value={height} onChange={(v) => setHeight(Number(v))} type="number" />
-            <Field label="Cân nặng" value={weight} onChange={(v) => setWeight(Number(v))} type="number" />
-            <label className="field"><span>Mục tiêu</span><select value={goalType} onChange={(e) => setGoalType(e.target.value as GoalType)}>{Object.entries(goalLabel).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
+      <div className="p-body">
+        {/* Scan account banner */}
+        <div className={`p-scan-ban ${entitlement.data?.hasActiveEntitlement ? 'p-scan-ban-active' : 'p-scan-ban-inactive'}`}>
+          <div className="p-scan-ban-icon">
+            {entitlement.data?.hasActiveEntitlement ? <Sparkles size={22} /> : <LockOpen size={22} />}
           </div>
-          <Button onClick={saveProfile}>Lưu hồ sơ</Button>
-        </details>
-        {msg && <p className="success">{msg}</p>}
-      </section>
-      <section className="card">
-        <h2><Sparkles size={20} /> Gói scan AI</h2>
-        <div className={classNames('entitlement', entitlement.data?.hasActiveEntitlement && 'active')}>
-          <strong>{entitlement.data?.hasActiveEntitlement ? <><Sparkles size={18} /> Đang active</> : <><LockOpen size={18} /> Chưa active</>}</strong>
-          <span>{entitlement.data?.hasActiveEntitlement ? `${entitlement.data.quotaPolicy?.dailyLimit || 30} lượt/ngày đến ${new Date(entitlement.data.activeUntil || '').toLocaleDateString('vi-VN')}` : 'Nhập mã trong chai sữa Ủ để mở gói.'}</span>
+          <div>
+            <strong>{entitlement.state === 'loading' ? 'Đang kiểm tra...' : entitlement.data?.hasActiveEntitlement ? 'Tài khoản scan AI đang active' : 'Tài khoản scan AI chưa active'}</strong>
+            <p>{entitlement.data?.hasActiveEntitlement
+              ? `${entitlement.data.quotaPolicy?.dailyLimit || 30} lượt scan AI mỗi ngày${entitlement.data.activeUntil ? ` đến ${new Date(entitlement.data.activeUntil).toLocaleDateString('vi-VN')}` : ''}.`
+              : 'Nhập mã trong chai sữa Ủ để mở gói 30 lượt scan AI mỗi ngày.'}</p>
+          </div>
         </div>
-        <Field label="Mã campaign" value={code} onChange={setCode} />
-        <Button onClick={redeem} disabled={!code.trim()}>Kích hoạt mã</Button>
-        <div className="divider" />
-        <Button variant="soft" onClick={() => setRatingOpen(true)}><Star size={18} /> Đánh giá app</Button>
-      </section>
-      <section className="card achievement-card">
-        <h2><Trophy size={20} /> Thành tích</h2>
-        <div className="achievement-row">
-          {[7, 14, 28, 60].map((day) => (
-            <div className={classNames('milestone', (stats.data?.streakDays || 0) >= day && 'done')} key={day}>
-              {day >= 60 ? <Trophy size={22} /> : day >= 28 ? <Star size={22} /> : day >= 14 ? <Flame size={22} /> : <TrendingUp size={22} />}
-              <span>{day} ngày</span>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="card settings-card">
-        <h2><Settings size={20} /> Cài đặt</h2>
-        <button onClick={() => setPage('notifications')}><Bell size={20} /> Thông báo <ChevronLeft className="chev" size={18} /></button>
-        <button><Shield size={20} /> Quyền riêng tư <ChevronLeft className="chev" size={18} /></button>
-        <button onClick={onLogout}><LockOpen size={20} /> Đăng xuất <ChevronLeft className="chev" size={18} /></button>
-      </section>
-      {ratingOpen && <RatingModal onClose={() => { setRatingOpen(false); void rating.reload(); }} />}
-    </div>
-  );
-}
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="info-row">
-      <span>{icon}</span>
-      <div>
-        <small>{label}</small>
-        <strong>{value}</strong>
+        {/* Thông tin cá nhân */}
+        <SectionTitle title="Thông tin cá nhân" />
+        <div className="p-card">
+          <InfoRow icon={<Mail size={18} />} label="Email" value={user.email} />
+          <InfoRow icon={<CalendarDays size={18} />} label="Tuổi" value={user.profile?.age ? `${user.profile.age} tuổi` : '—'} />
+          <InfoRow icon={<Ruler size={18} />} label="Chiều cao" value={user.profile?.heightCm ? `${user.profile.heightCm} cm` : '—'} action="Cập nhật" onAction={() => setEditOpen(true)} />
+          <InfoRow icon={<Scale size={18} />} label="Cân nặng" value={user.profile?.weightKg ? `${user.profile.weightKg} kg` : '—'} action="Cập nhật" onAction={() => setEditOpen(true)} />
+          <InfoRow icon={<Trophy size={18} />} label="Mục tiêu" value={GOAL_LABEL[user.profile?.goalType ?? ''] ?? '—'} action="Thay đổi" onAction={() => setEditOpen(true)} />
+          <InfoRow icon={<BarChart3 size={18} />} label="Chỉ số BMI" value="Xem chi tiết" action="→" onAction={() => setPage('bmi')} last />
+        </div>
+
+        {/* Gói scan AI */}
+        <SectionTitle title="Gói scan AI" />
+        <Field label="Mã campaign" value={code} onChange={setCode} placeholder="Nhập mã trong chai sữa Ủ" />
+        <Button onClick={redeem} disabled={!code.trim()}>Kích hoạt mã</Button>
+
+        {/* Sữa Ủ phù hợp */}
+        <SectionTitle title="Sữa Ủ phù hợp" />
+        <div className="p-card">
+          <p className="p-milk-dsc">{milkData.data?.disclaimer ?? 'Gợi ý sản phẩm theo sở thích và thể trạng, không phải tư vấn y khoa.'}</p>
+          {(milkData.data?.flavors || []).map((flavor: any) => {
+            const sel = activeMilkId === flavor.flavorId;
+            return (
+              <button key={flavor.flavorId} className={`p-milk-opt ${sel ? 'p-milk-sel' : ''}`} onClick={() => setMilkSelected(flavor.flavorId)}>
+                <div>
+                  <strong>{flavor.nameVi}</strong>
+                  <p>{flavor.positioningVi}</p>
+                </div>
+                {sel ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+              </button>
+            );
+          })}
+          {activeMilkId && <button className="p-milk-save" onClick={saveMilk}>{savedMilkId ? 'Cập nhật lựa chọn' : 'Lưu lựa chọn'}</button>}
+        </div>
+
+        {/* Thành tích */}
+        <SectionTitle title="Thành tích" />
+        <div className="p-achieve">
+          <div className="p-achieve-hero">
+            <div className="p-achieve-icon"><Ribbon size={28} /></div>
+            <div>
+              <strong>{achievementTitle}</strong>
+              <span>Duy trì {streakDays} ngày liên tiếp</span>
+            </div>
+          </div>
+          <div className="p-achieve-row">
+            {MILESTONES.map(({ days, icon: Icon }) => (
+              <MilestoneBadge key={days} days={days} Icon={Icon} state={getMilestoneState(days)} />
+            ))}
+          </div>
+        </div>
+
+        {/* Cài đặt */}
+        <SectionTitle title="Cài đặt" />
+        <div className="p-card">
+          <SettingsRow icon={<Bell size={20} />} label="Thông báo" onPress={() => setPage('notifications')} />
+          <SettingsRow icon={<Shield size={20} />} label="Quyền riêng tư" onPress={() => setPage('help')} />
+          <SettingsRow icon={<HelpCircle size={20} />} label="Trợ giúp & Hỗ trợ" onPress={() => setPage('help')} />
+          <SettingsRow icon={<LockOpen size={20} />} label="Đăng xuất" onPress={confirmLogout} danger last />
+        </div>
+
+        {/* Footer */}
+        <div className="p-footer">
+          <span>Ủ App · Phiên bản 1.0.0</span>
+          <span>© 2026 Ú Health & Wellness</span>
+        </div>
       </div>
+
+      {/* Edit profile modal */}
+      {editOpen && (
+        <div className="modal-backdrop" onClick={() => setEditOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Chỉnh sửa hồ sơ</h2>
+            <div className="p-edit-fields">
+              <label className="field"><span>TÊN HIỂN THỊ</span><input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nhập tên của bạn" /></label>
+              <label className="field"><span>TUỔI</span><input type="number" value={editAge} onChange={(e) => setEditAge(Number(e.target.value))} placeholder="25" /></label>
+              <label className="field"><span>CHIỀU CAO (cm)</span><input type="number" value={editHeight} onChange={(e) => setEditHeight(Number(e.target.value))} placeholder="170" /></label>
+              <label className="field"><span>CÂN NẶNG (kg)</span><input type="number" value={editWeight} onChange={(e) => setEditWeight(Number(e.target.value))} placeholder="65" /></label>
+              <span className="p-edit-lbl">MỤC TIÊU SỨC KHỎE</span>
+              <div className="p-goal-row">
+                {(['lose', 'maintain', 'gain'] as const).map((g) => (
+                  <button key={g} className={`p-goal-opt ${editGoal === g ? 'p-goal-sel' : ''}`} onClick={() => setEditGoal(g)}>{GOAL_LABEL[g]}</button>
+                ))}
+              </div>
+              <span className="p-edit-lbl">MỤC TIÊU NƯỚC MỖI NGÀY (LY)</span>
+              <div className="p-water-row">
+                <button className="p-water-btn p-water-out" onClick={() => setEditWater(v => Math.max(4, v - 1))} disabled={editWater <= 4}>−</button>
+                <span className="p-water-val">{editWater}</span>
+                <button className="p-water-btn p-water-fill" onClick={() => setEditWater(v => Math.min(16, v + 1))} disabled={editWater >= 16}>+</button>
+              </div>
+            </div>
+            <Button onClick={saveProfile}>Lưu thay đổi</Button>
+            {msg && <p className="success" style={{ marginTop: 8 }}>{msg}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Delete account modal */}
+      {ratingOpen && <RatingModal onClose={() => { setRatingOpen(false); void rating.reload(); }} />}
     </div>
   );
 }
@@ -2175,28 +2322,89 @@ function Notifications() {
 
   async function save() {
     await updateNotifications({ ...form, waterReminderTime: form.waterReminderTimes[0] });
-    setMsg('Đã lưu lịch nhắc. Trên web MVP chưa gửi push notification, lịch này sẽ dùng cho app mobile.');
+    setMsg('Đã lưu lịch nhắc.');
   }
 
   return (
-    <div className="screen">
-      <section className="card">
-        <h1><Bell size={24} /> Lịch nhắc sức khỏe</h1>
-        <Toggle label="Nhắc uống nước" value={form.waterReminder} onChange={(v) => setForm({ ...form, waterReminder: v })} />
-        {form.waterReminder && form.waterReminderTimes.map((time, index) => (
-          <Field key={index} label={`Uống nước lần ${index + 1}`} value={time} type="time" onChange={(v) => {
-            const next = [...form.waterReminderTimes];
-            next[index] = v;
-            setForm({ ...form, waterReminderTimes: next });
-          }} />
-        ))}
-        <Toggle label="Nhắc tập luyện" value={form.workoutReminder} onChange={(v) => setForm({ ...form, workoutReminder: v })} />
-        {form.workoutReminder && <Field label="Giờ tập luyện" value={form.workoutReminderTime} type="time" onChange={(v) => setForm({ ...form, workoutReminderTime: v })} />}
-        <Toggle label="Nhắc uống sữa Ủ" value={form.nutMilkReminder} onChange={(v) => setForm({ ...form, nutMilkReminder: v })} />
-        {form.nutMilkReminder && <Field label="Giờ uống sữa Ủ" value={form.nutMilkReminderTime} type="time" onChange={(v) => setForm({ ...form, nutMilkReminderTime: v })} />}
+    <div className="screen n-screen">
+      <div className="n-header">
+        <h1>Thông báo</h1>
+        <p>Quản lý lịch nhắc sức khỏe</p>
+      </div>
+      <div className="n-body">
+        <div className="n-card">
+          <Toggle label="Nhắc uống nước" value={form.waterReminder} onChange={(v) => setForm({ ...form, waterReminder: v })} />
+          {form.waterReminder && (
+            <div className="n-times">
+              {form.waterReminderTimes.map((time, index) => (
+                <Field key={index} label={`Lần ${index + 1}`} value={time} type="time" onChange={(v) => {
+                  const next = [...form.waterReminderTimes];
+                  next[index] = v;
+                  setForm({ ...form, waterReminderTimes: next });
+                }} />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="n-card">
+          <Toggle label="Nhắc tập luyện" value={form.workoutReminder} onChange={(v) => setForm({ ...form, workoutReminder: v })} />
+          {form.workoutReminder && <Field label="Giờ tập luyện" value={form.workoutReminderTime} type="time" onChange={(v) => setForm({ ...form, workoutReminderTime: v })} />}
+        </div>
+        <div className="n-card">
+          <Toggle label="Nhắc uống sữa Ủ" value={form.nutMilkReminder} onChange={(v) => setForm({ ...form, nutMilkReminder: v })} />
+          {form.nutMilkReminder && <Field label="Giờ uống sữa Ủ" value={form.nutMilkReminderTime} type="time" onChange={(v) => setForm({ ...form, nutMilkReminderTime: v })} />}
+        </div>
         <Button onClick={save}>Lưu thông báo</Button>
         {msg && <p className="success">{msg}</p>}
-      </section>
+      </div>
+    </div>
+  );
+}
+
+function HelpScreen() {
+  const [copied, setCopied] = useState(false);
+  const FAQ = [
+    { q: 'Làm thế nào để cập nhật cân nặng?', a: 'Vào tab BMI, dùng thanh trượt để chọn cân nặng và chiều cao mới, sau đó nhấn Lưu.' },
+    { q: 'Dữ liệu của tôi có được lưu an toàn không?', a: 'Có. Tất cả dữ liệu được lưu trữ trên MongoDB Atlas với mã hóa khi truyền và khi lưu. Mật khẩu được hash bằng bcrypt.' },
+    { q: 'Cách tính streak là gì?', a: 'Streak là số ngày liên tiếp bạn đánh dấu hoàn thành ít nhất 3 thói quen trong 6 thói quen mặc định.' },
+    { q: 'Tôi có thể xóa tài khoản không?', a: 'Hiện tại bạn có thể xóa tài khoản bằng cách liên hệ với chúng tôi qua email hỗ trợ. Tính năng tự xóa sẽ có trong bản cập nhật tiếp theo.' },
+  ];
+
+  function copyEmail() {
+    navigator.clipboard.writeText('support@u-app.vn');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="screen hlp-screen">
+      <div className="hlp-header">
+        <h1>Trợ giúp & Hỗ trợ</h1>
+        <p>Câu hỏi thường gặp và liên hệ</p>
+      </div>
+      <div className="hlp-body">
+        <div className="hlp-card">
+          <strong className="hlp-card-title">Câu hỏi thường gặp</strong>
+          {FAQ.map((item) => (
+            <details className="hlp-faq" key={item.q}>
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
+          ))}
+        </div>
+        <div className="hlp-card">
+          <div className="hlp-contact">
+            <Mail size={20} />
+            <span>support@u-app.vn</span>
+            <button className="hlp-copy" onClick={copyEmail}>{copied ? 'Đã sao chép!' : 'Sao chép'}</button>
+          </div>
+          <div className="hlp-divider" />
+          <div className="hlp-version">
+            <span>Phiên bản ứng dụng</span>
+            <span>1.0.0</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2227,6 +2435,7 @@ function App() {
       {page === 'habits' && <Habits />}
       {page === 'profile' && <Profile user={user} setUser={setUser} setPage={setPage} onLogout={logout} />}
       {page === 'notifications' && <Notifications />}
+      {page === 'help' && <HelpScreen />}
     </Shell>
   );
 }
