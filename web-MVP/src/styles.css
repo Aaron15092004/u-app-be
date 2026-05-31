@@ -2254,17 +2254,6 @@ textarea {
   border: 1px solid #CDE8B5;
 }
 
-.result-comment-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #DFF2C9;
-  display: grid;
-  place-items: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
 .result-comment-card p {
   margin: 0;
   font-size: 14px;

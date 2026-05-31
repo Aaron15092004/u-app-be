@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   Circle,
+  Clock,
   Dumbbell,
   Droplet,
   Flame,
@@ -20,6 +21,7 @@ import {
   LockOpen,
   Mail,
   Minus,
+  Moon,
   PersonStanding,
   QrCode,
   RefreshCw,
@@ -951,15 +953,15 @@ function ScanScreen() {
 }
 
 function NutrRow({ icon, iconColor, label, value, unit, hero, last }: {
-  icon: string; iconColor: string; label: string; value: number; unit: string; hero?: boolean; last?: boolean;
+  icon?: string; iconColor: string; label: string; value: number; unit: string; hero?: boolean; last?: boolean;
 }) {
   const formatted = value % 1 === 0 ? String(value) : value.toFixed(1);
   return (
     <div className={`nr ${last ? 'nr-last' : ''}`}>
       <div className="nr-left">
-        <div className="nr-icon" style={{ backgroundColor: iconColor + '18' }}>
-          <span style={{ color: iconColor }}>{icon === 'flame' ? '🔥' : icon === 'barbell' ? '💪' : icon === 'pizza' ? '🍕' : icon === 'water' ? '💧' : icon === 'leaf' ? '🥬' : icon === 'cafe' ? '☕' : '✦'}</span>
-        </div>
+      {icon && <div className="nr-icon" style={{ backgroundColor: iconColor + '18' }}>
+          <span style={{ color: iconColor }}>✦</span>
+        </div>}
         <span className={`nr-label ${hero ? 'nr-hero-label' : ''}`}>{label}</span>
       </div>
       <div className="nr-right">
@@ -1026,7 +1028,6 @@ function FoodResult({ result, preview, file, onSave, onRetake, busy }: {
           <>
             <SectionLabel title="Nhận xét nhanh" />
             <div className="result-comment-card">
-              <div className="result-comment-icon">💬</div>
               <p>{result.commentVi}</p>
             </div>
           </>
@@ -1034,13 +1035,13 @@ function FoodResult({ result, preview, file, onSave, onRetake, busy }: {
 
         <SectionLabel title="Dinh dưỡng chính" />
         <Card>
-          <NutrRow icon="flame"   iconColor="#FF5722" label="Năng lượng" value={totals.calories} unit="kcal" hero />
-          <NutrRow icon="barbell" iconColor="#4CAF50" label="Chất đạm"   value={totals.protein}  unit="g" />
-          <NutrRow icon="pizza"   iconColor="#FF9800" label="Tinh bột"   value={totals.carbs}    unit="g" />
-          <NutrRow icon="water"   iconColor="#FFC107" label="Chất béo"   value={totals.fat}      unit="g" />
-          <NutrRow icon="leaf"    iconColor="#8BC34A" label="Chất xơ"    value={fiber}           unit="g" last={sugar <= 0} />
+          <NutrRow iconColor="#FF5722" label="Năng lượng" value={totals.calories} unit="kcal" hero />
+          <NutrRow iconColor="#4CAF50" label="Chất đạm"   value={totals.protein}  unit="g" />
+          <NutrRow iconColor="#FF9800" label="Tinh bột"   value={totals.carbs}    unit="g" />
+          <NutrRow iconColor="#FFC107" label="Chất béo"   value={totals.fat}      unit="g" />
+          <NutrRow iconColor="#8BC34A" label="Chất xơ"    value={fiber}           unit="g" last={sugar <= 0} />
           {sugar > 0 && (
-            <NutrRow icon="cafe"  iconColor="#EC407A" label="Đường"      value={sugar}           unit="g" last />
+            <NutrRow iconColor="#EC407A" label="Đường"      value={sugar}           unit="g" last />
           )}
         </Card>
 
@@ -1050,7 +1051,7 @@ function FoodResult({ result, preview, file, onSave, onRetake, busy }: {
             <Card>
               {vitaminEntries.map(([key, value], i) => {
                 const meta = VITAMIN_META[key] ?? { label: key, unit: 'mg', icon: 'star', color: '#9E9E9E' };
-                return <NutrRow key={key} icon={meta.icon} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === vitaminEntries.length - 1} />;
+                return <NutrRow key={key} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === vitaminEntries.length - 1} />;
               })}
             </Card>
           </>
@@ -1062,7 +1063,7 @@ function FoodResult({ result, preview, file, onSave, onRetake, busy }: {
             <Card>
               {mineralEntries.map(([key, value], i) => {
                 const meta = MINERAL_META[key] ?? { label: key, unit: 'mg', icon: 'flask', color: '#9E9E9E' };
-                return <NutrRow key={key} icon={meta.icon} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === mineralEntries.length - 1} />;
+                return <NutrRow key={key} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === mineralEntries.length - 1} />;
               })}
             </Card>
           </>
@@ -1420,31 +1421,32 @@ const LEVEL_CHIPS: Array<{ id: string; label: string }> = [
   { id: 'advanced', label: 'Nâng cao' },
 ];
 
-const LEVEL_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-  beginner: { label: 'Người mới', color: '#4CAF50', icon: '🌱' },
-  intermediate: { label: 'Trung cấp', color: '#FFA726', icon: '🔥' },
-  advanced: { label: 'Nâng cao', color: '#EF5350', icon: '🏆' },
+const LEVEL_CONFIG: Record<string, { label: string; color: string }> = {
+  beginner: { label: 'Người mới', color: '#4CAF50' },
+  intermediate: { label: 'Trung cấp', color: '#FFA726' },
+  advanced: { label: 'Nâng cao', color: '#EF5350' },
 };
 
 function ProgramCard({ program, onPress }: { program: ProgramSummary; onPress: () => void }) {
   const cfg = LEVEL_CONFIG[program.level] ?? LEVEL_CONFIG.beginner;
   const progress = program.userProgress;
   const hasImage = !!program.imageUrl;
+  const LevelIcon = program.level === 'advanced' ? Trophy : program.level === 'intermediate' ? Flame : Leaf;
 
   return (
     <button className="w-card" onClick={onPress}>
       <div className="w-card-bg" style={hasImage ? { backgroundImage: `url(${program.imageUrl})` } : { background: 'linear-gradient(180deg, #3E6B10CC, #6C9A24EE)' }}>
         <div className="w-card-gradient" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.68) 0%, transparent 50%)' }}>
           <div className="w-card-badge" style={{ backgroundColor: cfg.color + '33', border: '1px solid rgba(255,255,255,0.2)' }}>
-            <span>{cfg.icon}</span>
+            <LevelIcon size={14} />
             <span>{cfg.label}</span>
           </div>
           <div className="w-card-bottom">
             <strong className="w-card-title">{program.title}</strong>
             {program.description ? <span className="w-card-desc">{program.description}</span> : null}
             <div className="w-card-stats">
-              <span className="w-card-stat">📅 {program.totalDays} ngày</span>
-              <span className="w-card-stat">⏱ ~{program.avgDayMinutes} phút/ngày</span>
+              <span className="w-card-stat"><CalendarDays size={13} /> {program.totalDays} ngày</span>
+              <span className="w-card-stat"><Clock size={13} /> ~{program.avgDayMinutes} phút/ngày</span>
             </div>
             {progress && program.totalDays > 0 && (
               <div className="w-card-progress">
@@ -1543,7 +1545,7 @@ function Workouts() {
           </div>
           {streak > 0 && (
             <div className="w-streak-badge">
-              <span>🔥</span>
+              <Flame size={20} />
               <span className="w-streak-num">{streak}</span>
               <span className="w-streak-lbl">ngày</span>
             </div>
@@ -1623,13 +1625,13 @@ function Workouts() {
 }
 
 const HABIT_DEFS: Array<{
-  id: HabitId; name: string; icon: string; iconColor: string; iconBg: string; barColor: string; mode: 'water-log' | 'auto' | 'manual';
+  id: HabitId; name: string; iconColor: string; iconBg: string; barColor: string; mode: 'water-log' | 'auto' | 'manual';
 }> = [
-  { id: 'water',      name: 'Uống 8 ly nước',      icon: '💧', iconColor: '#2196F3', iconBg: '#E3F2FD', barColor: '#2196F3', mode: 'water-log' },
-  { id: 'vegetables', name: 'Ăn đủ chất',           icon: '🥗', iconColor: '#4CAF50', iconBg: '#E8F5E9', barColor: '#4CAF50', mode: 'auto' },
-  { id: 'exercise',   name: 'Tập luyện hôm nay',    icon: '💪', iconColor: '#FF6B35', iconBg: '#FFF3EE', barColor: '#FF6B35', mode: 'auto' },
-  { id: 'sleep',      name: 'Ngủ đủ 8 tiếng',       icon: '🌙', iconColor: '#7C3AED', iconBg: '#F5F3FF', barColor: '#7C3AED', mode: 'manual' },
-  { id: 'nut-milk',   name: 'Uống sữa hạt từ Ủ',    icon: '🥛', iconColor: '#F59E0B', iconBg: '#FFFBEB', barColor: '#F59E0B', mode: 'manual' },
+  { id: 'water',      name: 'Uống 8 ly nước',      iconColor: '#2196F3', iconBg: '#E3F2FD', barColor: '#2196F3', mode: 'water-log' },
+  { id: 'vegetables', name: 'Ăn đủ chất',           iconColor: '#4CAF50', iconBg: '#E8F5E9', barColor: '#4CAF50', mode: 'auto' },
+  { id: 'exercise',   name: 'Tập luyện hôm nay',    iconColor: '#FF6B35', iconBg: '#FFF3EE', barColor: '#FF6B35', mode: 'auto' },
+  { id: 'sleep',      name: 'Ngủ đủ 8 tiếng',       iconColor: '#7C3AED', iconBg: '#F5F3FF', barColor: '#7C3AED', mode: 'manual' },
+  { id: 'nut-milk',   name: 'Uống sữa hạt từ Ủ',    iconColor: '#F59E0B', iconBg: '#FFFBEB', barColor: '#F59E0B', mode: 'manual' },
 ];
 
 const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -1650,12 +1652,21 @@ function getWeekDates(): string[] {
   });
 }
 
+const HABIT_ICONS: Record<string, React.ElementType> = {
+  water: Droplet,
+  vegetables: Leaf,
+  exercise: Dumbbell,
+  sleep: Moon,
+  'nut-milk': Droplet,
+};
+
 function HabitCard({ habit, isCompleted, progress, onAction, isLoading }: {
   habit: typeof HABIT_DEFS[0]; isCompleted: boolean;
   progress: { current: number; total: number; unit: string; percent: number };
   onAction: (() => void) | null; isLoading: boolean;
 }) {
   const pct = progress.percent;
+  const HabitIcon = HABIT_ICONS[habit.id] ?? Droplet;
   const showCompleted = isCompleted || (habit.mode === 'auto' && pct >= 1);
   const actionLabel = habit.mode === 'water-log' ? 'Đánh dấu +1' : habit.mode === 'manual' ? 'Xác nhận' : null;
 
@@ -1663,7 +1674,7 @@ function HabitCard({ habit, isCompleted, progress, onAction, isLoading }: {
     <div className="h-card">
       <div className="h-card-header">
         <div className="h-icon-box" style={{ backgroundColor: habit.iconBg }}>
-          <span>{habit.icon}</span>
+          <HabitIcon size={20} />
         </div>
         <div className="h-name-col">
           <span className="h-name">{habit.name}</span>
