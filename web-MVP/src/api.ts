@@ -154,7 +154,7 @@ export interface RatingStatus {
 
 export const api = axios.create({
   baseURL: API_URL,
-  timeout: 45000,
+  timeout: 60000,
 });
 
 api.interceptors.request.use((config) => {
