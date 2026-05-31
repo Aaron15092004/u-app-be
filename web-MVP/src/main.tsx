@@ -46,6 +46,7 @@ import {
   ProgramDetail,
   ProgramSummary,
   ScanResult,
+  TodaySummary,
   checkInHabit,
   clearAuth,
   completeProfile,
@@ -1412,19 +1413,96 @@ function BmiMilk({ user, setUser }: { user: AuthUser; setUser: (u: AuthUser) => 
   );
 }
 
+const LEVEL_CHIPS: Array<{ id: string; label: string }> = [
+  { id: 'all', label: 'Tất cả' },
+  { id: 'beginner', label: 'Người mới' },
+  { id: 'intermediate', label: 'Trung cấp' },
+  { id: 'advanced', label: 'Nâng cao' },
+];
+
+const LEVEL_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
+  beginner: { label: 'Người mới', color: '#4CAF50', icon: '🌱' },
+  intermediate: { label: 'Trung cấp', color: '#FFA726', icon: '🔥' },
+  advanced: { label: 'Nâng cao', color: '#EF5350', icon: '🏆' },
+};
+
+function ProgramCard({ program, onPress }: { program: ProgramSummary; onPress: () => void }) {
+  const cfg = LEVEL_CONFIG[program.level] ?? LEVEL_CONFIG.beginner;
+  const progress = program.userProgress;
+  const hasImage = !!program.imageUrl;
+
+  return (
+    <button className="w-card" onClick={onPress}>
+      <div className="w-card-bg" style={hasImage ? { backgroundImage: `url(${program.imageUrl})` } : { background: 'linear-gradient(180deg, #3E6B10CC, #6C9A24EE)' }}>
+        <div className="w-card-gradient" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.68) 0%, transparent 50%)' }}>
+          <div className="w-card-badge" style={{ backgroundColor: cfg.color + '33', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <span>{cfg.icon}</span>
+            <span>{cfg.label}</span>
+          </div>
+          <div className="w-card-bottom">
+            <strong className="w-card-title">{program.title}</strong>
+            {program.description ? <span className="w-card-desc">{program.description}</span> : null}
+            <div className="w-card-stats">
+              <span className="w-card-stat">📅 {program.totalDays} ngày</span>
+              <span className="w-card-stat">⏱ ~{program.avgDayMinutes} phút/ngày</span>
+            </div>
+            {progress && program.totalDays > 0 && (
+              <div className="w-card-progress">
+                <div className="w-card-progress-track">
+                  <div className="w-card-progress-fill" style={{ width: `${Math.round((progress.completedDays.length / program.totalDays) * 100)}%` }} />
+                </div>
+                <span className="w-card-progress-text">{progress.completedDays.length}/{program.totalDays}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 function Workouts() {
   const [level, setLevel] = useState('all');
   const [programId, setProgramId] = useState('');
-  const programs = useAsync(() => listPrograms(level), [level]);
-  const program = useAsync(() => programId ? getProgram(programId) : Promise.resolve(null as ProgramDetail | null), [programId]);
-  const stats = useAsync(getWeeklyWorkoutStats, []);
-  const streak = useAsync(getWorkoutStreak, []);
   const [msg, setMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [programsData, setProgramsData] = useState<ProgramSummary[]>([]);
+  const [streakData, setStreakData] = useState<{ currentStreak: number } | null>(null);
+  const [programDetail, setProgramDetail] = useState<ProgramDetail | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [progs, str] = await Promise.all([listPrograms(level), getWorkoutStreak()]);
+        setProgramsData(progs as ProgramSummary[]);
+        setStreakData(str as { currentStreak: number });
+      } catch { /* ignore */ } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, [level]);
+
+  async function loadProgramDetail(id: string) {
+    setProgramId(id);
+    if (id) {
+      const detail = await getProgram(id);
+      setProgramDetail(detail as ProgramDetail);
+    } else {
+      setProgramDetail(null);
+    }
+  }
 
   async function start(id: string) {
     await startProgram(id);
     setMsg('Đã bắt đầu chương trình.');
-    void programs.reload();
+    const [progs] = await Promise.all([listPrograms(level)]);
+    setProgramsData(progs as ProgramSummary[]);
+    if (programId === id) {
+      const detail = await getProgram(id);
+      setProgramDetail(detail as ProgramDetail);
+    }
   }
 
   async function completeDay(detail: ProgramDetail, dayNumber: number) {
@@ -1444,101 +1522,380 @@ function Workouts() {
     });
     await completeSession(session._id, day.totalDurationSeconds);
     setMsg('Đã hoàn thành buổi tập.');
-    void stats.reload();
-    void streak.reload();
-    void program.reload();
+    const detailReload = await getProgram(detail._id);
+    setProgramDetail(detailReload as ProgramDetail);
+    const [progs, str] = await Promise.all([listPrograms(level), getWorkoutStreak()]);
+    setProgramsData(progs as ProgramSummary[]);
+    setStreakData(str as { currentStreak: number });
   }
 
+  const streak = streakData?.currentStreak ?? 0;
+  const enrolledPrograms = programsData.filter((p) => p.userProgress?.status === 'active');
+  const discoverPrograms = programsData.filter((p) => p.userProgress?.status !== 'active');
+
   return (
-    <div className="screen workouts-screen">
-      <div className="sub-gradient-header">
-        <h1><Dumbbell size={24} /> Luyện tập</h1>
-        <p>Kiên trì mỗi ngày, kết quả đến tự nhiên</p>
-      </div>
-      <div className="metric-grid">
-        <Metric label="Streak tập" value={streak.data?.currentStreak ?? 0} unit="ngày" />
-        <Metric label="Tuần này" value={stats.data?.minutes ?? 0} unit="phút" />
-        <Metric label="Bài tập" value={stats.data?.exercises ?? 0} unit="lượt" />
-        <Metric label="Calo đốt" value={stats.data?.kcal ?? 0} unit="kcal" />
-      </div>
-      {msg && <p className="success">{msg}</p>}
-      <section className="card">
-        <div className="section-head">
-          <div><h2>Khám phá chương trình</h2></div>
-          <select value={level} onChange={(e) => setLevel(e.target.value)}>
-            <option value="all">Tất cả</option>
-            <option value="beginner">Người mới</option>
-            <option value="intermediate">Trung cấp</option>
-            <option value="advanced">Nâng cao</option>
-          </select>
+    <div className="screen w-screen">
+      <div className="w-header">
+        <div className="w-header-top">
+          <div>
+            <h1>Luyện tập</h1>
+            <p>Kiên trì mỗi ngày, kết quả đến tự nhiên</p>
+          </div>
+          {streak > 0 && (
+            <div className="w-streak-badge">
+              <span>🔥</span>
+              <span className="w-streak-num">{streak}</span>
+              <span className="w-streak-lbl">ngày</span>
+            </div>
+          )}
         </div>
-        <div className="program-grid">
-          {(programs.data || []).map((item: ProgramSummary) => (
-            <button key={item._id} className={classNames('program-card', programId === item._id && 'active')} onClick={() => setProgramId(item._id)}>
-              {item.imageUrl && <img src={item.imageUrl} alt={item.title} />}
-              <span>{item.level}</span>
-              <strong>{item.title}</strong>
-              <small>{item.totalDays} ngày · ~{item.avgDayMinutes} phút/ngày</small>
-              <em>{item.userProgress ? `${item.userProgress.completedDays.length}/${item.totalDays} ngày` : 'Chưa bắt đầu'}</em>
+      </div>
+
+      <div className="w-body">
+        {msg && <p className="success" style={{ margin: '0 16px' }}>{msg}</p>}
+
+        {enrolledPrograms.length > 0 && (
+          <>
+            <span className="w-section-title">Chương trình của tôi</span>
+            {enrolledPrograms.map((prog) => (
+              <ProgramCard key={prog._id} program={prog} onPress={() => loadProgramDetail(prog._id)} />
+            ))}
+          </>
+        )}
+
+        <span className="w-section-title">Khám phá chương trình</span>
+
+        <div className="w-chips">
+          {LEVEL_CHIPS.map((chip) => (
+            <button key={chip.id} className={`w-chip ${level === chip.id ? 'w-chip-active' : ''}`} onClick={() => { setLevel(chip.id); setProgramId(''); setProgramDetail(null); }}>
+              {chip.label}
             </button>
           ))}
         </div>
-      </section>
-      {program.data && (
-        <section className="card">
-          <div className="section-head">
-            <div><h2>{program.data.title}</h2><p>{program.data.description}</p></div>
-            <Button onClick={() => start(program.data!._id)}>Bắt đầu</Button>
-          </div>
-          <div className="day-list">
-            {program.data.days.map((day) => (
-              <div className="day-card" key={day.dayNumber}>
-                <div><strong>Ngày {day.dayNumber}: {day.title}</strong><small>{day.exercises.length} bài · {day.totalDurationMinutes} phút</small></div>
-                <ul>{day.exercises.map((e) => <li key={`${day.dayNumber}-${e.order}`}>{e.exerciseName} · {Math.round(e.durationSeconds / 60)} phút</li>)}</ul>
-                <Button variant="soft" onClick={() => completeDay(program.data!, day.dayNumber)}>Hoàn thành ngày này</Button>
+
+        {isLoading ? (
+          <>{[1, 2, 3].map((k) => <div key={k} className="w-skeleton" />)}</>
+        ) : discoverPrograms.length === 0 && enrolledPrograms.length === 0 ? (
+          <div className="w-empty"><span>Chưa có chương trình nào.</span></div>
+        ) : (
+          discoverPrograms.map((prog) => (
+            <ProgramCard key={prog._id} program={prog} onPress={() => loadProgramDetail(prog._id)} />
+          ))
+        )}
+
+        {/* Program detail modal */}
+        {programDetail && (
+          <div className="w-modal-backdrop" onClick={() => { setProgramId(''); setProgramDetail(null); }}>
+            <div className="w-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="w-modal-header">
+                <h2>{programDetail.title}</h2>
+                {programDetail.description && <p>{programDetail.description}</p>}
+                <button className="w-start-btn" onClick={() => start(programDetail._id)}>Bắt đầu</button>
               </div>
-            ))}
+              <div className="w-day-list">
+                {programDetail.days.map((day) => (
+                  <div className="w-day-card" key={day.dayNumber}>
+                    <div className="w-day-title">
+                      <strong>Ngày {day.dayNumber}: {day.title}</strong>
+                      <small>{day.exercises.length} bài · {day.totalDurationMinutes} phút</small>
+                    </div>
+                    <div className="w-ex-list">
+                      {day.exercises.map((e) => (
+                        <div className="w-ex-row" key={`${day.dayNumber}-${e.order}`}>
+                          <span>{e.exerciseName}</span>
+                          <span>{Math.round(e.durationSeconds / 60)} phút</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="w-complete-btn" onClick={() => completeDay(programDetail, day.dayNumber)}>
+                      Hoàn thành ngày này
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button className="w-close-btn" onClick={() => { setProgramId(''); setProgramDetail(null); }}>Đóng</button>
+            </div>
           </div>
-        </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const HABIT_DEFS: Array<{
+  id: HabitId; name: string; icon: string; iconColor: string; iconBg: string; barColor: string; mode: 'water-log' | 'auto' | 'manual';
+}> = [
+  { id: 'water',      name: 'Uống 8 ly nước',      icon: '💧', iconColor: '#2196F3', iconBg: '#E3F2FD', barColor: '#2196F3', mode: 'water-log' },
+  { id: 'vegetables', name: 'Ăn đủ chất',           icon: '🥗', iconColor: '#4CAF50', iconBg: '#E8F5E9', barColor: '#4CAF50', mode: 'auto' },
+  { id: 'exercise',   name: 'Tập luyện hôm nay',    icon: '💪', iconColor: '#FF6B35', iconBg: '#FFF3EE', barColor: '#FF6B35', mode: 'auto' },
+  { id: 'sleep',      name: 'Ngủ đủ 8 tiếng',       icon: '🌙', iconColor: '#7C3AED', iconBg: '#F5F3FF', barColor: '#7C3AED', mode: 'manual' },
+  { id: 'nut-milk',   name: 'Uống sữa hạt từ Ủ',    icon: '🥛', iconColor: '#F59E0B', iconBg: '#FFFBEB', barColor: '#F59E0B', mode: 'manual' },
+];
+
+const DAY_LABELS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+function toYMD(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getWeekDates(): string[] {
+  const today = new Date();
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return toYMD(d);
+  });
+}
+
+function HabitCard({ habit, isCompleted, progress, onAction, isLoading }: {
+  habit: typeof HABIT_DEFS[0]; isCompleted: boolean;
+  progress: { current: number; total: number; unit: string; percent: number };
+  onAction: (() => void) | null; isLoading: boolean;
+}) {
+  const pct = progress.percent;
+  const showCompleted = isCompleted || (habit.mode === 'auto' && pct >= 1);
+  const actionLabel = habit.mode === 'water-log' ? 'Đánh dấu +1' : habit.mode === 'manual' ? 'Xác nhận' : null;
+
+  return (
+    <div className="h-card">
+      <div className="h-card-header">
+        <div className="h-icon-box" style={{ backgroundColor: habit.iconBg }}>
+          <span>{habit.icon}</span>
+        </div>
+        <div className="h-name-col">
+          <span className="h-name">{habit.name}</span>
+          <span className="h-progress">{progress.current}/{progress.total} {progress.unit}</span>
+        </div>
+        {showCompleted && (
+          <div className="h-check-circle" style={{ backgroundColor: habit.iconColor }}>✓</div>
+        )}
+      </div>
+      <div className="h-bar-track">
+        <div className="h-bar-fill" style={{ width: `${Math.round(pct * 100)}%`, backgroundColor: habit.barColor }} />
+      </div>
+      {habit.mode === 'auto' && !showCompleted && (
+        <span className="h-auto-hint">Tự động cập nhật từ hoạt động của bạn</span>
       )}
+      {showCompleted ? (
+        <div className="h-done-btn">✓ Hoàn thành</div>
+      ) : actionLabel ? (
+        <button className="h-action-btn" onClick={isLoading ? undefined : (onAction ?? undefined)} disabled={isLoading}>
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function ProgressCard({ completed, total }: { completed: number; total: number }) {
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const encouragement = pct === 100 ? 'Tuyệt vời! Hoàn thành rồi!' : pct >= 50 ? 'Tiếp tục phát huy!' : 'Bắt đầu thôi nào!';
+  return (
+    <div className="h-progress-card">
+      <span className="h-progress-title">Tiến độ hôm nay</span>
+      <span className="h-progress-sub">{completed}/{total} thói quen hoàn thành</span>
+      <div className="h-progress-bar-track">
+        <div className="h-progress-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="h-progress-footer">
+        <span>{encouragement}</span>
+        <span className="h-progress-pct">{pct}%</span>
+      </div>
+    </div>
+  );
+}
+
+function StreakCard({ streakDays, weekDates, weeklyMap }: {
+  streakDays: number; weekDates: string[]; weeklyMap: Record<string, boolean>;
+}) {
+  const todayStr = toYMD(new Date());
+  return (
+    <div className="h-streak-card">
+      <div className="h-streak-top">
+        <div>
+          <span className="h-streak-title">Chuỗi ngày liên tiếp</span>
+          <span className="h-streak-sub">{streakDays > 0 ? 'Bạn đang làm rất tốt!' : 'Bắt đầu hôm nay nhé!'}</span>
+        </div>
+        <div className="h-streak-count">
+          <span className="h-streak-num">{streakDays}</span>
+          <span className="h-streak-lbl">ngày</span>
+        </div>
+      </div>
+      <div className="h-streak-row">
+        {weekDates.map((date, i) => {
+          const qualified = weeklyMap[date] ?? false;
+          const isToday = date === todayStr;
+          const isFuture = date > todayStr;
+          const circleColor = isFuture ? '#E0E0E0' : isToday ? '#FF6B35' : qualified ? '#B7CD65' : '#E0E0E0';
+          return (
+            <div className="h-streak-col" key={date}>
+              <div className="h-streak-circle" style={{ backgroundColor: circleColor }}>
+                {!isFuture && (qualified || isToday) ? '✓' : null}
+              </div>
+              <span style={{ fontSize: 11, color: isFuture ? '#E0E0E0' : '#999', marginTop: 4 }}>{DAY_LABELS[i]}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function TipsCard() {
+  return (
+    <div className="h-tips-card">
+      <span className="h-tips-title">Mẹo xây dựng thói quen</span>
+      {['Bắt đầu với thói quen nhỏ, dễ thực hiện', 'Duy trì ít nhất 21 ngày liên tiếp', 'Đặt lời nhắc để không quên', 'Kết nối thói quen mới với thói quen cũ'].map((tip) => (
+        <span key={tip} className="h-tip">• {tip}</span>
+      ))}
     </div>
   );
 }
 
 function Habits() {
-  const today = useAsync(getHabitsToday, []);
-  const weekly = useAsync(getWeeklyHabits, []);
-  const streak = useAsync(getHabitStreak, []);
-  const completed = new Set(today.data?.completed || []);
+  const [summary, setSummary] = useState<TodaySummary | null>(null);
+  const [todayData, setTodayData] = useState<{ completed: HabitId[] } | null>(null);
+  const [weeklyData, setWeeklyData] = useState<Array<{ date: string; qualified: boolean }>>([]);
+  const [streakData, setStreakData] = useState<{ streakDays: number } | null>(null);
+  const [statsData, setStatsData] = useState<{ dailyTargets?: { kcal: number } } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [busyId, setBusyId] = useState<HabitId | null>(null);
 
-  async function check(id: HabitId) {
-    await checkInHabit(id);
-    void today.reload();
-    void weekly.reload();
-    void streak.reload();
+  useEffect(() => {
+    async function load() {
+      try {
+        const [td, wd, sd, sm, st] = await Promise.all([
+          getHabitsToday(),
+          getWeeklyHabits(),
+          getHabitStreak(),
+          getTodaySummary(),
+          getProfileStats(),
+        ]);
+        setTodayData(td);
+        setWeeklyData(wd as Array<{ date: string; qualified: boolean }>);
+        setStreakData(sd as { streakDays: number });
+        setSummary(sm as TodaySummary);
+        setStatsData(st as { dailyTargets?: { kcal: number } });
+      } catch { /* ignore */ } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  async function reload() {
+    try {
+      const [td, wd, sd, sm] = await Promise.all([
+        getHabitsToday(),
+        getWeeklyHabits(),
+        getHabitStreak(),
+        getTodaySummary(),
+      ]);
+      setTodayData(td);
+      setWeeklyData(wd as Array<{ date: string; qualified: boolean }>);
+      setStreakData(sd as { streakDays: number });
+      setSummary(sm as TodaySummary);
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (!summary || !todayData) return;
+    async function autoSync() {
+      const targetKcal = statsData?.dailyTargets?.kcal ?? 2000;
+      const completedSet = new Set(todayData!.completed ?? []);
+      for (const id of ['water', 'vegetables', 'exercise'] as HabitId[]) {
+        const autoMet = id === 'water' ? summary!.waterGlasses >= summary!.waterGoal
+          : id === 'vegetables' ? (summary!.kcalConsumed >= targetKcal * 0.85 && summary!.macros.protein > 0 && summary!.macros.carbs > 0 && summary!.macros.fat > 0)
+          : id === 'exercise' ? summary!.workoutMinutes >= 30 : false;
+        if (autoMet && !completedSet.has(id)) {
+          await checkInHabit(id);
+        }
+      }
+      void reload();
+    }
+    autoSync();
+  }, [summary?.waterGlasses, summary?.kcalConsumed, summary?.workoutMinutes]);
+
+  const completedSet = new Set(todayData?.completed ?? []);
+  const targetKcal = statsData?.dailyTargets?.kcal ?? 2000;
+  const weekDates = getWeekDates();
+  const weeklyMap: Record<string, boolean> = {};
+  for (const entry of weeklyData) weeklyMap[entry.date] = entry.qualified;
+  const TOTAL = HABIT_DEFS.length;
+
+  function getProgress(id: HabitId, isCompleted: boolean) {
+    switch (id) {
+      case 'water': {
+        const c = summary?.waterGlasses ?? 0;
+        const t = summary?.waterGoal ?? 8;
+        return { current: c, total: t, unit: 'cốc', percent: Math.min(1, t > 0 ? c / t : 0) };
+      }
+      case 'vegetables': {
+        const c = Math.round(summary?.kcalConsumed ?? 0);
+        const t = targetKcal;
+        return { current: c, total: t, unit: 'kcal', percent: Math.min(1, t > 0 ? c / t : 0) };
+      }
+      case 'exercise': {
+        const c = summary?.workoutMinutes ?? 0;
+        return { current: c, total: 30, unit: 'phút', percent: Math.min(1, c / 30) };
+      }
+      default: {
+        const done = isCompleted ? 1 : 0;
+        return { current: done, total: 1, unit: id === 'nut-milk' ? 'cốc' : 'lần', percent: done };
+      }
+    }
+  }
+
+  async function handleCheckIn(id: HabitId) {
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      if (id === 'water') {
+        await logWater();
+      } else {
+        await checkInHabit(id);
+      }
+      void reload();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const completedCount = ['water', 'vegetables', 'exercise', 'sleep', 'nut-milk'].filter((id) => completedSet.has(id as HabitId)).length;
+
+  if (isLoading) {
+    return (
+      <div className="screen h-screen">
+        <div className="h-header"><h1>Thói quen</h1><p>Theo dõi thói quen lành mạnh hàng ngày</p></div>
+        <div className="h-body">{Array.from({ length: 7 }).map((_, i) => <div key={i} className="h-skeleton" />)}</div>
+      </div>
+    );
   }
 
   return (
-    <div className="screen">
-      <div className="sub-gradient-header">
-        <h1><CheckCircle2 size={24} /> Thói quen</h1>
-        <p>{streak.data?.streakDays || 0} ngày streak · Hoàn thành ít nhất 3 habit mỗi ngày</p>
+    <div className="screen h-screen">
+      <div className="h-header">
+        <h1>Thói quen</h1>
+        <p>Theo dõi thói quen lành mạnh hàng ngày</p>
       </div>
-      <section className="card">
-        <h2>Hôm nay</h2>
-        <div className="habit-grid">
-          {(Object.keys(habitLabels) as HabitId[]).map((id) => (
-            <button className={classNames('habit-card', completed.has(id) && 'done')} key={id} onClick={() => check(id)}>
-              <strong>{id === 'water' ? <Droplet size={19} /> : id === 'exercise' ? <Dumbbell size={19} /> : id === 'nut-milk' ? <Leaf size={19} /> : id === 'sleep' ? <Circle size={19} /> : id === 'vegetables' ? <Apple size={19} /> : <CalendarDays size={19} />} {habitLabels[id]}</strong>
-              <span>{completed.has(id) ? 'Đã xong' : 'Check-in'}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-      <section className="card">
-        <h2>7 ngày gần đây</h2>
-        <div className="heat-row">{(weekly.data || []).map((d: { date: string; qualified: boolean }) => <span className={d.qualified ? 'hot' : ''} key={d.date}>{new Date(d.date).getDate()}</span>)}</div>
-      </section>
+      <div className="h-body">
+        <ProgressCard completed={completedCount} total={TOTAL} />
+        <StreakCard streakDays={streakData?.streakDays ?? 0} weekDates={weekDates} weeklyMap={weeklyMap} />
+        <span className="h-list-title">Danh sách thói quen</span>
+        {HABIT_DEFS.map((habit) => {
+          const isCompleted = completedSet.has(habit.id);
+          const prog = getProgress(habit.id, isCompleted);
+          let onAction: (() => void) | null = null;
+          if ((habit.mode === 'water-log' || habit.mode === 'manual') && !isCompleted) {
+            onAction = () => handleCheckIn(habit.id);
+          }
+          return <HabitCard key={habit.id} habit={habit} isCompleted={isCompleted} progress={prog} onAction={onAction} isLoading={busyId === habit.id} />;
+        })}
+        <TipsCard />
+      </div>
     </div>
   );
 }
