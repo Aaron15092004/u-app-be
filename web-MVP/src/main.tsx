@@ -80,6 +80,7 @@ import {
   saveBmi,
   saveFoodLog,
   scanFood,
+  uploadFoodLogImage,
   selectMilk,
   startProgram,
   storeAuth,
@@ -115,31 +116,28 @@ const habitLabels: Record<HabitId, string> = {
   'nut-milk': 'Sữa Ủ',
 };
 
-const VITAMIN_META: Record<string, { label: string; unit: string }> = {
-  vitaminA: { label: 'Vitamin A', unit: 'mcg' },
-  vitaminB1: { label: 'Vitamin B1', unit: 'mg' },
-  vitaminB2: { label: 'Vitamin B2', unit: 'mg' },
-  vitaminB3: { label: 'Vitamin B3', unit: 'mg' },
-  vitaminB6: { label: 'Vitamin B6', unit: 'mg' },
-  vitaminB12: { label: 'Vitamin B12', unit: 'mcg' },
-  vitaminC: { label: 'Vitamin C', unit: 'mg' },
-  vitaminD: { label: 'Vitamin D', unit: 'mcg' },
-  vitaminE: { label: 'Vitamin E', unit: 'mg' },
-  vitaminK: { label: 'Vitamin K', unit: 'mcg' },
-  folate: { label: 'Folate', unit: 'mcg' },
+const VITAMIN_META: Record<string, { label: string; unit: string; icon: string; color: string }> = {
+  vitaminC:   { label: 'Vitamin C',   unit: 'mg',  icon: 'sunny',     color: '#FFB300' },
+  vitaminA:   { label: 'Vitamin A',   unit: 'mcg', icon: 'eye',       color: '#FF9800' },
+  vitaminD:   { label: 'Vitamin D',   unit: 'mcg', icon: 'sun',       color: '#FFC107' },
+  vitaminE:   { label: 'Vitamin E',   unit: 'mg',  icon: 'leaf',      color: '#8BC34A' },
+  vitaminK:   { label: 'Vitamin K',   unit: 'mcg', icon: 'heart',     color: '#4CAF50' },
+  vitaminB1:  { label: 'Vitamin B1',  unit: 'mg',  icon: 'zap',       color: '#03A9F4' },
+  vitaminB2:  { label: 'Vitamin B2',  unit: 'mg',  icon: 'zap',       color: '#2196F3' },
+  vitaminB3:  { label: 'Vitamin B3',  unit: 'mg',  icon: 'zap',       color: '#9C27B0' },
+  vitaminB12: { label: 'Vitamin B12', unit: 'mcg', icon: 'star',      color: '#E91E63' },
+  folate:     { label: 'Folate (B9)', unit: 'mcg', icon: 'leaf',      color: '#66BB6A' },
 };
 
-const MINERAL_META: Record<string, { label: string; unit: string }> = {
-  calcium: { label: 'Canxi', unit: 'mg' },
-  iron: { label: 'Sắt', unit: 'mg' },
-  magnesium: { label: 'Magie', unit: 'mg' },
-  phosphorus: { label: 'Phốt pho', unit: 'mg' },
-  potassium: { label: 'Kali', unit: 'mg' },
-  sodium: { label: 'Natri', unit: 'mg' },
-  zinc: { label: 'Kẽm', unit: 'mg' },
-  copper: { label: 'Đồng', unit: 'mg' },
-  manganese: { label: 'Mangan', unit: 'mg' },
-  selenium: { label: 'Selen', unit: 'mcg' },
+const MINERAL_META: Record<string, { label: string; unit: string; icon: string; color: string }> = {
+  sodium:     { label: 'Natri',   unit: 'mg',  icon: 'flask',        color: '#78909C' },
+  potassium:  { label: 'Kali',    unit: 'mg',  icon: 'zap',          color: '#9C27B0' },
+  calcium:    { label: 'Canxi',   unit: 'mg',  icon: 'git-branch',   color: '#607D8B' },
+  magnesium:  { label: 'Magie',   unit: 'mg',  icon: 'radio',        color: '#00897B' },
+  phosphorus: { label: 'Phospho', unit: 'mg',  icon: 'circle',       color: '#1976D2' },
+  iron:       { label: 'Sắt',     unit: 'mg',  icon: 'dumbbell',     color: '#D32F2F' },
+  zinc:       { label: 'Kẽm',     unit: 'mg',  icon: 'shield',       color: '#455A64' },
+  selenium:   { label: 'Selen',   unit: 'mcg', icon: 'shield',       color: '#FFA726' },
 };
 
 function todayKey(): string {
@@ -695,6 +693,7 @@ function ScanScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasImage = !!preview;
+  const showCamera = !result;
 
   useEffect(() => {
     let cancelled = false;
@@ -790,7 +789,10 @@ function ScanScreen() {
     if (!result) return;
     setBusy(true);
     try {
-      await saveFoodLog(result);
+      const saved = await saveFoodLog(result);
+      if (file) {
+        void uploadFoodLogImage(saved._id, file).catch(() => null);
+      }
       setMessage('Đã lưu bữa ăn.');
       setResult(null);
       retake();
@@ -837,6 +839,7 @@ function ScanScreen() {
 
   return (
     <div className="screen scan-screen">
+      {showCamera && (
       <div className="scan-view">
         {cameraError ? (
           <div className="scan-fallback-bg" />
@@ -938,35 +941,154 @@ function ScanScreen() {
 
           {message && <p className={message.includes('Đã') ? 'scan-msg success' : 'scan-msg error'}>{message}</p>}
         </div>
-      </div>
-
-      <section className="card result-card">
-        <h2>Kết quả</h2>
-        {result ? <FoodResult result={result} onSave={save} busy={busy} /> : <p className="muted">Kết quả phân tích sẽ hiển thị tại đây.</p>}
-      </section>
+      </div>)}
+      {result && (
+        <FoodResult result={result} preview={preview} file={file} onSave={save} onRetake={retake} busy={busy} />
+      )}
     </div>
   );
 }
 
-function FoodResult({ result, onSave, busy }: { result: ScanResult; onSave: () => void; busy: boolean }) {
+function NutrRow({ icon, iconColor, label, value, unit, hero, last }: {
+  icon: string; iconColor: string; label: string; value: number; unit: string; hero?: boolean; last?: boolean;
+}) {
+  const formatted = value % 1 === 0 ? String(value) : value.toFixed(1);
   return (
-    <div className="result">
-      <div className="metric-grid compact">
-        <Metric label="Năng lượng" value={Math.round(result.totals.calories)} unit="kcal" />
-        <Metric label="Đạm" value={Math.round(result.totals.protein)} unit="g" />
-        <Metric label="Carb" value={Math.round(result.totals.carbs)} unit="g" />
-        <Metric label="Béo" value={Math.round(result.totals.fat)} unit="g" />
+    <div className={`nr ${last ? 'nr-last' : ''}`}>
+      <div className="nr-left">
+        <div className="nr-icon" style={{ backgroundColor: iconColor + '18' }}>
+          <span style={{ color: iconColor }}>{icon === 'flame' ? '🔥' : icon === 'barbell' ? '💪' : icon === 'pizza' ? '🍕' : icon === 'water' ? '💧' : icon === 'leaf' ? '🥬' : icon === 'cafe' ? '☕' : '✦'}</span>
+        </div>
+        <span className={`nr-label ${hero ? 'nr-hero-label' : ''}`}>{label}</span>
       </div>
-      {result.commentVi && <div className="notice"><strong>Nhận xét nhanh</strong><span>{result.commentVi}</span></div>}
-      <div className="food-list">
-        {result.foods.map((food, index) => (
-          <div className="food-row" key={`${food.name}-${index}`}>
-            <div><strong>{food.name}</strong><small>{food.weightG ? `${food.weightG}g` : food.source || 'ai_scan'}</small></div>
-            <b>{Math.round(food.calories)} kcal</b>
+      <div className="nr-right">
+        <span className={`nr-value ${hero ? 'nr-hero-value' : ''}`}>{formatted}</span>
+        <span className={`nr-unit ${hero ? 'nr-hero-unit' : ''}`}>{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function SectionLabel({ title }: { title: string }) {
+  return <p className="section-label">{title}</p>;
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return <div className="nr-card">{children}</div>;
+}
+
+function FoodResult({ result, preview, file, onSave, onRetake, busy }: {
+  result: ScanResult; preview: string; file: File | null; onSave: () => void; onRetake: () => void; busy: boolean;
+}) {
+  const { foods, totals } = result;
+
+  const fiber = foods.reduce((s, f) => s + (f.fiber ?? 0), 0);
+  const sugar = foods.reduce((s, f) => s + (f.sugar ?? 0), 0);
+
+  const allVitamins: Record<string, number> = {};
+  const allMinerals: Record<string, number> = {};
+  for (const f of foods) {
+    for (const [k, v] of Object.entries(f.vitamins ?? {})) {
+      allVitamins[k] = (allVitamins[k] ?? 0) + v;
+    }
+    for (const [k, v] of Object.entries(f.minerals ?? {})) {
+      allMinerals[k] = (allMinerals[k] ?? 0) + v;
+    }
+  }
+  const vitaminEntries = Object.entries(allVitamins).filter(([, v]) => v > 0);
+  const mineralEntries = Object.entries(allMinerals).filter(([, v]) => v > 0);
+
+  return (
+    <div className="result-wrap">
+      <div className="result-header" style={{
+        background: 'linear-gradient(135deg, #6C9A24, #B7CD65)',
+      }}>
+        <button className="result-back" onClick={onRetake}><ChevronLeft size={24} /></button>
+        <div className="result-header-center">
+          <h2>Kết quả phân tích</h2>
+          <p>{foods.length > 1 ? `${foods.length} món ăn` : (foods[0]?.name ?? 'Bữa ăn')}</p>
+        </div>
+        <div className="result-cal-badge">
+          <span className="result-cal-num">{Math.round(totals.calories)}</span>
+          <span className="result-cal-unit">kcal</span>
+        </div>
+      </div>
+
+      <div className="result-body">
+        {preview && (
+          <div className="result-photo-card">
+            <img className="result-photo" src={preview} alt="" />
           </div>
-        ))}
+        )}
+
+        {result.commentVi && (
+          <>
+            <SectionLabel title="Nhận xét nhanh" />
+            <div className="result-comment-card">
+              <div className="result-comment-icon">💬</div>
+              <p>{result.commentVi}</p>
+            </div>
+          </>
+        )}
+
+        <SectionLabel title="Dinh dưỡng chính" />
+        <Card>
+          <NutrRow icon="flame"   iconColor="#FF5722" label="Năng lượng" value={totals.calories} unit="kcal" hero />
+          <NutrRow icon="barbell" iconColor="#4CAF50" label="Chất đạm"   value={totals.protein}  unit="g" />
+          <NutrRow icon="pizza"   iconColor="#FF9800" label="Tinh bột"   value={totals.carbs}    unit="g" />
+          <NutrRow icon="water"   iconColor="#FFC107" label="Chất béo"   value={totals.fat}      unit="g" />
+          <NutrRow icon="leaf"    iconColor="#8BC34A" label="Chất xơ"    value={fiber}           unit="g" last={sugar <= 0} />
+          {sugar > 0 && (
+            <NutrRow icon="cafe"  iconColor="#EC407A" label="Đường"      value={sugar}           unit="g" last />
+          )}
+        </Card>
+
+        {vitaminEntries.length > 0 && (
+          <>
+            <SectionLabel title="Vitamin" />
+            <Card>
+              {vitaminEntries.map(([key, value], i) => {
+                const meta = VITAMIN_META[key] ?? { label: key, unit: 'mg', icon: 'star', color: '#9E9E9E' };
+                return <NutrRow key={key} icon={meta.icon} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === vitaminEntries.length - 1} />;
+              })}
+            </Card>
+          </>
+        )}
+
+        {mineralEntries.length > 0 && (
+          <>
+            <SectionLabel title="Khoáng chất" />
+            <Card>
+              {mineralEntries.map(([key, value], i) => {
+                const meta = MINERAL_META[key] ?? { label: key, unit: 'mg', icon: 'flask', color: '#9E9E9E' };
+                return <NutrRow key={key} icon={meta.icon} iconColor={meta.color} label={meta.label} value={value} unit={meta.unit} last={i === mineralEntries.length - 1} />;
+              })}
+            </Card>
+          </>
+        )}
+
+        <SectionLabel title="Chi tiết từng món" />
+        <Card>
+          {foods.map((f, i) => (
+            <div className={`nr ${i === foods.length - 1 ? 'nr-last' : ''}`} key={i}>
+              <div className="food-detail-left">
+                <span className="food-detail-name">{f.name}</span>
+                {f.weightG ? <span className="food-detail-weight">{f.weightG}g</span> : null}
+              </div>
+              <span className="food-detail-cal">{Math.round(f.calories)} kcal</span>
+            </div>
+          ))}
+        </Card>
       </div>
-      <Button onClick={onSave} disabled={busy}>Lưu bữa ăn</Button>
+
+      <div className="result-bottom-bar">
+        <button className="result-save-btn" onClick={onSave} disabled={busy}>
+          {busy ? 'Đang lưu...' : 'Lưu bữa ăn'}
+        </button>
+        <button className="result-retry-btn" onClick={onRetake} disabled={busy}>
+          Chụp lại
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 export const API_URL =
   import.meta.env.VITE_API_URL ||
@@ -8,6 +8,20 @@ export const API_URL =
 const ACCESS_TOKEN_KEY = 'u_web_access_token';
 const REFRESH_TOKEN_KEY = 'u_web_refresh_token';
 const USER_KEY = 'u_web_user';
+
+let isRefreshing = false;
+let pendingQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
+
+function processQueue(token: string | null, err: unknown) {
+  for (const item of pendingQueue) {
+    if (err) item.reject(err);
+    else item.resolve(token!);
+  }
+  pendingQueue = [];
+}
 
 export type GoalType = 'lose' | 'maintain' | 'gain';
 export type HabitId = 'water' | 'vegetables' | 'exercise' | 'sleep' | 'reading' | 'nut-milk';
@@ -163,6 +177,45 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error?.config as InternalAxiosRequestConfig & { __isRetry?: boolean };
+    if (!original || error.response?.status !== 401 || original.__isRetry) {
+      return Promise.reject(error);
+    }
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      clearAuth();
+      return Promise.reject(error);
+    }
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingQueue.push({ resolve, reject });
+      }).then((token) => {
+        original.headers.Authorization = `Bearer ${token}`;
+        return api(original);
+      });
+    }
+    isRefreshing = true;
+    original.__isRetry = true;
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/refresh`, { refreshToken });
+      const data = res.data.data as { accessToken: string; refreshToken: string; user: AuthUser };
+      storeAuth(data);
+      processQueue(data.accessToken, null);
+      original.headers.Authorization = `Bearer ${data.accessToken}`;
+      return api(original);
+    } catch (refreshErr) {
+      processQueue(null, refreshErr);
+      clearAuth();
+      return Promise.reject(refreshErr);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
 export function getStoredAuth(): AuthState {
   const rawUser = localStorage.getItem(USER_KEY);
   return {
@@ -270,6 +323,16 @@ export const saveFoodLog = (result: ScanResult) =>
     aiProvider: result.aiProvider,
     imageUrl: null,
   }).then((r) => r.data.data as FoodLog);
+
+export async function uploadFoodLogImage(logId: string, file: File): Promise<string | null> {
+  const form = new FormData();
+  form.append('image', file, 'meal.jpg');
+  const res = await api.patch(`/api/food/logs/${logId}/image`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
+  });
+  return (res.data.data as { imageUrl: string }).imageUrl ?? null;
+}
 
 export const getFoodLogs = (date: string) => api.get('/api/food/logs', { params: { date } }).then((r) => r.data.data as FoodLog[]);
 export const getFoodLogsRange = (from: string, to: string) => api.get('/api/food/logs/range', { params: { from, to } }).then((r) => r.data.data as Array<{
