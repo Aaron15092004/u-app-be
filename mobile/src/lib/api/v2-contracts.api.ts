@@ -20,24 +20,39 @@ interface ApiResponse<T> {
 
 const NUT_MILK_COPY: Record<string, { nameVi: string; positioningVi: string }> = {
   rau_ma_sua_dua: {
-    nameVi: 'Rau má sữa dừa',
-    positioningVi: 'Thanh nhiệt và kiểm soát cân nặng',
+    nameVi: 'Rau má - Sữa dừa',
+    positioningVi:
+      'Vẫn là slay, nhưng thanh lọc cơ thể xíu cho nhẹ bụng, tự tin diện đồ hè nha đồng Ủ ơi!',
   },
   rau_ma_hat_sen: {
     nameVi: 'Rau má - Hạt sen',
-    positioningVi: 'Giảm stress và ngủ ngon sâu giấc',
+    positioningVi:
+      'Giao diện mlem quá! Giữ vững phong độ đỉnh cao này bằng cách hạ hỏa, dưỡng nhan thanh mát từ bên trong nha.',
   },
   gao_lut_me_den_hat_sen: {
     nameVi: 'Gạo lứt - Mè đen - Hạt sen',
-    positioningVi: 'Duy trì vóc dáng và đẹp da, chống lão hóa',
+    positioningVi:
+      'Tướng có hậu lắm nha! Nhưng để lên đồ mùa hè cực cháy thì mình cùng detox, đánh bay bé mỡ xíu nào!',
   },
   gao_lut_oc_cho_hanh_nhan: {
     nameVi: 'Gạo lứt - Óc chó - Hạnh nhân',
-    positioningVi: 'Bổ sung dinh dưỡng và tăng cường trí não',
+    positioningVi:
+      'Xin vía ăn hoài không béo! Nhưng giao diện hơi gầy rồi nha đồng Ủ ơi. Nạp gấp năng lượng để có sức gánh team cuối kỳ!',
   },
   hat_sen_oc_cho: {
     nameVi: 'Hạt sen - Óc chó',
-    positioningVi: 'Phục hồi năng lượng và trí nhớ bền bỉ',
+    positioningVi:
+      'Ốm nhom rồi đó nha! Trạm sạc AI yêu cầu bạn nạp ngay chai này để bồi bổ khí huyết, phục hồi công lực ngay tắp lự.',
+  },
+  dau_nanh_dau_xanh: {
+    nameVi: 'Đậu nành - Đậu xanh',
+    positioningVi:
+      "Vóc dáng thanh mảnh xinh đó, nhưng thêm xíu 'cơ bắp' để chạy deadline cho khỏe nhé!",
+  },
+  cafe_dua_hat_dieu_dau_nanh: {
+    nameVi: 'Cafe dừa - Hạt điều - Đậu nành',
+    positioningVi:
+      "Vóc dáng 10 điểm không có nhưng! Uống thêm chút 'doping' này để nảy số ầm ầm cho bài thuyết trình ngày mai nhé.",
   },
 };
 

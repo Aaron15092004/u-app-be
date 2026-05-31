@@ -47,8 +47,13 @@ test('nut milk recommendations return static options and non-medical disclaimer'
 
   assert.equal(res.status, 200);
   assert.equal(res.body.data.bmiRule, 'range_18_5_22_9');
-  assert.equal(res.body.data.flavors.length, 5);
-  assert.match(res.body.data.disclaimer, /khong phai chan doan/i);
+  assert.equal(res.body.data.flavors.length, 7);
+  assert.ok(
+    res.body.data.flavors.some(
+      (flavor: { flavorId: string }) => flavor.flavorId === 'cafe_dua_hat_dieu_dau_nanh',
+    ),
+  );
+  assert.match(res.body.data.disclaimer, /không phải chẩn đoán/i);
 });
 
 test('nut milk selection persists one current preference per user', async () => {

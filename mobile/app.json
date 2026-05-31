@@ -18,7 +18,8 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Ủ to take photos for food recognition.",
-        "NSPhotoLibraryUsageDescription": "Allow Ủ to access your photos for food logging."
+        "NSPhotoLibraryUsageDescription": "Allow Ủ to access your photos for food logging.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -29,8 +30,9 @@
       },
       "package": "com.uapp.health",
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
