@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Apple,
@@ -15,6 +15,7 @@ import {
   Flashlight,
   Heart,
   Home as HomeIcon,
+  ImageUp,
   Leaf,
   LockOpen,
   Mail,
@@ -680,16 +681,87 @@ function ShopBannerWeb({ url, isLoading }: { url: string | null; isLoading: bool
 }
 
 function ScanScreen() {
+  const [mode, setMode] = useState<'camera' | 'gallery'>('camera');
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
   const [result, setResult] = useState<ScanResult | null>(null);
   const [barcode, setBarcode] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (mode !== 'camera') return;
+    let cancelled = false;
+    async function start() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        if (cancelled) { stream.getTracks().forEach((t) => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      } catch {
+        setMessage('Không thể truy cập camera. Vui lòng dùng chế độ thư viện.');
+        setMode('gallery');
+      }
+    }
+    start();
+    return () => { cancelled = true; stopStream(); };
+  }, [mode]);
+
+  function stopStream() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
+
+  function capture() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')!.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const f = new File([blob], 'meal.jpg', { type: 'image/jpeg' });
+      setFile(f);
+      setPreview(URL.createObjectURL(f));
+      stopStream();
+    }, 'image/jpeg', 0.85);
+  }
 
   function pick(next: File | null) {
     setFile(next);
     setPreview(next ? URL.createObjectURL(next) : '');
+  }
+
+  function switchMode(m: 'camera' | 'gallery') {
+    if (m === mode) return;
+    stopStream();
+    setPreview('');
+    setFile(null);
+    setMode(m);
+  }
+
+  function retake() {
+    setPreview('');
+    setFile(null);
+    setResult(null);
+    setMessage('');
+    if (mode === 'camera') {
+      async function restart() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          streamRef.current = stream;
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        } catch {
+          setMessage('Không thể truy cập camera.');
+          setMode('gallery');
+        }
+      }
+      restart();
+    }
   }
 
   async function runScan() {
@@ -754,6 +826,8 @@ function ScanScreen() {
     }
   }
 
+  const hasImage = !!preview;
+
   return (
     <div className="screen scan-screen">
       <section className="scan-camera">
@@ -764,12 +838,35 @@ function ScanScreen() {
             <p>Chụp ảnh để phân tích dinh dưỡng</p>
           </div>
         </div>
-        <div className="scan-frame">
-          {preview ? <img className="meal-preview" src={preview} alt="Ảnh món ăn" /> : <span><Camera size={52} /></span>}
+        <div className="scan-mode-tabs">
+          <button type="button" className={mode === 'camera' ? 'active' : ''} onClick={() => switchMode('camera')} disabled={hasImage}><Camera size={16} /> Camera</button>
+          <button type="button" className={mode === 'gallery' ? 'active' : ''} onClick={() => switchMode('gallery')} disabled={hasImage}><ImageUp size={16} /> Thư viện</button>
         </div>
-        <h1>Upload ảnh để AI phân tích</h1>
-        <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0] || null)} />
-        <Button onClick={runScan} disabled={!file || busy}>{busy ? <><RefreshCw size={18} /> Đang phân tích...</> : <><Camera size={18} /> Phân tích ảnh</>}</Button>
+        <div className="scan-frame">
+          {hasImage ? (
+            <img className="meal-preview" src={preview} alt="Ảnh món ăn" />
+          ) : mode === 'camera' ? (
+            <video ref={videoRef} autoPlay playsInline muted className="camera-live" />
+          ) : (
+            <span><Camera size={52} /></span>
+          )}
+        </div>
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+        {!hasImage && mode === 'camera' && (
+          <Button onClick={capture} disabled={busy}><Camera size={18} /> Chụp ảnh</Button>
+        )}
+        {!hasImage && mode === 'gallery' && (
+          <>
+            <h1>Upload ảnh để AI phân tích</h1>
+            <input type="file" accept="image/*" onChange={(e) => pick(e.target.files?.[0] || null)} />
+          </>
+        )}
+        {hasImage && (
+          <div className="scan-actions">
+            <Button variant="soft" onClick={retake} disabled={busy}><RefreshCw size={18} /> Chụp lại</Button>
+            <Button onClick={runScan} disabled={busy}>{busy ? <><RefreshCw size={18} /> Đang phân tích...</> : <><Sparkles size={18} /> Phân tích ảnh</>}</Button>
+          </div>
+        )}
         <div className="divider" />
         <Field label="Tra barcode thủ công" value={barcode} onChange={setBarcode} placeholder="Nhập mã vạch" />
         <Button variant="soft" onClick={barcodeLookup} disabled={busy}><QrCode size={18} /> Tra mã vạch</Button>
