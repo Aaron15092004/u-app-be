@@ -134,9 +134,9 @@ export function AuthProvider({ children }: Props): React.JSX.Element {
 
   const completeProfile = async (body: CompleteProfileRequest): Promise<IAuthUser> => {
     const result = await completeProfileApi(body);
-    useAuthStore.setState({ user: result.user });
-    setCachedUser(result.user);
-    return result.user;
+    useAuthStore.setState({ user: result });
+    setCachedUser(result);
+    return result;
   };
 
   const loginWithGoogle = async (): Promise<IAuthUser> => {

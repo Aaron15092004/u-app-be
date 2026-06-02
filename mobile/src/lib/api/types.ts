@@ -30,7 +30,7 @@ export interface CompleteProfileRequest {
   weightKg: number;
   goalType: 'lose' | 'maintain' | 'gain';
 }
-export interface CompleteProfileResponse { user: IAuthUser; }
+export type CompleteProfileResponse = IAuthUser;
 
 // ---------------------------------------------------------------------------
 // Phase 3 Types
