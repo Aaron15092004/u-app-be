@@ -39,6 +39,74 @@ textarea {
   font-family: "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
+.privacy-page {
+  min-height: 100vh;
+  padding: 32px 16px;
+  background: linear-gradient(135deg, #fff, #fff0dc);
+}
+
+.privacy-card {
+  width: min(100%, 860px);
+  margin: 0 auto;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 32px;
+  box-shadow: 0 14px 48px rgba(62, 107, 16, 0.12);
+}
+
+.privacy-brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.privacy-brand img {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #fff0dc;
+}
+
+.privacy-brand p {
+  margin: 0 0 2px;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.privacy-card h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.privacy-card h2 {
+  margin: 28px 0 8px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.privacy-card p {
+  margin: 0 0 12px;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.privacy-card a {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.privacy-updated {
+  color: var(--muted) !important;
+  font-size: 13px !important;
+}
+
 button,
 input,
 select,

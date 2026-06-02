@@ -2409,7 +2409,76 @@ function HelpScreen() {
   );
 }
 
+function PrivacyPolicyPage() {
+  return (
+    <main className="privacy-page">
+      <section className="privacy-card">
+        <div className="privacy-brand">
+          <img src="/assets/logo.png" alt="Ủ Health" />
+          <div>
+            <p>Ủ Health</p>
+            <h1>Privacy Policy</h1>
+          </div>
+        </div>
+        <p className="privacy-updated">Last updated: June 2, 2026</p>
+
+        <p>
+          Ủ Health helps users track wellness habits, meals, water intake, workouts, BMI, and personalized
+          Ủ milk recommendations. This Privacy Policy explains what information we collect and how we use it.
+        </p>
+
+        <h2>Information We Collect</h2>
+        <p>
+          We may collect account information such as name and email address, profile information such as age,
+          height, weight, health goals, BMI-related data, notification preferences, meal logs, workout activity,
+          water intake, habit check-ins, app ratings, and images that users choose to upload for meal scanning.
+        </p>
+
+        <h2>How We Use Information</h2>
+        <p>
+          We use this information to provide app functionality, personalize recommendations, calculate wellness
+          summaries, process AI-assisted food analysis, manage scan-code entitlements, send reminders, improve
+          reliability, and provide support.
+        </p>
+
+        <h2>AI and Health Information</h2>
+        <p>
+          AI-generated meal analysis, nutrition information, BMI insights, and Ủ milk recommendations are for
+          informational and lifestyle purposes only. They are not medical advice, diagnosis, or treatment.
+        </p>
+
+        <h2>Sharing and Third Parties</h2>
+        <p>
+          We do not sell personal data. We may use service providers to host the backend, store data, process
+          images, send notifications, authenticate users, and support AI-assisted analysis. These services only
+          process data needed to operate the app.
+        </p>
+
+        <h2>Data Retention and Deletion</h2>
+        <p>
+          We retain user data while the account is active or as needed to provide the service. Users can request
+          access, correction, or deletion of their account data by contacting support.
+        </p>
+
+        <h2>Security</h2>
+        <p>
+          We use reasonable technical safeguards, including encrypted transport and password hashing, to protect
+          user information. No method of transmission or storage is completely secure.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          For privacy questions or data requests, contact us at{' '}
+          <a href="mailto:nguyenmanhhuynh15092004@gmail.com">nguyenmanhhuynh15092004@gmail.com</a>.
+        </p>
+      </section>
+    </main>
+  );
+}
+
 function App() {
+  if (window.location.pathname === '/privacy') return <PrivacyPolicyPage />;
+
   const initial = getStoredAuth();
   const [user, setUser] = useState<AuthUser | null>(initial.user);
   const [seenIntro, setSeenIntro] = useState(localStorage.getItem(INTRO_KEY) === '1');

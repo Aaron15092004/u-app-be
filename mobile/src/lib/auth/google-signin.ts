@@ -12,8 +12,7 @@ GoogleSignin.configure({
   webClientId:
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
     '788882504008-5jp9p0njsl401qkqgn1fp7h597i25e6i.apps.googleusercontent.com',
-  // TODO: add iosClientId once iOS OAuth client is created in Google Cloud Console
-  // iosClientId: 'XXXX.apps.googleusercontent.com',
+  iosClientId: '788882504008-fiebmvmkcnkk7290lu46cud4u7m6b5hr.apps.googleusercontent.com',
   offlineAccess: false,
 });
 
