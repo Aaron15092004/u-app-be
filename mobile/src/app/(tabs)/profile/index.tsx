@@ -298,8 +298,8 @@ function ScanAccountBanner({
           {active
             ? `${dailyLimit} lượt scan AI mỗi ngày${activeUntil ? ` đến ${activeUntil}` : ""}.`
             : Platform.OS === "ios"
-              ? "Mua gói bằng Apple hoặc nhập mã trong chai sữa Ủ để mở 30 lượt scan AI mỗi ngày."
-              : "Nhập mã trong chai sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
+              ? "Mua gói scan qua Apple hoặc nhập mã quyền lợi từ sản phẩm sữa Ủ."
+              : "Nhập mã quyền lợi từ sản phẩm sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
         </Text>
       </View>
     </LinearGradient>

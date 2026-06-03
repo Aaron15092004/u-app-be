@@ -41,8 +41,8 @@ export default function ScanEntitlementBadge({
             : usedToday !== undefined
               ? `Đã dùng ${usedToday}/${dailyLimit} lượt hôm nay`
               : Platform.OS === "ios"
-                ? "Mua gói bằng Apple hoặc nhập mã chai sữa để tăng hạn mức."
-                : "Kích hoạt mã chai sữa để tăng hạn mức."}
+                ? "Mua qua Apple hoặc nhập mã quyền lợi sữa Ủ để tăng hạn mức."
+                : "Kích hoạt mã quyền lợi sữa Ủ để tăng hạn mức."}
         </Text>
       </View>
     </View>

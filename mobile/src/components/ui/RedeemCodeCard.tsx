@@ -57,8 +57,8 @@ export default function RedeemCodeCard({
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.sub}>
         {Platform.OS === "ios"
-          ? "Nhập mã in trên chai hoặc mua gói qua Apple để nhận 30 lượt quét AI mỗi ngày."
-          : "Nhập mã in trên chai để nhận 30 lượt quét AI mỗi ngày."}
+          ? "Nếu bạn có mã quyền lợi từ sản phẩm sữa Ủ, nhập tại đây. Người dùng iOS cũng có thể mua gói scan trực tiếp qua Apple."
+          : "Nhập mã quyền lợi từ sản phẩm sữa Ủ để nhận 30 lượt quét AI mỗi ngày."}
       </Text>
       <View style={styles.row}>
         <TextInput

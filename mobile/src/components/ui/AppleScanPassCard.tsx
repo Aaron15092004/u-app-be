@@ -79,7 +79,7 @@ export default function AppleScanPassCard({
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Mua gói scan AI bằng Apple</Text>
           <Text style={styles.sub}>
-            Gói 30 ngày, 30 lượt quét AI mỗi ngày. Tương đương mã trong chai sữa Ủ.
+            Gói 30 ngày, 30 lượt quét AI mỗi ngày. Đây là lựa chọn mua trực tiếp trong app cho người dùng iOS.
           </Text>
         </View>
       </View>

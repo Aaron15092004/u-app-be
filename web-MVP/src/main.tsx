@@ -2367,11 +2367,11 @@ function HelpScreen() {
     { q: 'Làm thế nào để cập nhật cân nặng?', a: 'Vào tab BMI, dùng thanh trượt để chọn cân nặng và chiều cao mới, sau đó nhấn Lưu.' },
     { q: 'Dữ liệu của tôi có được lưu an toàn không?', a: 'Có. Tất cả dữ liệu được lưu trữ trên MongoDB Atlas với mã hóa khi truyền và khi lưu. Mật khẩu được hash bằng bcrypt.' },
     { q: 'Cách tính streak là gì?', a: 'Streak là số ngày liên tiếp bạn đánh dấu hoàn thành ít nhất 3 thói quen trong 6 thói quen mặc định.' },
-    { q: 'Tôi có thể xóa tài khoản không?', a: 'Hiện tại bạn có thể xóa tài khoản bằng cách liên hệ với chúng tôi qua email hỗ trợ. Tính năng tự xóa sẽ có trong bản cập nhật tiếp theo.' },
+    { q: 'Tôi có thể xóa tài khoản không?', a: 'Có. Vào Trang cá nhân > Cài đặt > Xóa tài khoản để xóa tài khoản và dữ liệu cá nhân khỏi hệ thống.' },
   ];
 
   function copyEmail() {
-    navigator.clipboard.writeText('support@u-app.vn');
+    navigator.clipboard.writeText('uchamsocsuckhoe88@gmail.com');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -2395,7 +2395,7 @@ function HelpScreen() {
         <div className="hlp-card">
           <div className="hlp-contact">
             <Mail size={20} />
-            <span>support@u-app.vn</span>
+            <span>uchamsocsuckhoe88@gmail.com</span>
             <button className="hlp-copy" onClick={copyEmail}>{copied ? 'Đã sao chép!' : 'Sao chép'}</button>
           </div>
           <div className="hlp-divider" />
@@ -2456,8 +2456,8 @@ function PrivacyPolicyPage() {
 
         <h2>Data Retention and Deletion</h2>
         <p>
-          We retain user data while the account is active or as needed to provide the service. Users can request
-          access, correction, or deletion of their account data by contacting support.
+          We retain user data while the account is active or as needed to provide the service. Users can delete
+          their account in the app from Profile &gt; Settings &gt; Delete Account, or contact support for data questions.
         </p>
 
         <h2>Security</h2>

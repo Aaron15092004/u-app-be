@@ -19,8 +19,8 @@ import SocialAuthButton from "../../components/ui/SocialAuthButton";
 import { isAppleAuthAvailable } from "../../lib/auth/apple-signin";
 import { PRIMARY, TEXT_SECONDARY, SURFACE, INACTIVE } from "../../constants/colors";
 
-const PRIVACY_URL = "https://u-app.vn/privacy";
-const TERMS_URL = "https://u-app.vn/terms";
+const PRIVACY_URL = "https://u-app-web-mvp.onrender.com/privacy";
+const TERMS_URL = "https://u-app-web-mvp.onrender.com/privacy";
 
 // Simple email validation
 function isValidEmail(email: string): boolean {

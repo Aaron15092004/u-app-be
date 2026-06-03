@@ -27,7 +27,7 @@ try {
   clipboardAvailable = false;
 }
 
-const SUPPORT_EMAIL = "support@u-app.vn";
+const SUPPORT_EMAIL = "uchamsocsuckhoe88@gmail.com";
 
 const FAQ_ITEMS = [
   {
