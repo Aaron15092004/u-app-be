@@ -473,8 +473,8 @@ export async function getActiveScanEntitlement(userId: string): Promise<object |
 export async function getMyScanEntitlements(userId: string): Promise<object> {
   const entitlement = await getActiveScanEntitlement(userId) as {
     _id: mongoose.Types.ObjectId;
-    campaignId: mongoose.Types.ObjectId;
-    redeemCodeId: mongoose.Types.ObjectId;
+    campaignId?: mongoose.Types.ObjectId;
+    redeemCodeId?: mongoose.Types.ObjectId;
     activeUntil: Date;
     quotaPolicy: { mode: string; dailyLimit: number };
   } | null;
@@ -494,8 +494,8 @@ export async function getMyScanEntitlements(userId: string): Promise<object> {
   return {
     hasActiveEntitlement: true,
     activeUntil: entitlement.activeUntil.toISOString(),
-    campaignId: String(entitlement.campaignId),
-    redeemCodeId: String(entitlement.redeemCodeId),
+    campaignId: entitlement.campaignId ? String(entitlement.campaignId) : null,
+    redeemCodeId: entitlement.redeemCodeId ? String(entitlement.redeemCodeId) : null,
     quotaPolicy: entitlement.quotaPolicy,
     entitlement,
     message: 'Goi quet AI dang hoat dong',

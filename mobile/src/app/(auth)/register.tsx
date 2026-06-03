@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,8 @@ import ScreenHeader from "../../components/ui/ScreenHeader";
 import AuthInput from "../../components/ui/AuthInput";
 import PrimaryButton from "../../components/ui/PrimaryButton";
 import FormErrorText from "../../components/ui/FormErrorText";
+import SocialAuthButton from "../../components/ui/SocialAuthButton";
+import { isAppleAuthAvailable } from "../../lib/auth/apple-signin";
 import { PRIMARY, TEXT_SECONDARY, SURFACE, INACTIVE } from "../../constants/colors";
 
 const PRIVACY_URL = "https://u-app.vn/privacy";
@@ -37,7 +40,7 @@ function extractErrorMessage(err: unknown): string {
 
 export default function RegisterScreen(): React.JSX.Element {
   const router = useRouter();
-  const { register } = useAuth();
+  const auth = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +48,12 @@ export default function RegisterScreen(): React.JSX.Element {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [oauthLoading, setOauthLoading] = useState<"google" | "apple" | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    isAppleAuthAvailable().then(setAppleAvailable).catch(() => setAppleAvailable(false));
+  }, []);
 
   // Inline validation
   const emailError =
@@ -68,7 +77,7 @@ export default function RegisterScreen(): React.JSX.Element {
     setServerError("");
     setLoading(true);
     try {
-      await register(email.trim(), password);
+      await auth.register(email.trim(), password);
       // D-30: always go to complete-profile after register
       router.replace("/(auth)/complete-profile");
     } catch (err) {
@@ -162,6 +171,54 @@ export default function RegisterScreen(): React.JSX.Element {
           loading={loading}
           disabled={!isFormValid}
         />
+
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>hoặc</Text>
+          <View style={styles.divider} />
+        </View>
+
+        {Platform.OS === "ios" && appleAvailable ? (
+          <SocialAuthButton
+            provider="apple"
+            loading={oauthLoading === "apple"}
+            onPress={async () => {
+              setServerError("");
+              setOauthLoading("apple");
+              try {
+                const user = await auth.loginWithApple();
+                router.replace(user.profileCompleted ? "/(tabs)" : "/(auth)/complete-profile");
+              } catch (err: any) {
+                if (err?.code !== "ERR_REQUEST_CANCELED" && err?.message !== "CANCELLED") {
+                  setServerError(err?.message ?? "Đăng nhập Apple thất bại. Vui lòng thử lại.");
+                }
+              } finally {
+                setOauthLoading(null);
+              }
+            }}
+          />
+        ) : null}
+
+        <View style={Platform.OS === "ios" && appleAvailable ? styles.socialGap : undefined}>
+          <SocialAuthButton
+            provider="google"
+            loading={oauthLoading === "google"}
+            onPress={async () => {
+              setServerError("");
+              setOauthLoading("google");
+              try {
+                const user = await auth.loginWithGoogle();
+                router.replace(user.profileCompleted ? "/(tabs)" : "/(auth)/complete-profile");
+              } catch (err: any) {
+                if (err?.code !== "SIGN_IN_CANCELLED") {
+                  setServerError(err?.message ?? "Đăng nhập Google thất bại. Vui lòng thử lại.");
+                }
+              } finally {
+                setOauthLoading(null);
+              }
+            }}
+          />
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -205,6 +262,24 @@ const styles = StyleSheet.create({
   termsLink: {
     color: PRIMARY,
     fontWeight: "600",
+  },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 14,
+    color: TEXT_SECONDARY,
+  },
+  socialGap: {
+    marginTop: 12,
   },
   footer: {
     flexDirection: "row",

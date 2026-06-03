@@ -2,6 +2,18 @@ import mongoose from 'mongoose';
 import User from '../../models/User';
 import WorkoutLog from '../../models/WorkoutLog';
 import WorkoutSession from '../../models/WorkoutSession';
+import AppRating from '../../models/AppRating';
+import BMIRecord from '../../models/BMIRecord';
+import DeviceToken from '../../models/DeviceToken';
+import FeedbackPromptState from '../../models/FeedbackPromptState';
+import FoodLog from '../../models/FoodLog';
+import FoodScanAttempt from '../../models/FoodScanAttempt';
+import HabitLog from '../../models/HabitLog';
+import IapPurchase from '../../models/IapPurchase';
+import NutMilkPreference from '../../models/NutMilkPreference';
+import UserProgramProgress from '../../models/UserProgramProgress';
+import UserScanEntitlement from '../../models/UserScanEntitlement';
+import WaterLog from '../../models/WaterLog';
 import { getStreak } from '../habits/habits.service';
 import { updateProfileSchema, updateNotificationsSchema } from './users.validation';
 import { z } from 'zod';
@@ -208,4 +220,30 @@ export async function updateUserNotifications(
   if (!user) throw makeError('Không tìm thấy người dùng', 404);
 
   return user;
+}
+
+export async function deleteUserAccount(userId: string): Promise<void> {
+  const userObjId = new mongoose.Types.ObjectId(userId);
+  const user = await User.findById(userObjId).select('role').lean();
+  if (!user) throw makeError('Không tìm thấy người dùng', 404);
+  if (user.role === 'admin') throw makeError('Không thể xóa tài khoản quản trị trong app', 403);
+
+  await Promise.all([
+    AppRating.deleteMany({ userId: userObjId }),
+    BMIRecord.deleteMany({ userId: userObjId }),
+    DeviceToken.deleteMany({ userId: userObjId }),
+    FeedbackPromptState.deleteMany({ userId: userObjId }),
+    FoodLog.deleteMany({ userId: userObjId }),
+    FoodScanAttempt.deleteMany({ userId: userObjId }),
+    HabitLog.deleteMany({ userId: userObjId }),
+    IapPurchase.deleteMany({ userId: userObjId }),
+    NutMilkPreference.deleteMany({ userId: userObjId }),
+    UserProgramProgress.deleteMany({ userId: userObjId }),
+    UserScanEntitlement.deleteMany({ userId: userObjId }),
+    WaterLog.deleteMany({ userId: userObjId }),
+    WorkoutLog.deleteMany({ userId: userObjId }),
+    WorkoutSession.deleteMany({ userId: userObjId }),
+  ]);
+
+  await User.deleteOne({ _id: userObjId });
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StatusBar,
@@ -14,7 +15,7 @@ import { useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../providers/AuthProvider";
-import { getProfileStatsApi } from "../../../lib/api/users.api";
+import { deleteMyAccountApi, getProfileStatsApi } from "../../../lib/api/users.api";
 import { getWorkoutStreakApi } from "../../../lib/api/workout-sessions.api";
 import {
   getNutMilkRecommendationsApi,
@@ -24,6 +25,7 @@ import {
 } from "../../../lib/api/v2-contracts.api";
 import RedeemCodeCard from "../../../components/ui/RedeemCodeCard";
 import ScanEntitlementBadge from "../../../components/ui/ScanEntitlementBadge";
+import AppleScanPassCard from "../../../components/ui/AppleScanPassCard";
 import AppRatingPrompt from "../../../components/ui/AppRatingPrompt";
 import type { IV2ScanEntitlementStatus } from "../../../lib/api/types";
 import {
@@ -295,7 +297,9 @@ function ScanAccountBanner({
         <Text style={styles.scanBannerCopy}>
           {active
             ? `${dailyLimit} lượt scan AI mỗi ngày${activeUntil ? ` đến ${activeUntil}` : ""}.`
-            : "Nhập mã trong chai sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
+            : Platform.OS === "ios"
+              ? "Mua gói bằng Apple hoặc nhập mã trong chai sữa Ủ để mở 30 lượt scan AI mỗi ngày."
+              : "Nhập mã trong chai sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
         </Text>
       </View>
     </LinearGradient>
@@ -310,6 +314,7 @@ export default function ProfileScreen(): React.JSX.Element {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [ratingVisible, setRatingVisible] = useState(false);
   const [milkSelectedId, setMilkSelectedId] = useState<string | null>(null);
 
@@ -404,6 +409,34 @@ export default function ProfileScreen(): React.JSX.Element {
     ]);
   };
 
+  const confirmDeleteAccount = (): void => {
+    Alert.alert(
+      "Xóa tài khoản",
+      "Tài khoản và dữ liệu cá nhân của bạn sẽ bị xóa khỏi hệ thống. Hành động này không thể hoàn tác.",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa tài khoản",
+          style: "destructive",
+          onPress: async () => {
+            setDeleteLoading(true);
+            try {
+              await deleteMyAccountApi();
+              await auth.logout();
+            } catch (err) {
+              Alert.alert(
+                "Không thể xóa tài khoản",
+                err instanceof Error ? err.message : "Vui lòng thử lại sau.",
+              );
+            } finally {
+              setDeleteLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
@@ -494,6 +527,7 @@ export default function ProfileScreen(): React.JSX.Element {
         <SectionTitle title="Gói scan AI" />
         <View style={styles.redeemStack}>
           <ScanEntitlementBadge status={entitlementQ.data} />
+          <AppleScanPassCard onPurchased={() => setRatingVisible(true)} />
           <RedeemCodeCard onRedeemed={() => setRatingVisible(true)} />
         </View>
 
@@ -597,6 +631,12 @@ export default function ProfileScreen(): React.JSX.Element {
             icon="help-circle-outline"
             label="Trợ giúp & Hỗ trợ"
             onPress={() => router.push("/(tabs)/profile/help" as never)}
+          />
+          <SettingsRow
+            icon="trash-outline"
+            label={deleteLoading ? "Đang xóa tài khoản..." : "Xóa tài khoản"}
+            onPress={confirmDeleteAccount}
+            danger
           />
           <SettingsRow
             icon="log-out-outline"

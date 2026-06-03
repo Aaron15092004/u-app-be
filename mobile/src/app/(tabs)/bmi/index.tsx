@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
+  Linking,
   ScrollView,
   StatusBar,
   View,
@@ -209,6 +210,20 @@ export default function BMIScreen(): React.JSX.Element {
           <Text style={styles.adviceText}>{CATEGORY_ADVICE[category]}</Text>
         </View>
 
+        <View style={styles.sourceCard}>
+          <Text style={styles.sourceTitle}>Nguồn tham khảo</Text>
+          <Text style={styles.sourceText}>
+            Chỉ số BMI trong app dùng nhóm phân loại người lớn theo CDC. BMI là chỉ số sàng lọc
+            thể trạng, không dùng để chẩn đoán bệnh hoặc thay thế tư vấn y tế.
+          </Text>
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => Linking.openURL('https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html')}
+          >
+            <Text style={styles.sourceLink}>CDC Adult BMI Categories</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.milkCard}>
           <View style={styles.milkHeader}>
             <View style={styles.milkIcon}>
@@ -339,6 +354,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: TEXT,
     lineHeight: 24,
+  },
+  sourceCard: {
+    backgroundColor: '#F9FBF2',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8F1D0',
+  },
+  sourceTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: TEXT,
+    marginBottom: 6,
+  },
+  sourceText: {
+    fontSize: 13,
+    color: TEXT_SECONDARY,
+    lineHeight: 20,
+  },
+  sourceLink: {
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    color: PRIMARY_DARK,
   },
   milkCard: {
     backgroundColor: SURFACE,

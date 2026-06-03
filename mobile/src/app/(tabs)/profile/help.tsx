@@ -48,7 +48,7 @@ const FAQ_ITEMS = [
   {
     question: "Tôi có thể xóa tài khoản không?",
     answer:
-      "Hiện tại bạn có thể xóa tài khoản bằng cách liên hệ với chúng tôi qua email hỗ trợ. Tính năng tự xóa sẽ có trong bản cập nhật tiếp theo.",
+      "Có. Vào Trang cá nhân > Cài đặt > Xóa tài khoản để xóa tài khoản và dữ liệu cá nhân khỏi hệ thống.",
   },
 ];
 

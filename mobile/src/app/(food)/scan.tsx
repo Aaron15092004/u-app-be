@@ -221,7 +221,7 @@ export default function ScanScreen() {
             Ứng dụng cần quyền truy cập camera để quét bữa ăn
           </Text>
           <PrimaryButton
-            label="Cấp quyền Camera"
+            label="Tiếp tục"
             onPress={requestPermission}
           />
           <Pressable onPress={handleGallery} style={styles.galleryLink}>

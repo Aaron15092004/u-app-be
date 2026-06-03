@@ -9,5 +9,6 @@ const router = Router();
 router.get('/profile/stats', authenticate, usersController.getStats);
 router.patch('/profile', authenticate, usersController.updateProfile);
 router.patch('/notifications', authenticate, usersController.updateNotifications);
+router.delete('/me', authenticate, usersController.deleteMe);
 
 export default router;

@@ -44,3 +44,7 @@ export async function updateNotificationsApi(
   );
   return res.data.data;
 }
+
+export async function deleteMyAccountApi(): Promise<void> {
+  await apiClient.delete('/api/users/me');
+}

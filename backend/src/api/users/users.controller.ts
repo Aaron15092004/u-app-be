@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { updateProfileSchema, updateNotificationsSchema } from './users.validation';
-import { getProfileStats, updateUserProfile, updateUserNotifications } from './users.service';
+import { deleteUserAccount, getProfileStats, updateUserProfile, updateUserNotifications } from './users.service';
 import { success, error } from '../../utils/response';
 import { AuthRequest } from '../../middleware/auth.middleware';
 
@@ -50,6 +50,18 @@ export const updateNotifications = async (req: Request, res: Response): Promise<
   try {
     const notifications = await updateUserNotifications(userId, parseResult.data);
     success(res, notifications);
+  } catch (err: unknown) {
+    const e = err as { statusCode?: number; message?: string };
+    error(res, e.message ?? 'Lỗi server', e.statusCode ?? 500);
+  }
+};
+
+export const deleteMe = async (req: Request, res: Response): Promise<void> => {
+  const userId = (req as AuthRequest).user.id;
+
+  try {
+    await deleteUserAccount(userId);
+    res.status(204).end();
   } catch (err: unknown) {
     const e = err as { statusCode?: number; message?: string };
     error(res, e.message ?? 'Lỗi server', e.statusCode ?? 500);

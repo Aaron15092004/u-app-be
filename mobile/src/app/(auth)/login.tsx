@@ -118,34 +118,8 @@ export default function LoginScreen(): React.JSX.Element {
           <View style={styles.divider} />
         </View>
 
-        <SocialAuthButton
-          provider="google"
-          loading={oauthLoading === "google"}
-          onPress={async () => {
-            setOauthLoading("google");
-            try {
-              const user = await auth.loginWithGoogle();
-              if (!user.profileCompleted)
-                router.replace("/(auth)/complete-profile");
-              else router.replace("/(tabs)");
-            } catch (err: any) {
-              console.warn("[GoogleLogin]", {
-                code: err?.code,
-                message: err?.message,
-                response: err?.response?.data,
-              });
-              if (err?.code !== "SIGN_IN_CANCELLED")
-                setServerError(
-                  err?.message ?? "Đăng nhập Google thất bại. Vui lòng thử lại.",
-                );
-            } finally {
-              setOauthLoading(null);
-            }
-          }}
-        />
-
         {Platform.OS === "ios" && appleAvailable && (
-          <View style={styles.appleButton}>
+          <View style={styles.socialButton}>
             <SocialAuthButton
               provider="apple"
               loading={oauthLoading === "apple"}
@@ -168,6 +142,34 @@ export default function LoginScreen(): React.JSX.Element {
             />
           </View>
         )}
+
+        <View style={Platform.OS === "ios" && appleAvailable ? styles.socialButton : undefined}>
+          <SocialAuthButton
+            provider="google"
+            loading={oauthLoading === "google"}
+            onPress={async () => {
+              setOauthLoading("google");
+              try {
+                const user = await auth.loginWithGoogle();
+                if (!user.profileCompleted)
+                  router.replace("/(auth)/complete-profile");
+                else router.replace("/(tabs)");
+              } catch (err: any) {
+                console.warn("[GoogleLogin]", {
+                  code: err?.code,
+                  message: err?.message,
+                  response: err?.response?.data,
+                });
+                if (err?.code !== "SIGN_IN_CANCELLED")
+                  setServerError(
+                    err?.message ?? "Đăng nhập Google thất bại. Vui lòng thử lại.",
+                  );
+              } finally {
+                setOauthLoading(null);
+              }
+            }}
+          />
+        </View>
       </View>
 
       <View style={styles.footer}>
@@ -217,9 +219,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: TEXT_SECONDARY,
   },
-  appleButton: {
-    marginTop: 12,
-  },
+  socialButton: { marginTop: 12 },
   footer: {
     flexDirection: "row",
     justifyContent: "center",

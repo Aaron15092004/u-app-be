@@ -344,7 +344,7 @@ export type IV2RedeemSource = 'manual' | 'qr';
 export type IV2CampaignStatus = 'draft' | 'active' | 'paused' | 'ended' | 'revoked';
 export type IV2RedeemCodeStatus = 'unused' | 'redeemed' | 'revoked' | 'expired';
 export type IV2EntitlementType = 'ai_scan_high_quota';
-export type IV2EntitlementSource = 'redeem_code';
+export type IV2EntitlementSource = 'redeem_code' | 'ios_iap';
 export type IV2QuotaPolicyMode = 'high_daily_quota';
 
 export interface IV2RedeemCampaignCodeRequest {
@@ -365,8 +365,8 @@ export interface IV2ScanQuotaPolicy {
 export interface IV2UserScanEntitlement {
   _id: string;
   userId: string;
-  campaignId: string;
-  redeemCodeId: string;
+  campaignId?: string | null;
+  redeemCodeId?: string | null;
   type: IV2EntitlementType;
   startsAt: string;
   activeUntil: string;
@@ -390,6 +390,14 @@ export interface IV2RedeemCampaignCodeResponse {
   status: 'success' | 'invalid' | 'already_used' | 'expired' | 'revoked' | 'unauthenticated' | 'rate_limited';
   message: string;
   entitlement?: IV2UserScanEntitlement | null;
+}
+
+export interface IV2VerifyAppleScanPassRequest {
+  productId: string;
+  transactionId: string;
+  purchaseToken?: string | null;
+  transactionDate?: number | null;
+  environment?: string | null;
 }
 
 export type IV2BarcodeSource = 'local' | 'open_food_facts' | 'manual' | 'admin_import';

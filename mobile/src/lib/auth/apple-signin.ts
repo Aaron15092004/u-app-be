@@ -1,10 +1,20 @@
-// EXPO GO MOCK — Apple Sign-In not available without native iOS build
-// Restore real implementation before EAS/production build
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 export async function isAppleAuthAvailable(): Promise<boolean> {
-  return false;
+  return AppleAuthentication.isAvailableAsync();
 }
 
 export async function signInWithApple(): Promise<{ identityToken: string; nonce?: string }> {
-  throw new Error('Apple Sign-In không khả dụng trong Expo Go. Cần Development Build trên iOS.');
+  const credential = await AppleAuthentication.signInAsync({
+    requestedScopes: [
+      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+    ],
+  });
+
+  if (!credential.identityToken) {
+    throw new Error('Apple Sign-In không trả về identityToken. Vui lòng thử lại.');
+  }
+
+  return { identityToken: credential.identityToken };
 }

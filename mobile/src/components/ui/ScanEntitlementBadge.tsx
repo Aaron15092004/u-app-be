@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { IV2ScanEntitlementStatus } from "../../lib/api/types";
 import { PRIMARY_DARK, SURFACE, TEXT, TEXT_SECONDARY } from "../../constants/colors";
@@ -40,7 +40,9 @@ export default function ScanEntitlementBadge({
             ? `Hiệu lực đến ${expiry}`
             : usedToday !== undefined
               ? `Đã dùng ${usedToday}/${dailyLimit} lượt hôm nay`
-              : "Kích hoạt mã chai sữa để tăng hạn mức."}
+              : Platform.OS === "ios"
+                ? "Mua gói bằng Apple hoặc nhập mã chai sữa để tăng hạn mức."
+                : "Kích hoạt mã chai sữa để tăng hạn mức."}
         </Text>
       </View>
     </View>
