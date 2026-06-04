@@ -49,6 +49,7 @@ import {
   GoalType,
   HabitId,
   MilkFlavor,
+  MilkPageContent,
   ProgramDetail,
   ProgramSummary,
   ScanResult,
@@ -69,6 +70,7 @@ import {
   getHabitsToday,
   getHabitStreak,
   getMilkRecommendations,
+  getMilkPageContent,
   getProfileStats,
   getProgram,
   getRatingStatus,
@@ -2476,8 +2478,128 @@ function PrivacyPolicyPage() {
   );
 }
 
+function MilkPublicPage() {
+  const [content, setContent] = useState<MilkPageContent | null>(null);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+
+  useEffect(() => {
+    let mounted = true;
+    getMilkPageContent()
+      .then((data) => {
+        if (!mounted) return;
+        setContent(data);
+        setLoadState('idle');
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setLoadState('error');
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const download = content?.download;
+
+  return (
+    <main className="milk-public-page">
+      <section className="milk-hero">
+        <div className="milk-hero-copy">
+          <img src="/assets/logo.png" alt="Ủ" />
+          <p className="milk-eyebrow">Ủ - chăm sóc sức khỏe</p>
+          <h1>Các vị sữa Ủ</h1>
+          <p>
+            Chọn vị sữa hạt phù hợp với thể trạng, nhu cầu năng lượng và nhịp sống mỗi ngày của bạn.
+          </p>
+          <a href="#download-app" className="milk-hero-cta">Tải app Ủ</a>
+        </div>
+      </section>
+
+      <section className="milk-section">
+        <div className="milk-section-head">
+          <div>
+            <p className="milk-eyebrow">Danh sách vị</p>
+            <h2>Sữa hạt của Ủ</h2>
+          </div>
+          <p>Ảnh sản phẩm có thể được cập nhật dần từ trang admin.</p>
+        </div>
+
+        {loadState === 'loading' ? (
+          <div className="milk-grid">
+            {Array.from({ length: 6 }).map((_, idx) => <div className="milk-card milk-card-loading" key={idx} />)}
+          </div>
+        ) : loadState === 'error' ? (
+          <div className="milk-error">Chưa tải được danh sách vị sữa. Vui lòng thử lại sau.</div>
+        ) : (
+          <div className="milk-grid">
+            {content?.flavors.map((flavor) => (
+              <article className="milk-card" key={flavor.flavorId}>
+                <div className="milk-image-wrap">
+                  {flavor.imageUrl ? (
+                    <img src={flavor.imageUrl} alt={flavor.nameVi} />
+                  ) : (
+                    <div className="milk-placeholder">
+                      <ImageUp />
+                      <span>Đang cập nhật ảnh</span>
+                    </div>
+                  )}
+                </div>
+                <div className="milk-card-body">
+                  <span>{milkBmiLabel(flavor.bmiRule)}</span>
+                  <h3>{flavor.nameVi}</h3>
+                  <p>{flavor.positioningVi}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="milk-download" id="download-app">
+        <div>
+          <p className="milk-eyebrow">Tải ứng dụng</p>
+          <h2>{download?.headlineVi || 'Tải app Ủ'}</h2>
+          <p>{download?.copyVi || 'Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.'}</p>
+          <div className="milk-store-buttons">
+            {download?.appStoreUrl ? <a href={download.appStoreUrl}>App Store</a> : <span>App Store sắp có</span>}
+            {download?.playStoreUrl ? <a href={download.playStoreUrl}>CH Play</a> : <span>CH Play sắp có</span>}
+          </div>
+        </div>
+        <div className="milk-qr-grid">
+          <QrBlock label="App Store" url={download?.appStoreUrl} qrUrl={download?.appStoreQrUrl} />
+          <QrBlock label="CH Play" url={download?.playStoreUrl} qrUrl={download?.playStoreQrUrl} />
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function QrBlock({ label, url, qrUrl }: { label: string; url?: string | null; qrUrl?: string | null }) {
+  return (
+    <a className="milk-qr-card" href={url ?? '#'} aria-disabled={!url}>
+      {qrUrl ? (
+        <img src={qrUrl} alt={`QR tải app trên ${label}`} />
+      ) : (
+        <div className="milk-qr-placeholder">
+          <QrCode />
+          <span>QR đang cập nhật</span>
+        </div>
+      )}
+      <strong>{label}</strong>
+    </a>
+  );
+}
+
+function milkBmiLabel(rule: string): string {
+  if (rule === 'lt_18_5') return 'BMI < 18.5';
+  if (rule === 'range_18_5_22_9') return 'BMI 18.5 - 24.9';
+  if (rule === 'gt_23') return 'BMI >= 25';
+  return 'Mọi chỉ số BMI';
+}
+
 function App() {
   if (window.location.pathname === '/privacy') return <PrivacyPolicyPage />;
+  if (window.location.pathname === '/milk') return <MilkPublicPage />;
 
   const initial = getStoredAuth();
   const [user, setUser] = useState<AuthUser | null>(initial.user);

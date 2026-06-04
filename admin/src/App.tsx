@@ -15,6 +15,7 @@ const UsersPage = lazy(() => import('@/pages/UsersPage').then((m) => ({ default:
 const ProgramsPage = lazy(() => import('@/pages/ProgramsPage').then((m) => ({ default: m.ProgramsPage })));
 const CampaignsPage = lazy(() => import('@/pages/CampaignsPage').then((m) => ({ default: m.CampaignsPage })));
 const RatingsPage = lazy(() => import('@/pages/RatingsPage').then((m) => ({ default: m.RatingsPage })));
+const MilkContentPage = lazy(() => import('@/pages/MilkContentPage').then((m) => ({ default: m.MilkContentPage })));
 
 export default function App() {
   return (
@@ -78,6 +79,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<div className="p-8 text-muted-foreground">Đang tải...</div>}>
                     <RatingsPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="milk-content"
+                element={
+                  <Suspense fallback={<div className="p-8 text-muted-foreground">Đang tải...</div>}>
+                    <MilkContentPage />
                   </Suspense>
                 }
               />

@@ -183,6 +183,22 @@ export interface AdminV2NutMilkFlavorRule {
   bmiRule: AdminV2NutMilkBmiRule;
   needSignal?: AdminV2NutMilkNeedSignal;
   positioningVi: string;
+  imageUrl?: string | null;
+}
+
+export interface AdminV2MilkPageDownloadContent {
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
+  appStoreQrUrl: string | null;
+  playStoreQrUrl: string | null;
+  headlineVi: string | null;
+  copyVi: string | null;
+}
+
+export interface AdminV2MilkPageContent {
+  flavors: AdminV2NutMilkFlavorRule[];
+  download: AdminV2MilkPageDownloadContent;
+  updatedAt: string | null;
 }
 
 export interface AdminV2NutMilkPreference {

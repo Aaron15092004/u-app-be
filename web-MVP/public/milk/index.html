@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Các vị sữa Ủ</title>
+    <style>
+      :root {
+        font-family: Montserrat, Inter, Arial, sans-serif;
+        color: #273611;
+        background: #fff7ec;
+      }
+
+      body {
+        margin: 0;
+        background: #fff7ec;
+      }
+
+      .hero {
+        min-height: 390px;
+        display: flex;
+        align-items: center;
+        padding: 48px clamp(18px, 5vw, 84px);
+        background:
+          linear-gradient(90deg, rgba(255,255,255,.96), rgba(255,240,220,.9), rgba(166,206,77,.22)),
+          radial-gradient(circle at right, rgba(166,206,77,.32), transparent 42%);
+        border-bottom: 1px solid #f2dfc6;
+      }
+
+      .hero div {
+        max-width: 720px;
+      }
+
+      .hero img {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: #80a83b;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(42px, 8vw, 76px);
+        line-height: .95;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 42px);
+      }
+
+      p {
+        color: #5f6758;
+        line-height: 1.65;
+      }
+
+      .section,
+      .download {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 42px 0;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: end;
+        margin-bottom: 22px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 18px;
+      }
+
+      .card,
+      .qr-card {
+        overflow: hidden;
+        border-radius: 24px;
+        background: #fff;
+        border: 1px solid #f0dfca;
+        box-shadow: 0 14px 36px rgba(85, 69, 42, .1);
+      }
+
+      .image {
+        aspect-ratio: 1 / 1;
+        background: #fff0dc;
+      }
+
+      .image img,
+      .qr-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .placeholder {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        place-items: center;
+        color: #8ca251;
+        font-weight: 800;
+        background:
+          linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,240,220,.72)),
+          repeating-linear-gradient(45deg, #fff6eb 0 12px, #f7ead8 12px 24px);
+      }
+
+      .body {
+        padding: 18px;
+      }
+
+      .body span {
+        color: #8fbd3e;
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .body h3 {
+        margin: 8px 0;
+        font-size: 20px;
+      }
+
+      .download {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+        gap: 28px;
+        align-items: center;
+      }
+
+      .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .buttons a,
+      .buttons span {
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        border-radius: 999px;
+        background: #8fbd3e;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 800;
+      }
+
+      .buttons span {
+        background: #edf3dc;
+        color: #6f8233;
+      }
+
+      .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .qr-card {
+        min-height: 220px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        text-decoration: none;
+        color: #273611;
+      }
+
+      .qr-img {
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .qr-card strong {
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        .section-head,
+        .download {
+          display: block;
+        }
+
+        .qr-grid {
+          margin-top: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div>
+          <img src="/assets/logo.png" alt="Ủ" />
+          <p class="eyebrow">Ủ - chăm sóc sức khỏe</p>
+          <h1>Các vị sữa Ủ</h1>
+          <p>Chọn vị sữa hạt phù hợp với thể trạng, nhu cầu năng lượng và nhịp sống mỗi ngày của bạn.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Danh sách vị</p>
+            <h2>Sữa hạt của Ủ</h2>
+          </div>
+          <p>Ảnh sản phẩm có thể được cập nhật dần từ trang admin.</p>
+        </div>
+        <div class="grid" id="milk-grid"></div>
+      </section>
+
+      <section class="download" id="download-app">
+        <div>
+          <p class="eyebrow">Tải ứng dụng</p>
+          <h2 id="download-title">Tải app Ủ</h2>
+          <p id="download-copy">Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.</p>
+          <div class="buttons">
+            <a id="app-store" href="#">App Store</a>
+            <a id="play-store" href="#">CH Play</a>
+          </div>
+        </div>
+        <div class="qr-grid">
+          <a class="qr-card" id="app-store-qr-link" href="#">
+            <div class="qr-img" id="app-store-qr"><div class="placeholder">QR đang cập nhật</div></div>
+            <strong>App Store</strong>
+          </a>
+          <a class="qr-card" id="play-store-qr-link" href="#">
+            <div class="qr-img" id="play-store-qr"><div class="placeholder">QR đang cập nhật</div></div>
+            <strong>CH Play</strong>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_URL = 'https://u-app-be.onrender.com';
+      const labels = {
+        lt_18_5: 'BMI < 18.5',
+        range_18_5_22_9: 'BMI 18.5 - 24.9',
+        gt_23: 'BMI >= 25',
+        any: 'Mọi chỉ số BMI',
+      };
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;',
+        }[char]));
+      }
+
+      function setLink(id, url) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (url) el.href = url;
+        else el.replaceWith(Object.assign(document.createElement('span'), { textContent: el.textContent }));
+      }
+
+      fetch(`${API_URL}/api/config/milk-page`)
+        .then((res) => res.json())
+        .then((json) => {
+          const data = json.data;
+          const grid = document.getElementById('milk-grid');
+          grid.innerHTML = data.flavors.map((flavor) => `
+            <article class="card">
+              <div class="image">
+                ${flavor.imageUrl ? `<img src="${escapeHtml(flavor.imageUrl)}" alt="${escapeHtml(flavor.nameVi)}" />` : '<div class="placeholder">Đang cập nhật ảnh</div>'}
+              </div>
+              <div class="body">
+                <span>${labels[flavor.bmiRule] || 'Mọi chỉ số BMI'}</span>
+                <h3>${escapeHtml(flavor.nameVi)}</h3>
+                <p>${escapeHtml(flavor.positioningVi)}</p>
+              </div>
+            </article>
+          `).join('');
+
+          document.getElementById('download-title').textContent = data.download.headlineVi || 'Tải app Ủ';
+          document.getElementById('download-copy').textContent = data.download.copyVi || 'Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.';
+          setLink('app-store', data.download.appStoreUrl);
+          setLink('play-store', data.download.playStoreUrl);
+          setLink('app-store-qr-link', data.download.appStoreUrl);
+          setLink('play-store-qr-link', data.download.playStoreUrl);
+          if (data.download.appStoreQrUrl) {
+            document.getElementById('app-store-qr').innerHTML = `<img src="${escapeHtml(data.download.appStoreQrUrl)}" alt="QR App Store" />`;
+          }
+          if (data.download.playStoreQrUrl) {
+            document.getElementById('play-store-qr').innerHTML = `<img src="${escapeHtml(data.download.playStoreQrUrl)}" alt="QR CH Play" />`;
+          }
+        })
+        .catch(() => {
+          document.getElementById('milk-grid').innerHTML = '<div class="card body">Chưa tải được danh sách vị sữa. Vui lòng thử lại sau.</div>';
+        });
+    </script>
+  </body>
+</html>

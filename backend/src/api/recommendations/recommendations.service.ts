@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import NutMilkPreference from '../../models/NutMilkPreference';
+import { getMilkPageContent } from '../config/app-content.service';
 import { getNutMilkBmiRule, NUT_MILK_FLAVORS } from './nut-milk.rules';
 import { SelectNutMilkFlavorInput } from './recommendations.validation';
 
@@ -23,13 +24,18 @@ export async function getNutMilkRules(userId: string, input: GetNutMilkRulesInpu
     userId: new mongoose.Types.ObjectId(userId),
   }).sort({ updatedAt: -1 }).lean();
 
+  const milkPage = await getMilkPageContent();
+
   return {
     bmiRule,
     signals: {
       stressOrSleep: input.stressOrSleep === true,
       energyOrMemory: input.energyOrMemory === true,
     },
-    flavors: NUT_MILK_FLAVORS,
+    flavors: NUT_MILK_FLAVORS.map((flavor) => ({
+      ...flavor,
+      imageUrl: milkPage.flavors.find((item) => item.flavorId === flavor.flavorId)?.imageUrl ?? null,
+    })),
     currentPreference,
     disclaimer:
       'Gợi ý sữa hạt là gợi ý sản phẩm theo sở thích và chỉ số cơ thể, không phải chẩn đoán hay điều trị y khoa.',

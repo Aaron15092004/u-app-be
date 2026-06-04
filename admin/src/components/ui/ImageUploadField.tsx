@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ImageUploadFieldProps {
-  folder: 'exercises' | 'food-items' | 'programs';
+  folder: 'exercises' | 'food-items' | 'programs' | 'nut-milk' | 'app-download';
   value: string | null | undefined;
   onChange: (url: string | null) => void;
 }

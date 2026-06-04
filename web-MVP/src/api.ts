@@ -115,6 +115,7 @@ export interface MilkFlavor {
   nameVi: string;
   bmiRule: string;
   positioningVi: string;
+  imageUrl?: string | null;
 }
 
 export interface MilkRecommendation {
@@ -122,6 +123,21 @@ export interface MilkRecommendation {
   flavors: MilkFlavor[];
   currentPreference?: { selectedFlavorId: string } | null;
   disclaimer: string;
+}
+
+export interface MilkPageDownloadContent {
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
+  appStoreQrUrl: string | null;
+  playStoreQrUrl: string | null;
+  headlineVi: string | null;
+  copyVi: string | null;
+}
+
+export interface MilkPageContent {
+  flavors: MilkFlavor[];
+  download: MilkPageDownloadContent;
+  updatedAt: string | null;
 }
 
 export interface ProgramSummary {
@@ -298,6 +314,7 @@ export async function updateProfile(body: Partial<AuthUser['profile']> & { name?
 export const getTodaySummary = () => api.get('/api/home/today-summary').then((r) => r.data.data as TodaySummary);
 export const getProfileStats = () => api.get('/api/users/profile/stats').then((r) => r.data.data as ProfileStats);
 export const getShopUrl = () => api.get('/api/config/shop-url').then((r) => r.data.data as { url: string });
+export const getMilkPageContent = () => api.get('/api/config/milk-page').then((r) => r.data.data as MilkPageContent);
 export const logWater = () => api.post('/api/water', {}).then((r) => r.data.data);
 export const saveBmi = (heightCm: number, weightKg: number) => api.patch('/api/bmi', { heightCm, weightKg }).then((r) => r.data.data);
 export const getBmiHistory = () => api.get('/api/bmi/history').then((r) => r.data.data);

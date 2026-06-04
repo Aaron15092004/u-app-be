@@ -33,10 +33,15 @@ export async function uploadImage(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const folder = (req.query.folder as string) === 'food-items' ? 'food-items' : 'exercises';
+  const allowedFolders = new Set(['exercises', 'food-items', 'programs', 'nut-milk', 'app-download']);
+  const requestedFolder = String(req.query.folder ?? 'exercises');
+  const folder = allowedFolders.has(requestedFolder) ? requestedFolder : 'exercises';
 
   try {
-    const result = await adminService.uploadAdminImage(req.file.buffer, folder);
+    const result = await adminService.uploadAdminImage(
+      req.file.buffer,
+      folder as 'exercises' | 'food-items' | 'programs' | 'nut-milk' | 'app-download',
+    );
     success(res, result, 201);
   } catch (err: unknown) {
     const e = err as { message?: string };

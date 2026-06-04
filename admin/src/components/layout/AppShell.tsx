@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Dumbbell, Apple, Users, LogOut, LayoutDashboard, BarChart2, ListChecks, Ticket, Star } from 'lucide-react';
+import { Dumbbell, Apple, Users, LogOut, LayoutDashboard, BarChart2, ListChecks, Ticket, Star, Milk } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logout } from '@/lib/auth-api';
 
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/programs', icon: ListChecks, label: 'Chương trình' },
   { to: '/food-items', icon: Apple, label: 'Thực phẩm' },
   { to: '/campaigns', icon: Ticket, label: 'Mã scan AI' },
+  { to: '/milk-content', icon: Milk, label: 'Sữa Ủ & app' },
   { to: '/ratings', icon: Star, label: 'Đánh giá' },
   { to: '/users', icon: Users, label: 'Người dùng' },
 ];

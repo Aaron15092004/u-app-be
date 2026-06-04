@@ -87,7 +87,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 export async function uploadAdminImage(
   buffer: Buffer,
-  folder: 'exercises' | 'food-items',
+  folder: 'exercises' | 'food-items' | 'programs' | 'nut-milk' | 'app-download',
 ): Promise<{ url: string; publicId: string }> {
   const result = await uploadImage(buffer, { folder: `u-app/${folder}` });
   return { url: result.url, publicId: result.publicId };

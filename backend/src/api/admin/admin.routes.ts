@@ -14,6 +14,7 @@ import {
   revokeCodeHandler,
 } from '../campaigns/campaigns.controller';
 import { getRatingsDashboardHandler, listAppRatings } from '../ratings/ratings.controller';
+import { getMilkPageAdmin, updateMilkPageAdmin } from './app-content.controller';
 
 const router = Router();
 
@@ -43,6 +44,10 @@ router.patch('/campaigns/codes/:codeId/revoke', revokeCodeHandler);
 // v2 internal feedback ratings (Phase 2 MVP)
 router.get('/ratings', listAppRatings);
 router.get('/ratings/stats', getRatingsDashboardHandler);
+
+// Public web/app content managed by admins
+router.get('/app-content/milk-page', getMilkPageAdmin);
+router.patch('/app-content/milk-page', updateMilkPageAdmin);
 
 // v2 media asset scaffolds (Phase 5)
 router.use('/media-assets', mediaAssetsRouter);
