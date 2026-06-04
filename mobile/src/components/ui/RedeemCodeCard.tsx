@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { redeemCampaignCodeApi } from "../../lib/api/v2-contracts.api";
 import type { IV2RedeemCampaignCodeResponse } from "../../lib/api/types";
@@ -56,9 +56,7 @@ export default function RedeemCodeCard({
     <View style={[styles.card, compact && styles.compact]}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.sub}>
-        {Platform.OS === "ios"
-          ? "Nếu bạn có mã quyền lợi từ sản phẩm sữa Ủ, nhập tại đây. Người dùng iOS cũng có thể mua gói scan trực tiếp qua Apple."
-          : "Nhập mã quyền lợi từ sản phẩm sữa Ủ để nhận 30 lượt quét AI mỗi ngày."}
+        Nhập mã quyền lợi từ sản phẩm sữa Ủ để nhận 30 lượt quét AI mỗi ngày.
       </Text>
       <View style={styles.row}>
         <TextInput

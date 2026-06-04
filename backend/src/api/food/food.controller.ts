@@ -27,6 +27,7 @@ import { uploadImageBuffer } from '../../utils/cloudinary';
 
 export const scanFood = async (req: Request, res: Response): Promise<void> => {
   const userId = (req as AuthRequest).user.id;
+  const iosAutoActive = String(req.headers['x-u-client-platform'] ?? '').toLowerCase() === 'ios';
 
   if (!req.file) {
     error(res, 'Vui lòng chọn ảnh', 400);
@@ -34,7 +35,7 @@ export const scanFood = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const rateLimit = await checkScanRateLimit(userId);
+    const rateLimit = await checkScanRateLimit(userId, { iosAutoActive });
     if (rateLimit.isLimited) {
       const hours = Math.floor(rateLimit.retryAfterSeconds / 3600);
       const minutes = Math.floor((rateLimit.retryAfterSeconds % 3600) / 60);

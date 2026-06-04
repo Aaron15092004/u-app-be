@@ -46,20 +46,26 @@ export interface ScanRateLimitResult {
   activeUntil: string | null;
 }
 
-export async function checkScanRateLimit(userId: string): Promise<ScanRateLimitResult> {
+export async function checkScanRateLimit(
+  userId: string,
+  options?: { iosAutoActive?: boolean },
+): Promise<ScanRateLimitResult> {
   const todayStart = vietnamDayStart(new Date());
   const tomorrowStart = new Date(todayStart.getTime() + 86400000);
   const now = new Date();
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  const entitlement = await UserScanEntitlement.findOne({
-    userId: userObjectId,
-    activeUntil: { $gt: now },
-  })
-    .sort({ activeUntil: -1 })
-    .lean();
+  const entitlement = options?.iosAutoActive
+    ? null
+    : await UserScanEntitlement.findOne({
+        userId: userObjectId,
+        activeUntil: { $gt: now },
+      })
+        .sort({ activeUntil: -1 })
+        .lean();
 
-  const limit = entitlement ? ENTITLEMENT_SCAN_DAILY_LIMIT : SCAN_DAILY_LIMIT;
+  const hasHighQuota = Boolean(entitlement || options?.iosAutoActive);
+  const limit = hasHighQuota ? ENTITLEMENT_SCAN_DAILY_LIMIT : SCAN_DAILY_LIMIT;
 
   const usedToday = await FoodScanAttempt.countDocuments({
     userId: userObjectId,
@@ -71,7 +77,7 @@ export async function checkScanRateLimit(userId: string): Promise<ScanRateLimitR
     usedToday,
     limit,
     retryAfterSeconds: secondsUntilVietnamMidnight(),
-    quotaMode: entitlement ? 'entitlement_30_daily' : 'standard_daily_limit',
+    quotaMode: hasHighQuota ? 'entitlement_30_daily' : 'standard_daily_limit',
     entitlementId: entitlement ? String(entitlement._id) : null,
     activeUntil: entitlement ? entitlement.activeUntil.toISOString() : null,
   };
@@ -87,7 +93,11 @@ export async function recordScanAttempt(
 ): Promise<void> {
   await FoodScanAttempt.create({
     userId: new mongoose.Types.ObjectId(userId),
-    source: quota?.entitlementId ? 'redeem_entitlement' : 'daily_quota',
+    source: quota?.quotaMode === 'entitlement_30_daily'
+      ? quota.entitlementId
+        ? 'redeem_entitlement'
+        : 'ios_auto_entitlement'
+      : 'daily_quota',
     entitlementId: quota?.entitlementId ? new mongoose.Types.ObjectId(quota.entitlementId) : undefined,
     quotaMode: quota?.quotaMode === 'entitlement_30_daily' ? 'high_quota' : 'standard',
   });

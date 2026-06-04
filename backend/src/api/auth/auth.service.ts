@@ -313,7 +313,8 @@ export async function googleSignIn(
 
 export async function appleSignIn(
   identityToken: string,
-  nonce?: string
+  nonce?: string,
+  fullName?: string,
 ): Promise<{ user: SafeUser; accessToken: string; refreshToken: string }> {
   let payload: { sub: string; email?: string };
   try {
@@ -327,6 +328,7 @@ export async function appleSignIn(
 
   const providerId = payload.sub;
   const email = payload.email ? normalizeEmail(payload.email) : null;
+  const appleName = fullName?.trim() || 'Apple User';
 
   let user = (await User.findOne({
     'authProviders.provider': 'apple',
@@ -345,7 +347,7 @@ export async function appleSignIn(
       try {
         user = await User.create({
           email: syntheticEmail,
-          name: '',
+          name: appleName,
           authProviders: [{ provider: 'apple', providerId }],
           profileCompleted: false,
         });
@@ -358,6 +360,11 @@ export async function appleSignIn(
     }
   }
 
+  if (!user.name || user.name.trim().length === 0) {
+    user.name = appleName;
+    await user.save();
+  }
+
   const tokens = await issueTokenPair(user);
   return { user: toSafeUser(user), ...tokens };
 }
@@ -365,7 +372,7 @@ export async function appleSignIn(
 export async function updateProfile(
   userId: string,
   payload: {
-    name: string;
+    name?: string;
     age: number;
     heightCm: number;
     weightKg: number;
@@ -378,7 +385,7 @@ export async function updateProfile(
   const user = await User.findByIdAndUpdate(
     userId,
     {
-      name: payload.name,
+      ...(payload.name ? { name: payload.name } : {}),
       'profile.dateOfBirth': dateOfBirth,
       'profile.age': payload.age,
       'profile.heightCm': payload.heightCm,

@@ -12,7 +12,7 @@ export const refreshSchema = z.object({
 });
 
 export const completeProfileSchema = z.object({
-  name: z.string().min(1, 'Vui lòng nhập họ và tên của bạn').max(100).trim(),
+  name: z.string().min(1, 'Vui lòng nhập họ và tên của bạn').max(100).trim().optional(),
   age: z.number().int().min(10).max(120),
   heightCm: z.number().min(50).max(300),
   weightKg: z.number().min(20).max(500),
@@ -33,4 +33,5 @@ export const googleSignInSchema = z.object({ idToken: z.string().min(1) });
 export const appleSignInSchema = z.object({
   identityToken: z.string().min(1),
   nonce: z.string().optional(),
+  fullName: z.string().min(1).max(100).trim().optional(),
 });

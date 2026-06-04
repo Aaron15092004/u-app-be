@@ -83,6 +83,10 @@ export async function googleSignIn(req: Request, res: Response): Promise<void> {
 export async function appleSignIn(req: Request, res: Response): Promise<void> {
   const parsed = appleSignInSchema.safeParse(req.body);
   if (!parsed.success) { error(res, parsed.error.errors[0].message, 400); return; }
-  const result = await authService.appleSignIn(parsed.data.identityToken, parsed.data.nonce);
+  const result = await authService.appleSignIn(
+    parsed.data.identityToken,
+    parsed.data.nonce,
+    parsed.data.fullName,
+  );
   success(res, result);
 }

@@ -149,8 +149,8 @@ export function AuthProvider({ children }: Props): React.JSX.Element {
   };
 
   const loginWithApple = async (): Promise<IAuthUser> => {
-    const { identityToken, nonce } = await signInWithApple();
-    const res = await appleSignInApi(identityToken, nonce);
+    const { identityToken, nonce, fullName } = await signInWithApple();
+    const res = await appleSignInApi(identityToken, nonce, fullName);
     await saveRefreshToken(res.refreshToken);
     useAuthStore.setState({ user: res.user, accessToken: res.accessToken });
     setCachedUser(res.user);

@@ -25,7 +25,6 @@ import {
 } from "../../../lib/api/v2-contracts.api";
 import RedeemCodeCard from "../../../components/ui/RedeemCodeCard";
 import ScanEntitlementBadge from "../../../components/ui/ScanEntitlementBadge";
-import AppleScanPassCard from "../../../components/ui/AppleScanPassCard";
 import AppRatingPrompt from "../../../components/ui/AppRatingPrompt";
 import type { IV2ScanEntitlementStatus } from "../../../lib/api/types";
 import {
@@ -298,7 +297,7 @@ function ScanAccountBanner({
           {active
             ? `${dailyLimit} lượt scan AI mỗi ngày${activeUntil ? ` đến ${activeUntil}` : ""}.`
             : Platform.OS === "ios"
-              ? "Mua gói scan qua Apple hoặc nhập mã quyền lợi từ sản phẩm sữa Ủ."
+              ? "Tài khoản iOS được kích hoạt gói scan AI mặc định."
               : "Nhập mã quyền lợi từ sản phẩm sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
         </Text>
       </View>
@@ -527,8 +526,9 @@ export default function ProfileScreen(): React.JSX.Element {
         <SectionTitle title="Gói scan AI" />
         <View style={styles.redeemStack}>
           <ScanEntitlementBadge status={entitlementQ.data} />
-          <AppleScanPassCard onPurchased={() => setRatingVisible(true)} />
-          <RedeemCodeCard onRedeemed={() => setRatingVisible(true)} />
+          {Platform.OS !== "ios" ? (
+            <RedeemCodeCard onRedeemed={() => setRatingVisible(true)} />
+          ) : null}
         </View>
 
         <SectionTitle title="Sữa Ủ phù hợp" />

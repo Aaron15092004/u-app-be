@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   Alert,
+  Platform,
   Pressable,
   ActivityIndicator,
   TextInput,
@@ -286,7 +287,7 @@ export default function ScanScreen() {
               quotaMode={quotaInfo.quotaMode}
             />
           </View>
-          {quotaBlocked && (
+          {quotaBlocked && Platform.OS !== 'ios' && (
             <View style={styles.redeemWrap}>
               <RedeemCodeCard
                 title="Nhập mã để tiếp tục quét"

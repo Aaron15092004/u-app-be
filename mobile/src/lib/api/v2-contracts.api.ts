@@ -6,7 +6,6 @@ import type {
   IV2RedeemCampaignCodeRequest,
   IV2RedeemCampaignCodeResponse,
   IV2ScanEntitlementStatus,
-  IV2VerifyAppleScanPassRequest,
   IV2SelectNutMilkFlavorRequest,
   IV2SubmitAppRatingRequest,
   IV2AppRating,
@@ -86,16 +85,6 @@ export async function redeemCampaignCodeApi(
 export async function getScanEntitlementsApi(): Promise<IV2ScanEntitlementStatus> {
   const res = await apiClient.get<ApiResponse<IV2ScanEntitlementStatus>>(
     '/api/campaigns/me/entitlements',
-  );
-  return res.data.data;
-}
-
-export async function verifyAppleScanPassApi(
-  body: IV2VerifyAppleScanPassRequest,
-): Promise<IV2RedeemCampaignCodeResponse> {
-  const res = await apiClient.post<ApiResponse<IV2RedeemCampaignCodeResponse>>(
-    '/api/iap/apple/scan-pass/verify',
-    body,
   );
   return res.data.data;
 }

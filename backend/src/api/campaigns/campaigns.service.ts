@@ -470,7 +470,25 @@ export async function getActiveScanEntitlement(userId: string): Promise<object |
     .lean();
 }
 
-export async function getMyScanEntitlements(userId: string): Promise<object> {
+export async function getMyScanEntitlements(
+  userId: string,
+  options?: { iosAutoActive?: boolean },
+): Promise<object> {
+  if (options?.iosAutoActive) {
+    return {
+      hasActiveEntitlement: true,
+      activeUntil: null,
+      campaignId: null,
+      redeemCodeId: null,
+      quotaPolicy: {
+        mode: SCAN_QUOTA_POLICY_MODE,
+        dailyLimit: HIGH_QUOTA_DAILY_LIMIT,
+      },
+      entitlement: null,
+      message: 'Tai khoan iOS duoc kich hoat goi quet AI mac dinh',
+    };
+  }
+
   const entitlement = await getActiveScanEntitlement(userId) as {
     _id: mongoose.Types.ObjectId;
     campaignId?: mongoose.Types.ObjectId;

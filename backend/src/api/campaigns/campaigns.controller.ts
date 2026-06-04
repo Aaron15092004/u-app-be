@@ -42,8 +42,9 @@ export const redeemCampaignCode = async (req: Request, res: Response): Promise<v
 
 export const getMyScanEntitlements = async (req: Request, res: Response): Promise<void> => {
   const userId = (req as AuthRequest).user.id;
+  const iosAutoActive = String(req.headers['x-u-client-platform'] ?? '').toLowerCase() === 'ios';
   try {
-    const result = await getMyScanEntitlementsService(userId);
+    const result = await getMyScanEntitlementsService(userId, { iosAutoActive });
     success(res, result);
   } catch (err: unknown) {
     const e = err as { statusCode?: number; message?: string };

@@ -39,7 +39,6 @@ export default function CompleteProfileScreen(): React.JSX.Element {
   const router = useRouter();
   const { completeProfile } = useAuth();
 
-  const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
@@ -72,9 +71,8 @@ export default function CompleteProfileScreen(): React.JSX.Element {
       ? 'Cân nặng không hợp lệ (10–500 kg)'
       : '';
 
-  // D-31: All 5 fields required
+  // Health fields required; name/email come from the auth provider.
   const isFormValid =
-    name.trim().length > 0 &&
     !isNaN(ageNum) &&
     ageNum >= 10 &&
     ageNum <= 120 &&
@@ -92,7 +90,6 @@ export default function CompleteProfileScreen(): React.JSX.Element {
     setLoading(true);
     try {
       const body: CompleteProfileRequest = {
-        name: name.trim(),
         age: ageNum,
         heightCm: heightNum,
         weightKg: weightNum,
@@ -122,14 +119,6 @@ export default function CompleteProfileScreen(): React.JSX.Element {
       </View>
 
       <View style={styles.form}>
-        <AuthInput
-          label="Họ và tên"
-          placeholder="Nguyễn Văn A"
-          value={name}
-          onChangeText={setName}
-          leftIcon="person-outline"
-        />
-
         <AuthInput
           label="Tuổi"
           placeholder="25"

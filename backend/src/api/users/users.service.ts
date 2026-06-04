@@ -9,7 +9,6 @@ import FeedbackPromptState from '../../models/FeedbackPromptState';
 import FoodLog from '../../models/FoodLog';
 import FoodScanAttempt from '../../models/FoodScanAttempt';
 import HabitLog from '../../models/HabitLog';
-import IapPurchase from '../../models/IapPurchase';
 import NutMilkPreference from '../../models/NutMilkPreference';
 import UserProgramProgress from '../../models/UserProgramProgress';
 import UserScanEntitlement from '../../models/UserScanEntitlement';
@@ -236,7 +235,6 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     FoodLog.deleteMany({ userId: userObjId }),
     FoodScanAttempt.deleteMany({ userId: userObjId }),
     HabitLog.deleteMany({ userId: userObjId }),
-    IapPurchase.deleteMany({ userId: userObjId }),
     NutMilkPreference.deleteMany({ userId: userObjId }),
     UserProgramProgress.deleteMany({ userId: userObjId }),
     UserScanEntitlement.deleteMany({ userId: userObjId }),

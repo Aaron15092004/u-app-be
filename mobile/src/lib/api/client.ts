@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { Platform } from 'react-native';
 import { useAuthStore } from '../auth/auth-store';
 import { getRefreshToken, saveRefreshToken, clearTokens } from '../auth/token-storage';
 import { refreshApi } from './auth.api';
@@ -31,6 +32,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'X-U-Client-Platform': Platform.OS,
   },
 });
 
@@ -41,6 +43,9 @@ apiClient.interceptors.request.use((requestConfig: AxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
   if (token && requestConfig.headers) {
     (requestConfig.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+  }
+  if (requestConfig.headers) {
+    (requestConfig.headers as Record<string, string>)['X-U-Client-Platform'] = Platform.OS;
   }
   return requestConfig as Parameters<typeof apiClient.interceptors.request.use>[0] extends (config: infer C) => infer R ? R : never;
 });

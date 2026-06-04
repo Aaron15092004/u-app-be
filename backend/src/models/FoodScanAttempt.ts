@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IFoodScanAttempt extends Document {
   userId: mongoose.Types.ObjectId;
-  source?: 'daily_quota' | 'redeem_entitlement';
+  source?: 'daily_quota' | 'redeem_entitlement' | 'ios_auto_entitlement';
   entitlementId?: mongoose.Types.ObjectId;
   quotaMode?: 'standard' | 'high_quota';
   createdAt: Date;
@@ -13,7 +13,7 @@ const FoodScanAttemptSchema = new Schema<IFoodScanAttempt>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     source: {
       type: String,
-      enum: ['daily_quota', 'redeem_entitlement'],
+      enum: ['daily_quota', 'redeem_entitlement', 'ios_auto_entitlement'],
       default: 'daily_quota',
     },
     entitlementId: { type: Schema.Types.ObjectId, ref: 'UserScanEntitlement' },

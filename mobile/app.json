@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.uapp.health",
-      "buildNumber": "4",
+      "buildNumber": "5",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Ủ to take photos for food recognition.",
@@ -60,7 +60,6 @@
           "color": "#4CAF50"
         }
       ],
-      "expo-iap",
       "@react-native-community/datetimepicker",
       "expo-font"
     ],

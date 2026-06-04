@@ -74,10 +74,14 @@ export async function googleSignInApi(idToken: string): Promise<LoginResponse> {
   return res.data.data;
 }
 
-export async function appleSignInApi(identityToken: string, nonce?: string): Promise<LoginResponse> {
+export async function appleSignInApi(
+  identityToken: string,
+  nonce?: string,
+  fullName?: string,
+): Promise<LoginResponse> {
   const res = await apiClient.post<{ success: boolean; data: LoginResponse }>(
     '/api/auth/apple',
-    { identityToken, nonce },
+    { identityToken, nonce, fullName },
   );
   return res.data.data;
 }

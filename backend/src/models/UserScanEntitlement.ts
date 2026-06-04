@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type ScanEntitlementType = 'ai_scan_high_quota';
-export type ScanEntitlementSource = 'redeem_code' | 'ios_iap';
+export type ScanEntitlementSource = 'redeem_code';
 export type ScanQuotaPolicyMode = 'high_daily_quota';
 
 export interface IUserScanEntitlement extends Document {
@@ -32,7 +32,7 @@ const UserScanEntitlementSchema = new Schema<IUserScanEntitlement>(
       mode: { type: String, enum: ['high_daily_quota'], default: 'high_daily_quota' },
       dailyLimit: { type: Number, required: true, min: 1 },
     },
-    source: { type: String, enum: ['redeem_code', 'ios_iap'], default: 'redeem_code' },
+    source: { type: String, enum: ['redeem_code'], default: 'redeem_code' },
   },
   { timestamps: true },
 );

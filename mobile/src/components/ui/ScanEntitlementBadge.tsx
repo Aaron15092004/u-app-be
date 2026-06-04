@@ -41,7 +41,7 @@ export default function ScanEntitlementBadge({
             : usedToday !== undefined
               ? `Đã dùng ${usedToday}/${dailyLimit} lượt hôm nay`
               : Platform.OS === "ios"
-                ? "Mua qua Apple hoặc nhập mã quyền lợi sữa Ủ để tăng hạn mức."
+                ? "Tài khoản iOS được kích hoạt gói scan AI mặc định."
                 : "Kích hoạt mã quyền lợi sữa Ủ để tăng hạn mức."}
         </Text>
       </View>

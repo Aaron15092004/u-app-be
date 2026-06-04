@@ -22,9 +22,9 @@ export interface RefreshResponse { accessToken: string; refreshToken: string; }
 export interface ForgotPasswordRequest { email: string; }
 export interface ResetPasswordRequest { token: string; password: string; }
 export interface GoogleSignInRequest { idToken: string; }
-export interface AppleSignInRequest { identityToken: string; nonce?: string; }
+export interface AppleSignInRequest { identityToken: string; nonce?: string; fullName?: string; }
 export interface CompleteProfileRequest {
-  name: string;
+  name?: string;
   age: number;
   heightCm: number;
   weightKg: number;
@@ -344,7 +344,7 @@ export type IV2RedeemSource = 'manual' | 'qr';
 export type IV2CampaignStatus = 'draft' | 'active' | 'paused' | 'ended' | 'revoked';
 export type IV2RedeemCodeStatus = 'unused' | 'redeemed' | 'revoked' | 'expired';
 export type IV2EntitlementType = 'ai_scan_high_quota';
-export type IV2EntitlementSource = 'redeem_code' | 'ios_iap';
+export type IV2EntitlementSource = 'redeem_code';
 export type IV2QuotaPolicyMode = 'high_daily_quota';
 
 export interface IV2RedeemCampaignCodeRequest {
@@ -390,14 +390,6 @@ export interface IV2RedeemCampaignCodeResponse {
   status: 'success' | 'invalid' | 'already_used' | 'expired' | 'revoked' | 'unauthenticated' | 'rate_limited';
   message: string;
   entitlement?: IV2UserScanEntitlement | null;
-}
-
-export interface IV2VerifyAppleScanPassRequest {
-  productId: string;
-  transactionId: string;
-  purchaseToken?: string | null;
-  transactionDate?: number | null;
-  environment?: string | null;
 }
 
 export type IV2BarcodeSource = 'local' | 'open_food_facts' | 'manual' | 'admin_import';
