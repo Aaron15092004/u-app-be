@@ -33,7 +33,6 @@ import {
   Scale,
   Settings,
   Shield,
-  ShoppingBag,
   Sparkles,
   Star,
   TrendingDown,
@@ -2513,14 +2512,14 @@ function MilkPublicPage() {
           </p>
           <div className="milk-store-buttons milk-hero-buttons">
             {download?.appStoreUrl ? (
-              <a href={download.appStoreUrl}><Apple size={18} /> App Store</a>
+              <a href={download.appStoreUrl}><StoreGlyph type="apple" /> App Store</a>
             ) : (
-              <span><Apple size={18} /> App Store sắp có</span>
+              <span><StoreGlyph type="apple" /> App Store sắp có</span>
             )}
             {download?.playStoreUrl ? (
-              <a href={download.playStoreUrl}><ShoppingBag size={18} /> CH Play</a>
+              <a href={download.playStoreUrl}><StoreGlyph type="play" /> CH Play</a>
             ) : (
-              <span><ShoppingBag size={18} /> CH Play sắp có</span>
+              <span><StoreGlyph type="play" /> CH Play sắp có</span>
             )}
           </div>
         </div>
@@ -2577,8 +2576,25 @@ function MilkPublicPage() {
   );
 }
 
+function StoreGlyph({ type }: { type: 'apple' | 'play' }) {
+  return (
+    <span className={`milk-store-glyph milk-store-glyph-${type}`} aria-hidden="true">
+      {type === 'apple' ? (
+        <Apple size={18} strokeWidth={2.6} />
+      ) : (
+        <svg viewBox="0 0 24 24" role="img">
+          <path className="play-mark-blue" d="M4.2 3.4c-.3.3-.5.7-.5 1.2v14.8c0 .5.2.9.5 1.2l8.7-8.6-8.7-8.6Z" />
+          <path className="play-mark-green" d="m13 12 2.6-2.6L6.1 3.9 13 12Z" />
+          <path className="play-mark-yellow" d="m13 12-6.9 8.1 9.5-5.5L13 12Z" />
+          <path className="play-mark-red" d="m15.6 9.4-2.6 2.6 2.6 2.6 3.5-2c1.1-.6 1.1-2.2 0-2.8l-3.5-2Z" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 function QrBlock({ label, url, qrUrl }: { label: string; url?: string | null; qrUrl?: string | null }) {
-  const Icon = label === 'App Store' ? Apple : ShoppingBag;
+  const type = label === 'App Store' ? 'apple' : 'play';
 
   return (
     <a className="milk-qr-card" href={url ?? '#'} aria-disabled={!url}>
@@ -2590,7 +2606,7 @@ function QrBlock({ label, url, qrUrl }: { label: string; url?: string | null; qr
           <span>QR đang cập nhật</span>
         </div>
       )}
-      <strong><Icon size={17} /> {label}</strong>
+      <strong><StoreGlyph type={type} /> {label}</strong>
     </a>
   );
 }
