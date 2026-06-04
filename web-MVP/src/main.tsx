@@ -2541,7 +2541,6 @@ function MilkPublicPage() {
             <p className="milk-eyebrow">Danh sách vị</p>
             <h2>Sữa hạt của Ủ</h2>
           </div>
-          <p>Ảnh sản phẩm có thể được cập nhật dần từ trang admin.</p>
         </div>
 
         {loadState === 'loading' ? (
