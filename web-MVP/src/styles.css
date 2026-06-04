@@ -1,8 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap");
+
 :root {
   color: #212121;
   background: #e9ece7;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Lexend", "Montserrat", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   line-height: 1.45;
   --primary: #b7cd65;
@@ -17,7 +19,7 @@
   --bg: #ffffff;
   --danger: #b71c1c;
   --blue: #2196f3;
-  font-family: "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Lexend", "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 * {
@@ -36,7 +38,7 @@ button,
 input,
 select,
 textarea {
-  font-family: "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Lexend", "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 .privacy-page {
@@ -112,12 +114,15 @@ textarea {
   min-height: 100vh;
   background: #fff7ec;
   color: #1f2933;
+  font-family: "Lexend", "Montserrat", Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 .milk-hero {
   min-height: 430px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
   align-items: center;
+  gap: clamp(22px, 5vw, 56px);
   padding: 48px clamp(18px, 5vw, 84px);
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 240, 220, 0.9) 58%, rgba(166, 206, 77, 0.22) 100%),
@@ -127,6 +132,15 @@ textarea {
 
 .milk-hero-copy {
   max-width: 680px;
+}
+
+.milk-hero-download {
+  border: 1px solid rgba(143, 189, 62, 0.22);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 24px;
+  box-shadow: 0 18px 46px rgba(85, 69, 42, 0.12);
+  backdrop-filter: blur(10px);
 }
 
 .milk-hero-copy img {
@@ -160,7 +174,8 @@ textarea {
 
 .milk-hero p:not(.milk-eyebrow),
 .milk-section-head p,
-.milk-download p {
+.milk-download p,
+.milk-hero-download p {
   color: #5f6758;
   line-height: 1.65;
 }
@@ -171,6 +186,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   height: 44px;
   padding: 0 18px;
   border-radius: 999px;
@@ -196,7 +212,8 @@ textarea {
 }
 
 .milk-section-head h2,
-.milk-download h2 {
+.milk-download h2,
+.milk-hero-download h2 {
   font-size: clamp(28px, 4vw, 42px);
 }
 
@@ -317,6 +334,10 @@ textarea {
   gap: 14px;
 }
 
+.milk-hero-download .milk-qr-grid {
+  margin-top: 18px;
+}
+
 .milk-qr-card {
   min-height: 220px;
   padding: 14px;
@@ -330,6 +351,11 @@ textarea {
   border-radius: 22px;
 }
 
+.milk-qr-card[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
 .milk-qr-card img,
 .milk-qr-placeholder {
   aspect-ratio: 1 / 1;
@@ -338,6 +364,10 @@ textarea {
 }
 
 .milk-qr-card strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   text-align: center;
 }
 
@@ -345,6 +375,10 @@ textarea {
   .milk-section-head,
   .milk-download {
     display: block;
+  }
+
+  .milk-hero {
+    grid-template-columns: 1fr;
   }
 
   .milk-qr-grid {

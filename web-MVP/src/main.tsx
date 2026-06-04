@@ -2511,7 +2511,27 @@ function MilkPublicPage() {
           <p>
             Chọn vị sữa hạt phù hợp với thể trạng, nhu cầu năng lượng và nhịp sống mỗi ngày của bạn.
           </p>
-          <a href="#download-app" className="milk-hero-cta">Tải app Ủ</a>
+          <div className="milk-store-buttons milk-hero-buttons">
+            {download?.appStoreUrl ? (
+              <a href={download.appStoreUrl}><Apple size={18} /> App Store</a>
+            ) : (
+              <span><Apple size={18} /> App Store sắp có</span>
+            )}
+            {download?.playStoreUrl ? (
+              <a href={download.playStoreUrl}><ShoppingBag size={18} /> CH Play</a>
+            ) : (
+              <span><ShoppingBag size={18} /> CH Play sắp có</span>
+            )}
+          </div>
+        </div>
+        <div className="milk-hero-download" id="download-app">
+          <p className="milk-eyebrow">Tải ứng dụng</p>
+          <h2>{download?.headlineVi || 'Tải app Ủ'}</h2>
+          <p>{download?.copyVi || 'Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.'}</p>
+          <div className="milk-qr-grid">
+            <QrBlock label="App Store" url={download?.appStoreUrl} qrUrl={download?.appStoreQrUrl} />
+            <QrBlock label="CH Play" url={download?.playStoreUrl} qrUrl={download?.playStoreQrUrl} />
+          </div>
         </div>
       </section>
 
@@ -2554,27 +2574,13 @@ function MilkPublicPage() {
           </div>
         )}
       </section>
-
-      <section className="milk-download" id="download-app">
-        <div>
-          <p className="milk-eyebrow">Tải ứng dụng</p>
-          <h2>{download?.headlineVi || 'Tải app Ủ'}</h2>
-          <p>{download?.copyVi || 'Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.'}</p>
-          <div className="milk-store-buttons">
-            {download?.appStoreUrl ? <a href={download.appStoreUrl}>App Store</a> : <span>App Store sắp có</span>}
-            {download?.playStoreUrl ? <a href={download.playStoreUrl}>CH Play</a> : <span>CH Play sắp có</span>}
-          </div>
-        </div>
-        <div className="milk-qr-grid">
-          <QrBlock label="App Store" url={download?.appStoreUrl} qrUrl={download?.appStoreQrUrl} />
-          <QrBlock label="CH Play" url={download?.playStoreUrl} qrUrl={download?.playStoreQrUrl} />
-        </div>
-      </section>
     </main>
   );
 }
 
 function QrBlock({ label, url, qrUrl }: { label: string; url?: string | null; qrUrl?: string | null }) {
+  const Icon = label === 'App Store' ? Apple : ShoppingBag;
+
   return (
     <a className="milk-qr-card" href={url ?? '#'} aria-disabled={!url}>
       {qrUrl ? (
@@ -2585,7 +2591,7 @@ function QrBlock({ label, url, qrUrl }: { label: string; url?: string | null; qr
           <span>QR đang cập nhật</span>
         </div>
       )}
-      <strong>{label}</strong>
+      <strong><Icon size={17} /> {label}</strong>
     </a>
   );
 }
