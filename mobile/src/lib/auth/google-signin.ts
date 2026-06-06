@@ -48,7 +48,7 @@ export async function signInWithGoogle(): Promise<{ idToken: string }> {
       String((err as { code?: unknown }).code) === '10'
     ) {
       throw new Error(
-        'Google Sign-In chưa đúng cấu hình Android OAuth (DEVELOPER_ERROR 10). Cần thêm SHA-1 của EAS Android keystore cho package com.uapp.health trong Google Cloud Console.',
+        'Google Sign-In chưa đúng cấu hình Android OAuth (DEVELOPER_ERROR 10). Nếu app tải từ CH Play, cần thêm SHA-1 của Play App Signing key cho package com.uapp.health trong Google Cloud/Firebase. Nếu cài APK/AAB ngoài Play, thêm SHA-1 của EAS Android keystore.',
       );
     }
     throw err;

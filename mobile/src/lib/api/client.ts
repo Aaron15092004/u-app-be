@@ -36,6 +36,19 @@ const apiClient = axios.create({
   },
 });
 
+const PUBLIC_AUTH_ENDPOINTS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/google',
+  '/api/auth/apple',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+];
+
+function isPublicAuthEndpoint(url: string): boolean {
+  return PUBLIC_AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+}
+
 // ---------------------------------------------------------------------------
 // Request interceptor — attach access token from Zustand (in-memory only, D-22)
 // ---------------------------------------------------------------------------
@@ -99,6 +112,11 @@ apiClient.interceptors.response.use(
       clearCachedUser();
       useAuthStore.getState().clear();
       authEvents.emit();
+      return Promise.reject(err);
+    }
+
+    // Do not convert public auth failures into "refresh token" failures.
+    if (isPublicAuthEndpoint(url)) {
       return Promise.reject(err);
     }
 
