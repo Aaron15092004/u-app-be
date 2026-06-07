@@ -267,6 +267,7 @@ function ScanAccountBanner({
   const activeUntil = status?.activeUntil
     ? new Date(status.activeUntil).toLocaleDateString("vi-VN")
     : null;
+  const isIos = Platform.OS === "ios";
 
   return (
     <LinearGradient
@@ -288,16 +289,18 @@ function ScanAccountBanner({
       <View style={{ flex: 1 }}>
         <Text style={styles.scanBannerTitle}>
           {loading
-            ? "Đang kiểm tra gói scan"
-            : active
-              ? "Tài khoản scan AI đang active"
-              : "Tài khoản scan AI chưa active"}
+            ? "Đang kiểm tra lượt quét"
+            : isIos
+              ? "Quét AI đã sẵn sàng"
+              : active
+                ? "Tài khoản scan AI đang active"
+                : "Tài khoản scan AI chưa active"}
         </Text>
         <Text style={styles.scanBannerCopy}>
-          {active
-            ? `${dailyLimit} lượt scan AI mỗi ngày${activeUntil ? ` đến ${activeUntil}` : ""}.`
-            : Platform.OS === "ios"
-              ? "Tài khoản iOS được kích hoạt gói scan AI mặc định."
+          {isIos
+            ? `${dailyLimit} lượt quét AI mỗi ngày để hỗ trợ ghi nhận bữa ăn.`
+            : active
+              ? `${dailyLimit} lượt scan AI mỗi ngày${activeUntil ? ` đến ${activeUntil}` : ""}.`
               : "Nhập mã quyền lợi từ sản phẩm sữa Ủ để mở gói 30 lượt scan AI mỗi ngày."}
         </Text>
       </View>
@@ -523,7 +526,7 @@ export default function ProfileScreen(): React.JSX.Element {
           />
         </Card>
 
-        <SectionTitle title="Gói scan AI" />
+        <SectionTitle title={Platform.OS === "ios" ? "Quét AI" : "Gói scan AI"} />
         <View style={styles.redeemStack}>
           <ScanEntitlementBadge status={entitlementQ.data} />
           {Platform.OS !== "ios" ? (
@@ -655,7 +658,11 @@ export default function ProfileScreen(): React.JSX.Element {
       </ScrollView>
       <AppRatingPrompt
         visible={ratingVisible}
-        contextNote="Đánh giá sau khi kích hoạt mã scan AI thành công."
+        contextNote={
+          Platform.OS === "ios"
+            ? "Đánh giá trải nghiệm quét AI trên iOS."
+            : "Đánh giá sau khi kích hoạt mã scan AI thành công."
+        }
         onClose={() => {
           setRatingVisible(false);
           void queryClient.invalidateQueries({ queryKey: ["v2", "rating-prompt-status"] });

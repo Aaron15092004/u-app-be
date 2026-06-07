@@ -25,6 +25,7 @@ export default function ScanEntitlementBadge({
   const active = Boolean(status?.hasActiveEntitlement || quotaMode === "entitlement_30_daily");
   const dailyLimit = status?.quotaPolicy?.dailyLimit ?? limit ?? (active ? 30 : 2);
   const expiry = status?.activeUntil ? formatDate(status.activeUntil) : null;
+  const isIos = Platform.OS === "ios";
 
   return (
     <View style={[styles.card, active && styles.cardActive]}>
@@ -33,16 +34,22 @@ export default function ScanEntitlementBadge({
       </View>
       <View style={styles.body}>
         <Text style={styles.title}>
-          {active ? `Gói AI ${dailyLimit} lượt/ngày đang hoạt động` : `${dailyLimit} lượt quét AI/ngày`}
+          {isIos
+            ? `${dailyLimit} lượt quét AI/ngày`
+            : active
+              ? `Gói AI ${dailyLimit} lượt/ngày đang hoạt động`
+              : `${dailyLimit} lượt quét AI/ngày`}
         </Text>
         <Text style={styles.sub}>
-          {active && expiry
+          {isIos
+            ? usedToday !== undefined
+              ? `Đã dùng ${usedToday}/${dailyLimit} lượt hôm nay`
+              : "Tính năng có sẵn trong ứng dụng iOS."
+            : active && expiry
             ? `Hiệu lực đến ${expiry}`
             : usedToday !== undefined
               ? `Đã dùng ${usedToday}/${dailyLimit} lượt hôm nay`
-              : Platform.OS === "ios"
-                ? "Tài khoản iOS được kích hoạt gói scan AI mặc định."
-                : "Kích hoạt mã quyền lợi sữa Ủ để tăng hạn mức."}
+              : "Kích hoạt mã quyền lợi sữa Ủ để tăng hạn mức."}
         </Text>
       </View>
     </View>

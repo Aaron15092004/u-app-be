@@ -33,7 +33,7 @@ export default function AppRatingPrompt({
       trigger,
       platform: Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "unknown",
       storeReviewRequested: stars >= 4,
-      deviceInfo: { source: "post_redeem_prompt" },
+      deviceInfo: { source: Platform.OS === "ios" ? "ios_scan_experience_prompt" : "post_redeem_prompt" },
     }),
     onSuccess: async () => {
       if (stars >= 4) {
@@ -56,7 +56,7 @@ export default function AppRatingPrompt({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.title}>Bạn thấy trải nghiệm kích hoạt thế nào?</Text>
+          <Text style={styles.title}>Bạn thấy trải nghiệm trong app thế nào?</Text>
           <Text style={styles.sub}>Chọn số sao và góp ý ngắn để đội ngũ cải thiện app.</Text>
           <View style={styles.stars}>
             {[1, 2, 3, 4, 5].map((value) => (

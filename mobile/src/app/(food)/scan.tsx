@@ -345,7 +345,11 @@ export default function ScanScreen() {
         </View>
         <AppRatingPrompt
           visible={ratingVisible}
-          contextNote="Đánh giá sau khi kích hoạt mã scan AI từ màn quét."
+          contextNote={
+            Platform.OS === 'ios'
+              ? 'Đánh giá trải nghiệm quét bữa ăn bằng AI trên iOS.'
+              : 'Đánh giá sau khi kích hoạt mã scan AI từ màn quét.'
+          }
           onClose={() => setRatingVisible(false)}
         />
       </CameraView>
