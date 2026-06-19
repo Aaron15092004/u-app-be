@@ -23,8 +23,11 @@ export interface NutritionResult {
   commentVi: string;
 }
 
-const GEMINI_MODEL = "gemini-flash-latest";
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+const RETRYABLE_PROVIDER_STATUSES = new Set([500, 503, 504]);
+const DEFAULT_REQUEST_TIMEOUT_MS = 8_000;
+const DEFAULT_RETRY_DELAY_MS = 500;
+const MAX_ATTEMPTS_PER_MODEL = 2;
 
 const USER_PROMPT = `Bạn là chuyên gia dinh dưỡng. Phân tích ảnh bữa ăn này và trả về ONLY một JSON object (không có markdown, không có text khác) với cấu trúc sau:
 {
@@ -82,52 +85,86 @@ function buildFallbackComment(result: {
   return `${foodNames || "Bữa ăn này"} có mức dinh dưỡng khá cân bằng. Nên giữ khẩu phần vừa phải và ưu tiên thêm rau hoặc thực phẩm ít chế biến nếu ăn thường xuyên.`;
 }
 
-export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
-  const apiKey = process.env.GEMINI_API_KEY ?? "";
-  if (!apiKey) throw new Error("GEMINI_API_KEY chưa được cấu hình");
+export class AiScanError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number,
+    readonly code: string,
+    readonly retryable = false,
+    readonly providerStatus?: number,
+  ) {
+    super(message);
+    this.name = "AiScanError";
+  }
+}
 
-  const base64 = imageBuffer.toString("base64");
-  const url = `${GEMINI_BASE}/${GEMINI_MODEL}:generateContent`;
+function getRequiredModels(): { primary: string; fallback: string } {
+  const primary = process.env.GEMINI_PRIMARY_MODEL?.trim();
+  const fallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
 
-  // No responseMimeType — JSON mode breaks vision requests on some model versions.
-  // Instead we embed the instruction directly in the prompt.
-  const body = {
-    contents: [
-      {
-        parts: [
-          { inline_data: { mime_type: "image/jpeg", data: base64 } },
-          { text: USER_PROMPT },
-        ],
-      },
-    ],
-    generationConfig: { maxOutputTokens: 4096, temperature: 0.1 },
-  };
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini API lỗi ${response.status}: ${errText.slice(0, 300)}`);
+  if (!primary || !fallback || primary === fallback) {
+    throw new AiScanError(
+      "Tính năng quét ảnh chưa được cấu hình. Vui lòng liên hệ hỗ trợ.",
+      503,
+      "AI_NOT_CONFIGURED",
+    );
   }
 
-  const json = (await response.json()) as {
+  return { primary, fallback };
+}
+
+function getRequestTimeoutMs(): number {
+  const configured = Number(process.env.GEMINI_REQUEST_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured >= 1_000 && configured <= 30_000
+    ? configured
+    : DEFAULT_REQUEST_TIMEOUT_MS;
+}
+
+function getRetryDelayMs(attempt: number): number {
+  const configured = Number(process.env.GEMINI_RETRY_DELAY_MS);
+  const baseDelay = Number.isFinite(configured) && configured >= 0
+    ? configured
+    : DEFAULT_RETRY_DELAY_MS;
+  return baseDelay * (attempt + 1);
+}
+
+function sleep(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function unavailableError(providerStatus?: number): AiScanError {
+  return new AiScanError(
+    "Dịch vụ phân tích ảnh đang bận. Vui lòng thử lại sau ít phút.",
+    503,
+    "AI_TEMPORARILY_UNAVAILABLE",
+    true,
+    providerStatus,
+  );
+}
+
+function imageRejectedError(): AiScanError {
+  return new AiScanError(
+    "Không nhận dạng được thức ăn trong ảnh. Hãy chụp rõ hơn và thử lại.",
+    422,
+    "AI_IMAGE_REJECTED",
+  );
+}
+
+function logAttempt(fields: Record<string, unknown>): void {
+  console.info(JSON.stringify({ event: "food_scan_ai", ...fields }));
+}
+
+function parseGeminiResponse(json: {
     candidates?: Array<{
       content?: { parts?: Array<{ text?: string }> };
       finishReason?: string;
     }>;
     promptFeedback?: { blockReason?: string };
-  };
+  }): NutritionResult {
 
   // Surface prompt-level blocks (e.g. SAFETY)
   if (json.promptFeedback?.blockReason) {
-    throw new Error(`Gemini từ chối ảnh: ${json.promptFeedback.blockReason}`);
+    throw imageRejectedError();
   }
 
   const candidate = json.candidates?.[0];
@@ -138,7 +175,7 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     candidate.finishReason !== "STOP" &&
     candidate.finishReason !== "MAX_TOKENS"
   ) {
-    throw new Error(`Gemini dừng bất thường: ${candidate.finishReason}`);
+    throw imageRejectedError();
   }
 
   // Gemini may split output across multiple parts — join them all.
@@ -147,28 +184,26 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     .join("");
 
   if (!rawText.trim()) {
-    console.error("[Gemini] empty response. Full API response:", JSON.stringify(json, null, 2));
-    throw new Error("Gemini trả về kết quả rỗng");
+    console.warn("[Gemini] empty response");
+    throw unavailableError();
   }
-
-  console.log("[Gemini] raw text (first 500 chars):", rawText.slice(0, 500));
 
   const jsonMatch = rawText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    console.error("[Gemini] no JSON object found in response:", rawText);
-    throw new Error("Gemini không trả về JSON. Vui lòng thử lại.");
+    console.warn("[Gemini] no JSON object found in response");
+    throw new AiScanError("Không đọc được kết quả phân tích. Vui lòng thử lại.", 422, "AI_INVALID_RESPONSE");
   }
 
   let raw: { foods?: Array<Record<string, unknown>>; totals?: Record<string, unknown>; commentVi?: unknown; comment?: unknown };
   try {
     raw = JSON.parse(jsonMatch[0]) as typeof raw;
   } catch (parseErr) {
-    console.error("[Gemini] JSON.parse failed on:", jsonMatch[0].slice(0, 300), parseErr);
-    throw new Error("Không đọc được kết quả từ Gemini. Vui lòng thử lại.");
+    console.warn("[Gemini] JSON.parse failed", parseErr);
+    throw new AiScanError("Không đọc được kết quả phân tích. Vui lòng thử lại.", 422, "AI_INVALID_RESPONSE");
   }
 
   if (!raw.foods || raw.foods.length === 0) {
-    throw new Error("Không nhận dạng được thức ăn trong ảnh");
+    throw imageRejectedError();
   }
 
   const foods = raw.foods.map((item) => {
@@ -228,4 +263,107 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
         : buildFallbackComment({ foods, totals });
 
   return { foods, totals, aiProvider: "gemini", imageUrl: null, commentVi };
+}
+
+async function requestGeminiModel(
+  model: string,
+  imageBase64: string,
+  apiKey: string,
+  timeoutMs: number,
+): Promise<NutritionResult> {
+  const url = `${GEMINI_BASE}/${model}:generateContent`;
+  const body = {
+    contents: [{
+      parts: [
+        { inline_data: { mime_type: "image/jpeg", data: imageBase64 } },
+        { text: USER_PROMPT },
+      ],
+    }],
+    generationConfig: { maxOutputTokens: 1200, temperature: 0.1 },
+  };
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    if (err instanceof AiScanError) throw err;
+    throw unavailableError();
+  }
+
+  if (!response.ok) {
+    // Consume the body so the connection can be reused, but never expose or log it.
+    await response.text().catch(() => undefined);
+    if (RETRYABLE_PROVIDER_STATUSES.has(response.status)) {
+      throw unavailableError(response.status);
+    }
+    if (response.status >= 400 && response.status < 500) {
+      throw new AiScanError(
+        "Tính năng quét ảnh tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
+        503,
+        "AI_PROVIDER_CONFIGURATION_ERROR",
+      );
+    }
+    throw unavailableError(response.status);
+  }
+
+  return parseGeminiResponse(await response.json() as Parameters<typeof parseGeminiResponse>[0]);
+}
+
+export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim() ?? "";
+  if (!apiKey) {
+    throw new AiScanError(
+      "Tính năng quét ảnh chưa được cấu hình. Vui lòng liên hệ hỗ trợ.",
+      503,
+      "AI_NOT_CONFIGURED",
+    );
+  }
+
+  const { primary, fallback } = getRequiredModels();
+  const imageBase64 = imageBuffer.toString("base64");
+  const timeoutMs = getRequestTimeoutMs();
+  const models = [primary, fallback];
+  let lastUnavailable: AiScanError | undefined;
+  let attemptNumber = 0;
+
+  for (const model of models) {
+    for (let modelAttempt = 0; modelAttempt < MAX_ATTEMPTS_PER_MODEL; modelAttempt += 1) {
+      attemptNumber += 1;
+      const startedAt = Date.now();
+      try {
+        const result = await requestGeminiModel(model, imageBase64, apiKey, timeoutMs);
+        logAttempt({ model, attempt: attemptNumber, outcome: "success", durationMs: Date.now() - startedAt });
+        return result;
+      } catch (err) {
+        const aiError = err instanceof AiScanError
+          ? err
+          : unavailableError();
+        logAttempt({
+          model,
+          attempt: attemptNumber,
+          outcome: "failure",
+          durationMs: Date.now() - startedAt,
+          code: aiError.code,
+          providerStatus: aiError.providerStatus,
+        });
+
+        if (!aiError.retryable) throw aiError;
+        lastUnavailable = aiError;
+
+        if (modelAttempt + 1 < MAX_ATTEMPTS_PER_MODEL) {
+          await sleep(getRetryDelayMs(modelAttempt));
+        }
+      }
+    }
+  }
+
+  throw lastUnavailable ?? unavailableError();
 }

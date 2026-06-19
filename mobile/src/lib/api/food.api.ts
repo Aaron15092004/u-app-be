@@ -6,7 +6,7 @@ export async function scanFoodApi(imageUri: string): Promise<IScanFoodResponse> 
   formData.append('image', { uri: imageUri, type: 'image/jpeg', name: 'meal.jpg' } as unknown as Blob);
   const res = await apiClient.post('/api/food/scan', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 30000,
+    timeout: 45000,
   });
   return res.data.data as IScanFoodResponse;
 }

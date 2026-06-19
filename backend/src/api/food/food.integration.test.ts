@@ -16,7 +16,11 @@ process.env.FIREBASE_PRIVATE_KEY = process.env.FIREBASE_PRIVATE_KEY ?? 'test-key
 // This prevents API key errors when food service is imported.
 // The real key is only in backend/.env (gitignored). Tests must mock analyzeImage()
 // and never call the real Gemini API.
-process.env.GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? 'test-key';
+process.env.GEMINI_API_KEY = 'test-key';
+process.env.GEMINI_PRIMARY_MODEL = 'gemini-primary-test';
+process.env.GEMINI_FALLBACK_MODEL = 'gemini-fallback-test';
+process.env.GEMINI_REQUEST_TIMEOUT_MS = '1000';
+process.env.GEMINI_RETRY_DELAY_MS = '0';
 
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -430,4 +434,155 @@ test('active entitlement user gets 30/day scan limit response', async () => {
   assert.equal(res.status, 429);
   assert.equal(res.body.limit, 30);
   assert.equal(res.body.quotaMode, 'entitlement_30_daily');
+});
+
+function geminiSuccessResponse() {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => ({
+      candidates: [{
+        finishReason: 'STOP',
+        content: {
+          parts: [{ text: JSON.stringify({
+            foods: [{
+              name: 'Cơm gà', weightG: 250, calories: 520, protein: 30, carbs: 65, fat: 14,
+              fiber: 3, sugar: 2, vitamins: {}, minerals: {}, tags: ['meal'],
+            }],
+            totals: { calories: 520, protein: 30, carbs: 65, fat: 14 },
+            commentVi: 'Bữa ăn cân bằng.',
+          }) }],
+        },
+      }],
+    }),
+  };
+}
+
+function geminiErrorResponse(status: number) {
+  return {
+    ok: false,
+    status,
+    text: async () => JSON.stringify({ error: { message: 'provider detail must not leak' } }),
+  };
+}
+
+test('POST /api/food/scan retries a transient 503 and records only the successful scan', async () => {
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = (async () => {
+    calls += 1;
+    return calls === 1 ? geminiErrorResponse(503) : geminiSuccessResponse();
+  }) as unknown as typeof fetch;
+
+  try {
+    const res = await request(app)
+      .post('/api/food/scan')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .attach('image', Buffer.from('fake-jpeg'), { filename: 'test.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(calls, 2);
+    assert.equal(await FoodScanAttempt.countDocuments({ userId: userIdA }), 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('POST /api/food/scan retries a transient network failure and records only the successful scan', async () => {
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = (async () => {
+    calls += 1;
+    if (calls === 1) throw new TypeError('network unavailable');
+    return geminiSuccessResponse();
+  }) as unknown as typeof fetch;
+
+  try {
+    const res = await request(app)
+      .post('/api/food/scan')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .attach('image', Buffer.from('fake-jpeg'), { filename: 'test.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(res.status, 200);
+    assert.equal(calls, 2);
+    assert.equal(await FoodScanAttempt.countDocuments({ userId: userIdA }), 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('POST /api/food/scan fails over to the fallback Gemini model after primary retries', async () => {
+  const originalFetch = global.fetch;
+  const requestedUrls: string[] = [];
+  global.fetch = (async (url: string) => {
+    requestedUrls.push(url);
+    return requestedUrls.length <= 2 ? geminiErrorResponse(503) : geminiSuccessResponse();
+  }) as unknown as typeof fetch;
+
+  try {
+    const res = await request(app)
+      .post('/api/food/scan')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .attach('image', Buffer.from('fake-jpeg'), { filename: 'test.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(res.status, 200);
+    assert.equal(requestedUrls.length, 3);
+    assert.match(requestedUrls[0], /gemini-primary-test/);
+    assert.match(requestedUrls[1], /gemini-primary-test/);
+    assert.match(requestedUrls[2], /gemini-fallback-test/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('POST /api/food/scan returns a friendly unavailable response after all Gemini attempts fail', async () => {
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = (async () => {
+    calls += 1;
+    return geminiErrorResponse(503);
+  }) as unknown as typeof fetch;
+
+  try {
+    const res = await request(app)
+      .post('/api/food/scan')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .attach('image', Buffer.from('fake-jpeg'), { filename: 'test.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(res.status, 503);
+    assert.equal(res.body.code, 'AI_TEMPORARILY_UNAVAILABLE');
+    assert.match(res.body.error, /Dịch vụ phân tích ảnh đang bận/);
+    assert.doesNotMatch(res.body.error, /provider detail|Gemini|503/);
+    assert.equal(calls, 4);
+    assert.equal(await FoodScanAttempt.countDocuments({ userId: userIdA }), 0);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('POST /api/food/scan does not retry an unrecognizable image response', async () => {
+  const originalFetch = global.fetch;
+  let calls = 0;
+  global.fetch = (async () => {
+    calls += 1;
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{"foods":[]}' }] } }] }),
+    };
+  }) as unknown as typeof fetch;
+
+  try {
+    const res = await request(app)
+      .post('/api/food/scan')
+      .set('Authorization', `Bearer ${tokenA}`)
+      .attach('image', Buffer.from('fake-jpeg'), { filename: 'test.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(res.status, 422);
+    assert.equal(res.body.code, 'AI_IMAGE_REJECTED');
+    assert.equal(calls, 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

@@ -68,16 +68,13 @@ export const scanFood = async (req: Request, res: Response): Promise<void> => {
       activeUntil: rateLimit.activeUntil,
     }, 200);
   } catch (err: unknown) {
-    const e = err as { statusCode?: number; message?: string };
-    const msg = e.message ?? 'Lỗi server';
-    // Surface friendly messages for common Gemini errors
-    if (msg.includes('Không nhận dạng được') || msg.includes('Không đọc được')) {
-      error(res, msg, 422);
-    } else if (msg.includes('GEMINI_API_KEY')) {
-      error(res, 'Tính năng quét ảnh chưa được cấu hình. Vui lòng liên hệ hỗ trợ.', 503);
-    } else {
-      error(res, msg, e.statusCode ?? 500);
+    if (err instanceof aiFoodService.AiScanError) {
+      error(res, err.message, err.statusCode, err.code);
+      return;
     }
+
+    console.error('[FoodScan] unexpected analysis failure', err);
+    error(res, 'Không thể phân tích ảnh lúc này. Vui lòng thử lại sau.', 500, 'AI_SCAN_FAILED');
   }
 };
 

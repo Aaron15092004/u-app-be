@@ -110,11 +110,9 @@ export default function ScanScreen() {
     return result.uri;
   }
 
-  async function processImage(uri: string) {
+  async function analyzeCompressedImage(compressed: string) {
     try {
       setIsScanning(true);
-      const compressed = await compressImage(uri);
-      setPendingImageUri(compressed);
       const result = await scanFoodApi(compressed);
       setQuotaBlocked(false);
       setQuotaInfo({
@@ -123,6 +121,7 @@ export default function ScanScreen() {
         quotaMode: result.quotaMode,
       });
       setScanResult(result);
+      setIsScanning(false);
       router.push('/(food)/result');
     } catch (err: unknown) {
       setIsScanning(false);
@@ -131,6 +130,7 @@ export default function ScanScreen() {
           status?: number;
           data?: {
             error?: string;
+            code?: string;
             retryAfterSeconds?: number;
             usedToday?: number;
             limit?: number;
@@ -155,11 +155,31 @@ export default function ScanScreen() {
           e?.response?.data?.error ?? 'Không tìm thấy món ăn trong ảnh. Hãy chụp rõ hơn và thử lại.',
         );
       } else if (status === 503) {
-        Alert.alert('Tính năng tạm thời không khả dụng', e?.response?.data?.error ?? 'Vui lòng thử lại sau.');
+        const message = e?.response?.data?.code === 'AI_TEMPORARILY_UNAVAILABLE'
+          ? 'Ảnh của bạn chưa được tính lượt quét. Vui lòng thử lại sau ít phút.'
+          : e?.response?.data?.error ?? 'Tính năng quét ảnh tạm thời không khả dụng.';
+        Alert.alert('Dịch vụ phân tích ảnh đang bận', message, [
+          { text: 'Đóng', style: 'cancel' },
+          { text: 'Thử lại', onPress: () => { void analyzeCompressedImage(compressed); } },
+        ]);
       } else {
         const msg = e?.response?.data?.error ?? e?.message ?? 'Vui lòng kiểm tra kết nối mạng và thử lại.';
         Alert.alert('Quét ảnh thất bại', msg);
       }
+    }
+  }
+
+  async function processImage(uri: string) {
+    try {
+      const compressed = await compressImage(uri);
+      setPendingImageUri(compressed);
+      await analyzeCompressedImage(compressed);
+    } catch (err) {
+      setIsScanning(false);
+      Alert.alert(
+        'Không thể chuẩn bị ảnh',
+        err instanceof Error ? err.message : 'Vui lòng chọn ảnh khác và thử lại.',
+      );
     }
   }
 
