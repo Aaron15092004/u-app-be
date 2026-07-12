@@ -26,5 +26,5 @@ export async function loginAdmin(email: string, password: string): Promise<void>
 
 export function logout(): void {
   authStorage.clear();
-  window.location.href = '/login';
+  window.location.href = '/#/login';
 }

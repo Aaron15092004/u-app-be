@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
@@ -20,7 +20,7 @@ const MilkContentPage = lazy(() => import('@/pages/MilkContentPage').then((m) =>
 export default function App() {
   return (
     <QueryProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
@@ -95,7 +95,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster />
-      </BrowserRouter>
+      </HashRouter>
     </QueryProvider>
   );
 }
