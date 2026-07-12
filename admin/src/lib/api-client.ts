@@ -81,7 +81,7 @@ apiClient.interceptors.response.use(
     } catch (err) {
       processQueue(err, null);
       authStorage.clear();
-      window.location.href = '/#/login';
+      window.location.href = '/login';
       return Promise.reject(err);
     } finally {
       isRefreshing = false;
