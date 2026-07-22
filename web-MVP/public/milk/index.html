@@ -22,17 +22,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,800;1,500&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap"
       rel="stylesheet"
     />
     <style>
       /* =====================================================================
          Ủ — Milk collection
          Editorial grid + bento, paper grain instead of gradient washes.
-         Display face: Playfair Display (verified Vietnamese subset).
-         UI face: Lexend (brand).
+         Display face: Bricolage Grotesque (variable optical size).
+         UI face: Be Vietnam Pro (drawn for Vietnamese diacritics).
+         Both verified to ship a vietnamese subset before adoption.
       ===================================================================== */
       :root {
+        /* Type. Bricolage Grotesque ships no italic master, so `em` inside
+           display copy is styled by colour/weight — never font-style: italic,
+           which would force the browser to synthesise a skewed oblique. */
+        --font-display: "Bricolage Grotesque", "Be Vietnam Pro", ui-sans-serif, sans-serif;
+        --font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+
         /* Paper */
         --paper: #f7efe1;
         --paper-2: #fffdf8;
@@ -74,7 +81,7 @@
 
         color: var(--ink);
         background: var(--paper);
-        font-family: Lexend, ui-sans-serif, system-ui, sans-serif;
+        font-family: var(--font-body);
         -webkit-font-smoothing: antialiased;
       }
 
@@ -119,7 +126,7 @@
          Typography — editorial scale
       --------------------------------------------------------------------- */
       .display {
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-weight: 800;
         line-height: 0.92;
         letter-spacing: -0.035em;
@@ -127,9 +134,16 @@
         text-wrap: balance;
       }
 
+      /* Emphasis without a real italic master: lighter weight + accent colour. */
       .display em {
-        font-style: italic;
-        font-weight: 700;
+        font-style: normal;
+        font-weight: 600;
+        color: var(--green);
+      }
+
+      .on-dark .display em,
+      .band-dark .display em {
+        color: var(--lime);
       }
 
       h1.display {
@@ -256,7 +270,7 @@
       }
 
       .brand b {
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-size: 22px;
         letter-spacing: -0.01em;
       }
@@ -380,18 +394,72 @@
       --------------------------------------------------------------------- */
       .hero {
         position: relative;
+        isolation: isolate;
         background: var(--forest);
         color: var(--on-forest);
         padding: clamp(48px, 7vw, 104px) 0 0;
         overflow: hidden;
       }
 
-      .hero::before {
-        content: "";
+      /* Photographic ground: walnuts on a dark plate, pushed back far enough
+         that display type still clears 4.5:1 over it (scrim below). */
+      .hero-bg {
         position: absolute;
-        inset: -30% 40% 40% -20%;
-        background: radial-gradient(circle, rgba(203, 232, 107, 0.09), transparent 65%);
+        inset: -6%;
+        z-index: -2;
+        /* Plain url() first so anything without image-set() still gets the JPG;
+           the type()-negotiated set below upgrades to WebP where supported.
+           -webkit-image-set() is deliberately skipped — it has no type()
+           syntax, so it would hand WebP to engines that cannot decode it. */
+        background-image: url("/assets/bg/hero-nuts.jpg");
+        background-image: image-set(
+          url("/assets/bg/hero-nuts.webp") type("image/webp"),
+          url("/assets/bg/hero-nuts.jpg") type("image/jpeg")
+        );
+        background-size: cover;
+        background-position: 18% 30%;
+        opacity: 0.5;
+        animation: drift 34s ease-in-out infinite alternate;
+        will-change: transform;
+      }
+
+      /* Scrim — guarantees the text contrast regardless of the photo behind. */
+      .hero-scrim {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
         pointer-events: none;
+        background:
+          linear-gradient(105deg, rgba(16, 26, 8, 0.96) 0 38%, rgba(16, 26, 8, 0.78) 62%, rgba(16, 26, 8, 0.9) 100%),
+          linear-gradient(0deg, var(--forest) 0 4%, rgba(16, 26, 8, 0) 34%);
+      }
+
+      /* Slow-drifting light blooms, transform-only so they stay on the compositor. */
+      .bloom {
+        position: absolute;
+        z-index: -1;
+        border-radius: 50%;
+        pointer-events: none;
+        filter: blur(70px);
+        opacity: 0.5;
+      }
+
+      .bloom-1 {
+        width: 46vw;
+        height: 46vw;
+        top: -14%;
+        left: -10%;
+        background: radial-gradient(circle, rgba(203, 232, 107, 0.34), transparent 68%);
+        animation: float-a 26s ease-in-out infinite alternate;
+      }
+
+      .bloom-2 {
+        width: 38vw;
+        height: 38vw;
+        right: -8%;
+        bottom: 4%;
+        background: radial-gradient(circle, rgba(232, 135, 58, 0.26), transparent 68%);
+        animation: float-b 32s ease-in-out infinite alternate;
       }
 
       .hero-grid {
@@ -442,7 +510,7 @@
       }
 
       .hero-index b {
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-size: 17px;
         color: var(--lime);
         min-width: 32px;
@@ -529,9 +597,11 @@
         display: inline-flex;
         align-items: center;
         gap: 44px;
-        font-family: "Playfair Display", Georgia, serif;
-        font-size: clamp(20px, 2.2vw, 30px);
+        /* Be Vietnam Pro does have a true italic — use it here, not Bricolage. */
+        font-family: var(--font-body);
+        font-size: clamp(19px, 2vw, 27px);
         font-style: italic;
+        font-weight: 500;
         color: var(--on-forest-soft);
         white-space: nowrap;
       }
@@ -563,8 +633,38 @@
       }
 
       .band-dark {
+        position: relative;
+        isolation: isolate;
         background: var(--forest);
         color: var(--on-forest);
+      }
+
+      /* Seed-field texture, dialled right back so it reads as material, not
+         as a photo competing with the quote. */
+      .band-texture::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-image: url("/assets/bg/seeds.jpg");
+        background-size: cover;
+        background-position: center;
+        opacity: 0.16;
+        mix-blend-mode: luminosity;
+      }
+
+      .band-texture::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background: linear-gradient(
+          92deg,
+          var(--forest) 0 30%,
+          rgba(16, 26, 8, 0.82) 62%,
+          rgba(16, 26, 8, 0.94) 100%
+        );
       }
 
       .band-dark h2.display {
@@ -596,7 +696,7 @@
       .step b {
         display: block;
         margin-bottom: 20px;
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-size: clamp(48px, 5vw, 70px);
         font-weight: 700;
         line-height: 1;
@@ -783,7 +883,7 @@
       }
 
       .card.is-featured h3 {
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-size: clamp(26px, 2.6vw, 38px);
         font-weight: 700;
         letter-spacing: -0.02em;
@@ -854,12 +954,11 @@
       --------------------------------------------------------------------- */
       .quote {
         max-width: 22ch;
-        font-family: "Playfair Display", Georgia, serif;
-        font-size: clamp(30px, 4.4vw, 58px);
-        font-style: italic;
-        font-weight: 600;
-        line-height: 1.12;
-        letter-spacing: -0.02em;
+        font-family: var(--font-display);
+        font-size: clamp(32px, 4.6vw, 62px);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
         color: var(--on-forest);
       }
 
@@ -888,7 +987,7 @@
       }
 
       .fact dt {
-        font-family: "Playfair Display", Georgia, serif;
+        font-family: var(--font-display);
         font-size: clamp(38px, 4vw, 56px);
         font-weight: 700;
         line-height: 1;
@@ -906,11 +1005,78 @@
       /* ---------------------------------------------------------------------
          Download
       --------------------------------------------------------------------- */
+      /* The download band is the page's conversion moment — it gets its own
+         photographic ground, the largest type on the page and a lime CTA. */
+      .download {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        padding: clamp(72px, 10vw, 152px) 0;
+        background: var(--forest);
+        color: var(--on-forest);
+      }
+
+      .download-bg {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background-image: url("/assets/bg/pour.jpg");
+        background-image: image-set(
+          url("/assets/bg/pour.webp") type("image/webp"),
+          url("/assets/bg/pour.jpg") type("image/jpeg")
+        );
+        background-size: cover;
+        background-position: 72% 40%;
+        opacity: 0.46;
+        animation: drift 40s ease-in-out infinite alternate;
+        will-change: transform;
+      }
+
+      .download-scrim {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          linear-gradient(100deg, rgba(16, 26, 8, 0.97) 0 44%, rgba(16, 26, 8, 0.7) 74%, rgba(16, 26, 8, 0.86) 100%);
+      }
+
       .download-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        align-items: end;
-        gap: clamp(32px, 5vw, 72px);
+        grid-template-columns: minmax(0, 1.15fr) auto;
+        align-items: center;
+        gap: clamp(32px, 5vw, 80px);
+      }
+
+      .download h2.display {
+        font-size: clamp(46px, 8vw, 108px);
+      }
+
+      .download .lead {
+        font-size: clamp(17px, 1.5vw, 21px);
+        margin-top: 24px;
+      }
+
+      .download .btn {
+        min-height: 60px;
+        padding: 0 32px;
+        font-size: 16px;
+      }
+
+      /* Ring of light behind the QR stack so it reads as the focal object. */
+      .qr-halo {
+        position: relative;
+      }
+
+      .qr-halo::before {
+        content: "";
+        position: absolute;
+        inset: -18%;
+        z-index: -1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(203, 232, 107, 0.28), transparent 70%);
+        filter: blur(40px);
+        animation: pulse 7s ease-in-out infinite;
       }
 
       .store-buttons {
@@ -1038,6 +1204,27 @@
         to { transform: translate3d(-50%, 0, 0); }
       }
 
+      /* Ambient motion — all transform/opacity, no layout-affecting properties. */
+      @keyframes drift {
+        from { transform: scale(1.04) translate3d(0, 0, 0); }
+        to { transform: scale(1.13) translate3d(-1.6%, -2.2%, 0); }
+      }
+
+      @keyframes float-a {
+        from { transform: translate3d(0, 0, 0) scale(1); }
+        to { transform: translate3d(9%, 12%, 0) scale(1.16); }
+      }
+
+      @keyframes float-b {
+        from { transform: translate3d(0, 0, 0) scale(1.1); }
+        to { transform: translate3d(-11%, -9%, 0) scale(0.94); }
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.07); }
+      }
+
       @keyframes shimmer {
         from { background-position: 140% 0; }
         to { background-position: -140% 0; }
@@ -1093,7 +1280,7 @@
         }
 
         .card.is-featured h3 {
-          font-family: Lexend, sans-serif;
+          font-family: var(--font-body);
           font-size: 19px;
           font-weight: 700;
         }
@@ -1148,8 +1335,18 @@
           transform: none;
         }
 
-        .ticker-track {
+        /* Ambient motion is switched off outright and parked in a sane resting
+           state, rather than left mid-keyframe by the 0.001ms override above. */
+        .ticker-track,
+        .bloom,
+        .qr-halo::before {
           animation: none;
+        }
+
+        .hero-bg,
+        .download-bg {
+          animation: none;
+          transform: scale(1.04);
         }
       }
     </style>
@@ -1178,6 +1375,10 @@
     <main id="main">
       <!-- ============================ HERO ============================ -->
       <section class="hero on-dark">
+        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-scrim" aria-hidden="true"></div>
+        <div class="bloom bloom-1" aria-hidden="true"></div>
+        <div class="bloom bloom-2" aria-hidden="true"></div>
         <div class="wrap">
           <div class="hero-grid">
             <div class="reveal">
@@ -1245,7 +1446,7 @@
       </section>
 
       <!-- ========================= PULL QUOTE ========================= -->
-      <section class="section band-dark on-dark" id="vi-sao">
+      <section class="section band-dark band-texture on-dark" id="vi-sao">
         <div class="wrap quote-grid">
           <div class="reveal">
             <p class="label">Vì sao chọn Ủ</p>
@@ -1296,7 +1497,9 @@
       </section>
 
       <!-- ========================= DOWNLOAD ========================= -->
-      <section class="section band-dark on-dark" id="tai-app">
+      <section class="download on-dark" id="tai-app">
+        <div class="download-bg" aria-hidden="true"></div>
+        <div class="download-scrim" aria-hidden="true"></div>
         <div class="wrap download-grid">
           <div class="reveal">
             <p class="label">Tải ứng dụng</p>
@@ -1305,7 +1508,7 @@
               Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp ngay trên điện thoại.
             </p>
             <div class="store-buttons">
-              <a class="btn btn-paper" id="app-store" href="#">
+              <a class="btn btn-lime" id="app-store" href="#">
                 <span class="store-glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.2 2.7c.1 1.3-.4 2.5-1.2 3.4-.8.9-2.1 1.6-3.3 1.5-.1-1.2.5-2.5 1.2-3.3.9-1 2.3-1.7 3.4-1.6Zm4.1 15.5c-.6 1.3-.9 1.8-1.7 2.9-1.1 1.5-2.6 3.3-4.4 3.3-1.6 0-2.1-1-4-1s-2.5 1-4 1c-1.8 0-3.2-1.7-4.3-3.2-3-4.3-3.3-9.3-1.5-12 1.3-1.9 3.2-3 5.1-3 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.7 9.6Z"/></svg></span>
                 App Store
               </a>
@@ -1315,7 +1518,9 @@
               </a>
             </div>
           </div>
-          <div class="qr-grid reveal" id="qr-grid" style="--d: 120ms" hidden></div>
+          <div class="qr-halo reveal" id="qr-halo" style="--d: 120ms" hidden>
+            <div class="qr-grid" id="qr-grid"></div>
+          </div>
         </div>
       </section>
     </main>
@@ -1561,8 +1766,10 @@
 
         if (!codes.length) return;
 
+        // Unhide the halo wrapper, not just the grid — an empty halo would
+        // render as a glow with nothing inside it.
+        $('qr-halo').hidden = false;
         const container = $('qr-grid');
-        container.hidden = false;
         container.innerHTML = codes.map((code) => `
           <a class="qr-card" ${code.url ? `href="${escapeHtml(code.url)}"` : ''}>
             <img src="${escapeHtml(code.qr)}" alt="Mã QR tải app Ủ trên ${escapeHtml(code.label)}" loading="lazy" decoding="async" />
