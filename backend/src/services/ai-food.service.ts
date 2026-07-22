@@ -24,10 +24,31 @@ export interface NutritionResult {
 }
 
 const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const RETRYABLE_PROVIDER_STATUSES = new Set([500, 503, 504]);
-const DEFAULT_REQUEST_TIMEOUT_MS = 8_000;
+const RETRYABLE_PROVIDER_STATUSES = new Set([408, 500, 502, 503, 504]);
+
+// Failures that are a property of the model itself (retired, out of quota,
+// rejects a config field): retrying the same model is pointless, but the next
+// model on the ladder may well work.
+const SKIP_MODEL_CODES = new Set(["AI_PROVIDER_CONFIGURATION_ERROR", "AI_PROVIDER_RATE_LIMITED"]);
+const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
 const DEFAULT_RETRY_DELAY_MS = 500;
 const MAX_ATTEMPTS_PER_MODEL = 2;
+
+// Gemini 2.5/3.x are thinking models: reasoning tokens are billed against
+// maxOutputTokens BEFORE any answer text is emitted. A small budget (the old
+// 1200) is consumed entirely by thinking, so the response comes back truncated
+// or empty and JSON.parse fails. Keep this generous.
+const MAX_OUTPUT_TOKENS = 8_192;
+
+// Mobile clients (already shipped to the App Store) abort the /scan request at
+// 45s, so the whole model/retry ladder must finish comfortably before that.
+const TOTAL_BUDGET_MS = 38_000;
+const MIN_ATTEMPT_BUDGET_MS = 6_000;
+
+// Used when GEMINI_PRIMARY_MODEL / GEMINI_FALLBACK_MODEL are unset, and appended
+// to the ladder so a retired model configured in the environment (Google returns
+// 404 "no longer available") degrades to a working model instead of hard-failing.
+const DEFAULT_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
 
 const USER_PROMPT = `Bạn là chuyên gia dinh dưỡng. Phân tích ảnh bữa ăn này và trả về ONLY một JSON object (không có markdown, không có text khác) với cấu trúc sau:
 {
@@ -98,24 +119,19 @@ export class AiScanError extends Error {
   }
 }
 
-function getRequiredModels(): { primary: string; fallback: string } {
-  const primary = process.env.GEMINI_PRIMARY_MODEL?.trim();
-  const fallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
+function getModelLadder(): string[] {
+  const configured = [
+    process.env.GEMINI_PRIMARY_MODEL?.trim(),
+    process.env.GEMINI_FALLBACK_MODEL?.trim(),
+  ].filter((model): model is string => Boolean(model));
 
-  if (!primary || !fallback || primary === fallback) {
-    throw new AiScanError(
-      "Tính năng quét ảnh chưa được cấu hình. Vui lòng liên hệ hỗ trợ.",
-      503,
-      "AI_NOT_CONFIGURED",
-    );
-  }
-
-  return { primary, fallback };
+  // Configured models first, then the built-in defaults as a safety net.
+  return [...new Set([...configured, ...DEFAULT_MODELS])];
 }
 
 function getRequestTimeoutMs(): number {
   const configured = Number(process.env.GEMINI_REQUEST_TIMEOUT_MS);
-  return Number.isFinite(configured) && configured >= 1_000 && configured <= 30_000
+  return Number.isFinite(configured) && configured >= 1_000 && configured <= 40_000
     ? configured
     : DEFAULT_REQUEST_TIMEOUT_MS;
 }
@@ -150,59 +166,171 @@ function imageRejectedError(): AiScanError {
   );
 }
 
+// Retryable: a garbled/truncated answer from one model says nothing about the
+// next one, so the ladder should keep going instead of dead-ending on the user.
+function invalidResponseError(): AiScanError {
+  return new AiScanError(
+    "Không đọc được kết quả phân tích. Vui lòng thử lại.",
+    422,
+    "AI_INVALID_RESPONSE",
+    true,
+  );
+}
+
+/**
+ * Pull a JSON object out of Gemini's answer text.
+ *
+ * Handles the three shapes seen in practice: clean JSON (responseMimeType),
+ * JSON wrapped in a ```json fence, and JSON truncated mid-object when the model
+ * runs out of output tokens — the last case is repaired by closing whatever
+ * brackets are still open.
+ */
+function extractJsonObject(rawText: string): Record<string, unknown> | null {
+  const cleaned = rawText
+    .replace(/^﻿/, "")
+    .replace(/```(?:json)?/gi, "")
+    .trim();
+
+  const start = cleaned.indexOf("{");
+  if (start === -1) return null;
+
+  const candidates: string[] = [];
+  const end = cleaned.lastIndexOf("}");
+  if (end > start) candidates.push(cleaned.slice(start, end + 1));
+  candidates.push(repairTruncatedJson(cleaned.slice(start)));
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // try the next candidate
+    }
+  }
+
+  return null;
+}
+
+/** Close brackets left open by a truncated response, dropping any partial tail. */
+function repairTruncatedJson(text: string): string {
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let lastSafeIndex = -1;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') inString = true;
+    else if (char === "{" || char === "[") stack.push(char === "{" ? "}" : "]");
+    else if (char === "}" || char === "]") {
+      stack.pop();
+      // A closing bracket ends a complete element — cutting here keeps only
+      // whole entries, so a half-written food never reaches the user as 0 kcal.
+      lastSafeIndex = i;
+    }
+  }
+
+  if (stack.length === 0) return text;
+
+  const truncated = lastSafeIndex >= 0 ? text.slice(0, lastSafeIndex + 1) : text;
+  // Recount depth on the trimmed slice — the tail we dropped may have opened brackets.
+  return trimTrailingComma(truncated) + closersFor(truncated);
+}
+
+function trimTrailingComma(text: string): string {
+  return text.replace(/,\s*$/, "");
+}
+
+function closersFor(text: string): string {
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+
+  for (const char of text) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === "{") stack.push("}");
+    else if (char === "[") stack.push("]");
+    else if (char === "}" || char === "]") stack.pop();
+  }
+
+  return stack.reverse().join("");
+}
+
 function logAttempt(fields: Record<string, unknown>): void {
   console.info(JSON.stringify({ event: "food_scan_ai", ...fields }));
 }
 
-function parseGeminiResponse(json: {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-      finishReason?: string;
-    }>;
-    promptFeedback?: { blockReason?: string };
-  }): NutritionResult {
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string; thought?: boolean }> };
+    finishReason?: string;
+  }>;
+  promptFeedback?: { blockReason?: string };
+  usageMetadata?: { thoughtsTokenCount?: number; candidatesTokenCount?: number };
+}
 
+function parseGeminiResponse(json: GeminiResponse): NutritionResult {
   // Surface prompt-level blocks (e.g. SAFETY)
   if (json.promptFeedback?.blockReason) {
     throw imageRejectedError();
   }
 
   const candidate = json.candidates?.[0];
+  const finishReason = candidate?.finishReason;
 
-  // Surface candidate-level blocks
-  if (
-    candidate?.finishReason &&
-    candidate.finishReason !== "STOP" &&
-    candidate.finishReason !== "MAX_TOKENS"
-  ) {
+  // Truncated by the output-token cap — retry, don't blame the user's photo.
+  if (finishReason === "MAX_TOKENS") {
+    console.warn(
+      `[Gemini] MAX_TOKENS (thoughts=${json.usageMetadata?.thoughtsTokenCount ?? 0}, ` +
+      `output=${json.usageMetadata?.candidatesTokenCount ?? 0})`,
+    );
+  } else if (finishReason && finishReason !== "STOP") {
+    // Surface candidate-level blocks (SAFETY, RECITATION, ...)
     throw imageRejectedError();
   }
 
-  // Gemini may split output across multiple parts — join them all.
+  // Gemini may split output across multiple parts — join them all, skipping
+  // thought summaries which are reasoning traces, not the answer.
   const rawText = (candidate?.content?.parts ?? [])
-    .map((p: { text?: string }) => p.text ?? "")
+    .filter((p) => p.thought !== true)
+    .map((p) => p.text ?? "")
     .join("");
 
   if (!rawText.trim()) {
-    console.warn("[Gemini] empty response");
-    throw unavailableError();
+    console.warn(`[Gemini] empty response (finishReason=${finishReason ?? "none"})`);
+    throw finishReason === "MAX_TOKENS" ? invalidResponseError() : unavailableError();
   }
 
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    console.warn("[Gemini] no JSON object found in response");
-    throw new AiScanError("Không đọc được kết quả phân tích. Vui lòng thử lại.", 422, "AI_INVALID_RESPONSE");
+  const raw = extractJsonObject(rawText) as {
+    foods?: Array<Record<string, unknown>>;
+    totals?: Record<string, unknown>;
+    commentVi?: unknown;
+    comment?: unknown;
+  } | null;
+
+  if (!raw) {
+    // Log a bounded prefix so a recurring format change is diagnosable from logs.
+    console.warn(`[Gemini] unparseable response (len=${rawText.length}): ${rawText.slice(0, 300)}`);
+    throw invalidResponseError();
   }
 
-  let raw: { foods?: Array<Record<string, unknown>>; totals?: Record<string, unknown>; commentVi?: unknown; comment?: unknown };
-  try {
-    raw = JSON.parse(jsonMatch[0]) as typeof raw;
-  } catch (parseErr) {
-    console.warn("[Gemini] JSON.parse failed", parseErr);
-    throw new AiScanError("Không đọc được kết quả phân tích. Vui lòng thử lại.", 422, "AI_INVALID_RESPONSE");
-  }
-
-  if (!raw.foods || raw.foods.length === 0) {
+  if (!Array.isArray(raw.foods) || raw.foods.length === 0) {
     throw imageRejectedError();
   }
 
@@ -279,7 +407,12 @@ async function requestGeminiModel(
         { text: USER_PROMPT },
       ],
     }],
-    generationConfig: { maxOutputTokens: 1200, temperature: 0.1 },
+    generationConfig: {
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      temperature: 0.1,
+      // Forces raw JSON — no ```json fences, no prose preamble.
+      responseMimeType: "application/json",
+    },
   };
 
   let response: Response;
@@ -304,17 +437,31 @@ async function requestGeminiModel(
     if (RETRYABLE_PROVIDER_STATUSES.has(response.status)) {
       throw unavailableError(response.status);
     }
+    if (response.status === 429) {
+      throw new AiScanError(
+        "Dịch vụ phân tích ảnh đang bận. Vui lòng thử lại sau ít phút.",
+        503,
+        "AI_PROVIDER_RATE_LIMITED",
+        true,
+        429,
+      );
+    }
     if (response.status >= 400 && response.status < 500) {
+      // 404 = model retired/unknown, 400 = unsupported request field for this
+      // model. Both are model-specific, so mark retryable to let the ladder move
+      // on to the next model rather than failing the whole scan.
       throw new AiScanError(
         "Tính năng quét ảnh tạm thời chưa sẵn sàng. Vui lòng thử lại sau.",
         503,
         "AI_PROVIDER_CONFIGURATION_ERROR",
+        true,
+        response.status,
       );
     }
     throw unavailableError(response.status);
   }
 
-  return parseGeminiResponse(await response.json() as Parameters<typeof parseGeminiResponse>[0]);
+  return parseGeminiResponse(await response.json() as GeminiResponse);
 }
 
 export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult> {
@@ -327,19 +474,38 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     );
   }
 
-  const { primary, fallback } = getRequiredModels();
+  const models = getModelLadder();
+  if (models.length === 0) {
+    throw new AiScanError(
+      "Tính năng quét ảnh chưa được cấu hình. Vui lòng liên hệ hỗ trợ.",
+      503,
+      "AI_NOT_CONFIGURED",
+    );
+  }
+
   const imageBase64 = imageBuffer.toString("base64");
-  const timeoutMs = getRequestTimeoutMs();
-  const models = [primary, fallback];
-  let lastUnavailable: AiScanError | undefined;
+  const configuredTimeoutMs = getRequestTimeoutMs();
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  let lastRetryable: AiScanError | undefined;
   let attemptNumber = 0;
 
   for (const model of models) {
     for (let modelAttempt = 0; modelAttempt < MAX_ATTEMPTS_PER_MODEL; modelAttempt += 1) {
+      // Stop rather than start an attempt the mobile client would time out on.
+      const remainingMs = deadline - Date.now();
+      if (remainingMs < MIN_ATTEMPT_BUDGET_MS) {
+        throw lastRetryable ?? unavailableError();
+      }
+
       attemptNumber += 1;
       const startedAt = Date.now();
       try {
-        const result = await requestGeminiModel(model, imageBase64, apiKey, timeoutMs);
+        const result = await requestGeminiModel(
+          model,
+          imageBase64,
+          apiKey,
+          Math.min(configuredTimeoutMs, remainingMs),
+        );
         logAttempt({ model, attempt: attemptNumber, outcome: "success", durationMs: Date.now() - startedAt });
         return result;
       } catch (err) {
@@ -356,7 +522,9 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
         });
 
         if (!aiError.retryable) throw aiError;
-        lastUnavailable = aiError;
+        lastRetryable = aiError;
+
+        if (SKIP_MODEL_CODES.has(aiError.code)) break;
 
         if (modelAttempt + 1 < MAX_ATTEMPTS_PER_MODEL) {
           await sleep(getRetryDelayMs(modelAttempt));
@@ -365,5 +533,5 @@ export async function analyzeImage(imageBuffer: Buffer): Promise<NutritionResult
     }
   }
 
-  throw lastUnavailable ?? unavailableError();
+  throw lastRetryable ?? unavailableError();
 }
