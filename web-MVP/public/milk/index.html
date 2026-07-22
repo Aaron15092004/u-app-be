@@ -3,276 +3,932 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Các vị sữa Ủ</title>
+    <title>Sữa hạt Ủ — 7 vị, chọn đúng theo thể trạng của bạn</title>
+    <meta
+      name="description"
+      content="Bộ sưu tập 7 vị sữa hạt Ủ, gợi ý theo chỉ số BMI và nhịp sống của bạn. Tải app Ủ để được chấm chỉ số và nhận vị phù hợp mỗi ngày."
+    />
+    <meta name="theme-color" content="#101a08" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sữa hạt Ủ — 7 vị, chọn đúng theo thể trạng của bạn" />
+    <meta
+      property="og:description"
+      content="Bộ sưu tập 7 vị sữa hạt Ủ, gợi ý theo chỉ số BMI và nhịp sống của bạn."
+    />
+    <meta property="og:image" content="/assets/logo.png" />
+    <meta property="og:locale" content="vi_VN" />
+    <link rel="icon" href="/assets/logo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      /* =====================================================================
+         Ủ — Milk collection
+         Editorial grid + bento, paper grain instead of gradient washes.
+         Display face: Playfair Display (verified Vietnamese subset).
+         UI face: Lexend (brand).
+      ===================================================================== */
       :root {
-        font-family: Lexend, Montserrat, Inter, Arial, sans-serif;
-        color: #273611;
-        background: #fff7ec;
+        /* Paper */
+        --paper: #f7efe1;
+        --paper-2: #fffdf8;
+        --ink: #1a2410;
+        --ink-soft: #55603f;
+
+        /* Forest (inverted sections) */
+        --forest: #101a08;
+        --forest-2: #1a2a0d;
+        --forest-line: #2e4218;
+        --on-forest: #f3efe2;
+        --on-forest-soft: #b6c4a2;
+
+        /* Brand */
+        --green: #3e6b10;
+        --green-cta: #577c1c;
+        --green-text: #4e6b19;
+        --lime: #cbe86b;
+        --amber: #e8873a;
+
+        --line: #e2d3ba;
+        --line-2: #d3c0a1;
+
+        --space-3: 24px;
+        --space-4: 40px;
+        --space-5: 72px;
+        --space-6: 112px;
+
+        --r-sm: 4px;
+        --r-md: 10px;
+        --r-lg: 20px;
+        --r-pill: 999px;
+
+        --ease: cubic-bezier(0.16, 0.84, 0.24, 1);
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+        --shadow: 0 24px 60px rgba(26, 36, 16, 0.14);
+        --shadow-lg: 0 40px 90px rgba(26, 36, 16, 0.22);
+
+        color: var(--ink);
+        background: var(--paper);
+        font-family: Lexend, ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
         margin: 0;
-        background: #fff7ec;
+        min-width: 320px;
+        background: var(--paper);
+        overflow-x: hidden;
       }
 
-      .hero {
-        position: relative;
-        overflow: hidden;
-        min-height: 390px;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-        align-items: center;
-        gap: clamp(22px, 5vw, 56px);
-        padding: 48px clamp(18px, 5vw, 84px);
-        background:
-          linear-gradient(90deg, rgba(255,255,255,.96), rgba(255,240,220,.9), rgba(166,206,77,.22)),
-          radial-gradient(circle at right, rgba(166,206,77,.32), transparent 42%);
-        border-bottom: 1px solid #f2dfc6;
+      img {
+        max-width: 100%;
       }
 
-      .hero::before {
+      /* Film grain — the page texture. Inline SVG turbulence, no asset fetch. */
+      body::after {
         content: "";
-        position: absolute;
-        inset: 18px;
+        position: fixed;
+        inset: 0;
+        z-index: 9;
         pointer-events: none;
-        background:
-          linear-gradient(135deg, transparent 0 42%, rgba(255,255,255,.38) 42% 44%, transparent 44%),
-          linear-gradient(45deg, transparent 0 62%, rgba(143,189,62,.18) 62% 64%, transparent 64%);
-        opacity: .7;
+        opacity: 0.42;
+        mix-blend-mode: multiply;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
       }
 
-      .hero-copy {
-        position: relative;
-        z-index: 1;
-        max-width: 720px;
-        animation: fade-up 650ms ease both;
+      .wrap {
+        width: min(1280px, calc(100% - 48px));
+        margin: 0 auto;
       }
 
-      .hero-download {
-        position: relative;
-        z-index: 1;
-        border: 1px solid rgba(143, 189, 62, .22);
-        border-radius: 28px;
-        background: rgba(255,255,255,.82);
-        padding: 24px;
-        box-shadow: 0 18px 46px rgba(85, 69, 42, .12);
-        backdrop-filter: blur(10px);
-        animation: fade-up 700ms ease 120ms both;
+      .wrap-tight {
+        width: min(1080px, calc(100% - 48px));
+        margin: 0 auto;
       }
 
-      .hero-copy > img {
-        width: 82px;
-        height: 82px;
-        border-radius: 22px;
-        margin-bottom: 20px;
-        box-shadow: 0 14px 34px rgba(62, 107, 16, .18);
-        animation: soft-float 4.8s ease-in-out infinite;
-      }
-
-      .eyebrow {
-        margin: 0 0 8px;
-        color: #80a83b;
-        font-size: 12px;
+      /* ---------------------------------------------------------------------
+         Typography — editorial scale
+      --------------------------------------------------------------------- */
+      .display {
+        font-family: "Playfair Display", Georgia, serif;
         font-weight: 800;
-        letter-spacing: .08em;
-        text-transform: uppercase;
+        line-height: 0.92;
+        letter-spacing: -0.035em;
+        margin: 0;
+        text-wrap: balance;
       }
 
-      h1 {
-        margin: 0;
-        font-size: clamp(42px, 8vw, 76px);
-        line-height: .95;
+      .display em {
+        font-style: italic;
+        font-weight: 700;
       }
 
-      h2 {
+      h1.display {
+        font-size: clamp(52px, 10.5vw, 148px);
+      }
+
+      h2.display {
+        font-size: clamp(38px, 6vw, 82px);
+      }
+
+      h3 {
         margin: 0;
-        font-size: clamp(28px, 4vw, 42px);
+        font-size: clamp(18px, 1.5vw, 21px);
+        font-weight: 700;
+        line-height: 1.28;
+        letter-spacing: -0.015em;
       }
 
       p {
-        color: #5f6758;
-        line-height: 1.65;
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.68;
       }
 
-      .section,
-      .download {
-        width: min(1180px, calc(100% - 32px));
-        margin: 0 auto;
-        padding: 42px 0;
+      .lead {
+        font-size: clamp(16px, 1.3vw, 19px);
+        max-width: 46ch;
       }
 
-      .section-head {
+      /* Section label: a hairline rule + tracked-out caps, print style */
+      .label {
         display: flex;
-        justify-content: space-between;
-        gap: 24px;
-        align-items: end;
-        margin-bottom: 22px;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 18px;
-      }
-
-      .card,
-      .qr-card {
-        position: relative;
-        overflow: hidden;
-        border-radius: 24px;
-        background: #fff;
-        border: 1px solid #f0dfca;
-        box-shadow: 0 14px 36px rgba(85, 69, 42, .1);
-        transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-      }
-
-      .card::after {
-        content: "";
-        position: absolute;
-        inset: auto 18px 0;
-        height: 3px;
-        border-radius: 999px 999px 0 0;
-        background: linear-gradient(90deg, #8fbd3e, #fff0dc, #ffb347);
-        transform: scaleX(.34);
-        transform-origin: left;
-        opacity: .8;
-        transition: transform 220ms ease;
-      }
-
-      .card:hover {
-        transform: translateY(-6px);
-        border-color: rgba(143,189,62,.42);
-        box-shadow: 0 22px 48px rgba(85, 69, 42, .16);
-      }
-
-      .card:hover::after {
-        transform: scaleX(1);
-      }
-
-      .image {
-        aspect-ratio: 1 / 1;
-        background: #fff0dc;
-      }
-
-      .image img,
-      .qr-card img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        transition: transform 260ms ease;
-      }
-
-      .card:hover .image img {
-        transform: scale(1.045);
-      }
-
-      .placeholder {
-        width: 100%;
-        height: 100%;
-        display: grid;
-        place-items: center;
-        color: #8ca251;
-        font-weight: 800;
-        background:
-          linear-gradient(135deg, rgba(255,255,255,.72), rgba(255,240,220,.72)),
-          repeating-linear-gradient(45deg, #fff6eb 0 12px, #f7ead8 12px 24px);
-      }
-
-      .body {
-        padding: 18px;
-      }
-
-      .body span {
-        color: #8fbd3e;
-        font-weight: 800;
-        font-size: 12px;
-      }
-
-      .body h3 {
-        margin: 8px 0;
-        font-size: 20px;
-      }
-
-      .download {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-        gap: 28px;
         align-items: center;
+        gap: 14px;
+        margin: 0 0 22px;
+        color: var(--green-text);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
       }
 
-      .buttons {
+      .label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line-2);
+      }
+
+      .on-dark .label {
+        color: var(--lime);
+      }
+
+      .on-dark .label::after {
+        background: var(--forest-line);
+      }
+
+      .on-dark p {
+        color: var(--on-forest-soft);
+      }
+
+      /* ---------------------------------------------------------------------
+         Focus / skip link
+      --------------------------------------------------------------------- */
+      :where(a, button):focus-visible {
+        outline: 3px solid var(--green-cta);
+        outline-offset: 4px;
+        border-radius: var(--r-sm);
+      }
+
+      .on-dark :where(a, button):focus-visible,
+      .site-header.on-dark :where(a, button):focus-visible {
+        outline-color: var(--lime);
+      }
+
+      .skip-link {
+        position: absolute;
+        left: 16px;
+        top: -60px;
+        z-index: 100;
+        padding: 12px 20px;
+        background: var(--forest);
+        color: var(--on-forest);
+        font-weight: 700;
+        text-decoration: none;
+        transition: top 180ms var(--ease);
+      }
+
+      .skip-link:focus-visible {
+        top: 16px;
+      }
+
+      /* ---------------------------------------------------------------------
+         Header
+      --------------------------------------------------------------------- */
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        background: var(--forest);
+        color: var(--on-forest);
+        border-bottom: 1px solid var(--forest-line);
+      }
+
+      .header-inner {
         display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-top: 18px;
+        align-items: center;
+        gap: var(--space-3);
+        height: 72px;
       }
 
-      .buttons a,
-      .buttons span {
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .brand img {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--r-md);
+      }
+
+      .brand b {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 22px;
+        letter-spacing: -0.01em;
+      }
+
+      .brand small {
+        display: block;
+        color: var(--on-forest-soft);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .site-nav {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .site-nav a {
+        padding: 10px 14px;
+        color: var(--on-forest);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        border-radius: var(--r-pill);
+        transition: background 180ms var(--ease), color 180ms var(--ease);
+      }
+
+      .site-nav a:hover {
+        background: var(--forest-2);
+        color: var(--lime);
+      }
+
+      /* ---------------------------------------------------------------------
+         Buttons
+      --------------------------------------------------------------------- */
+      .btn {
         position: relative;
         overflow: hidden;
-        height: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 0 18px;
-        border-radius: 999px;
-        background: linear-gradient(135deg, #7caf25, #b7cd65);
-        color: #fff;
+        gap: 10px;
+        min-height: 52px;
+        padding: 0 26px;
+        border: 1px solid transparent;
+        border-radius: var(--r-pill);
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 700;
         text-decoration: none;
-        font-weight: 800;
-        box-shadow: 0 10px 24px rgba(108,154,36,.22);
-        transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+        cursor: pointer;
+        transition: transform 220ms var(--ease-out), background 220ms var(--ease),
+          color 220ms var(--ease), border-color 220ms var(--ease), box-shadow 220ms var(--ease);
       }
 
-      .buttons a::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        transform: translateX(-120%);
-        background: linear-gradient(110deg, transparent, rgba(255,255,255,.34), transparent);
-        transition: transform 420ms ease;
-      }
-
-      .buttons a:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 16px 32px rgba(108,154,36,.3);
-        filter: saturate(1.08);
-      }
-
-      .buttons a:hover::after {
-        transform: translateX(120%);
-      }
-
-      .buttons span {
-        background: #edf3dc;
-        color: #6f8233;
-      }
-
-      .store-glyph {
-        width: 28px;
-        height: 28px;
-        display: inline-grid;
-        place-items: center;
-        border-radius: 10px;
-        background: rgba(255,255,255,.92);
-        color: #273611;
-        box-shadow: inset 0 0 0 1px rgba(39,54,17,.08);
-      }
-
-      .store-glyph svg {
+      .btn svg {
         width: 18px;
         height: 18px;
         flex: 0 0 auto;
       }
 
-      .store-glyph-play svg {
+      .btn-lime {
+        background: var(--lime);
+        color: #16210a;
+      }
+
+      .btn-lime:hover {
+        transform: translateY(-2px);
+        background: #d9f288;
+        box-shadow: 0 16px 32px rgba(203, 232, 107, 0.24);
+      }
+
+      .btn-outline {
+        border-color: var(--forest-line);
+        color: var(--on-forest);
+      }
+
+      .btn-outline:hover {
+        transform: translateY(-2px);
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+
+      .btn-ink {
+        background: var(--forest);
+        color: var(--on-forest);
+      }
+
+      .btn-ink:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+      }
+
+      .btn-paper {
+        background: var(--paper-2);
+        color: var(--ink);
+      }
+
+      .btn-paper:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.26);
+      }
+
+      .btn.is-disabled {
+        pointer-events: none;
+        opacity: 0.45;
+      }
+
+      .header-cta {
+        display: none;
+        min-height: 44px;
+        padding: 0 20px;
+        font-size: 14px;
+      }
+
+      /* ---------------------------------------------------------------------
+         HERO — dark editorial, asymmetric
+      --------------------------------------------------------------------- */
+      .hero {
+        position: relative;
+        background: var(--forest);
+        color: var(--on-forest);
+        padding: clamp(48px, 7vw, 104px) 0 0;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: -30% 40% 40% -20%;
+        background: radial-gradient(circle, rgba(203, 232, 107, 0.09), transparent 65%);
+        pointer-events: none;
+      }
+
+      .hero-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+        align-items: end;
+        gap: clamp(28px, 4vw, 64px);
+      }
+
+      .hero h1 {
+        color: var(--on-forest);
+      }
+
+      .hero h1 em {
+        color: var(--lime);
+      }
+
+      .hero-sub {
+        display: grid;
+        gap: 26px;
+        margin-top: 34px;
+        max-width: 44ch;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      /* Editorial index list — the flavour count, set like a contents page */
+      .hero-index {
+        margin: 40px 0 0;
+        padding: 0;
+        list-style: none;
+        border-top: 1px solid var(--forest-line);
+      }
+
+      .hero-index li {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        padding: 13px 0;
+        border-bottom: 1px solid var(--forest-line);
+        font-size: 14px;
+        color: var(--on-forest-soft);
+      }
+
+      .hero-index b {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 17px;
+        color: var(--lime);
+        min-width: 32px;
+      }
+
+      .hero-index span {
+        margin-left: auto;
+        font-variant-numeric: tabular-nums;
+        color: var(--on-forest);
+        font-weight: 600;
+      }
+
+      /* Hero image: tall editorial plate, slight tilt, parallax on scroll */
+      .hero-plate {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        border-radius: var(--r-lg);
+        overflow: hidden;
+        background: var(--forest-2);
+        border: 1px solid var(--forest-line);
+        transform: rotate(-1.4deg);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .hero-plate img,
+      .hero-plate .ph {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        will-change: transform;
+      }
+
+      .hero-caption {
+        position: absolute;
+        left: 18px;
+        bottom: 18px;
+        right: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 16px;
+        border-radius: var(--r-md);
+        background: rgba(16, 26, 8, 0.82);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--forest-line);
+        color: var(--on-forest);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .hero-caption svg {
+        width: 17px;
+        height: 17px;
+        flex: 0 0 auto;
+        color: var(--lime);
+      }
+
+      /* Marquee ticker of flavour names */
+      .ticker {
+        position: relative;
+        margin-top: clamp(44px, 6vw, 84px);
+        padding: 20px 0;
+        border-top: 1px solid var(--forest-line);
+        border-bottom: 1px solid var(--forest-line);
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      }
+
+      .ticker-track {
+        display: flex;
+        width: max-content;
+        gap: 44px;
+        animation: slide 42s linear infinite;
+      }
+
+      .ticker:hover .ticker-track {
+        animation-play-state: paused;
+      }
+
+      .ticker span {
+        display: inline-flex;
+        align-items: center;
+        gap: 44px;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(20px, 2.2vw, 30px);
+        font-style: italic;
+        color: var(--on-forest-soft);
+        white-space: nowrap;
+      }
+
+      .ticker span::after {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--lime);
+        flex: 0 0 auto;
+      }
+
+      /* ---------------------------------------------------------------------
+         Sections
+      --------------------------------------------------------------------- */
+      .section {
+        padding: clamp(64px, 9vw, 128px) 0;
+        scroll-margin-top: 84px;
+      }
+
+      .section-head {
+        max-width: 60ch;
+        margin-bottom: var(--space-5);
+      }
+
+      .section-head p {
+        margin-top: 20px;
+      }
+
+      .band-dark {
+        background: var(--forest);
+        color: var(--on-forest);
+      }
+
+      .band-dark h2.display {
+        color: var(--on-forest);
+      }
+
+      .band-dark h2.display em {
+        color: var(--lime);
+      }
+
+      /* Steps — oversized numerals, hairline columns */
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 0;
+        border-top: 1px solid var(--line-2);
+      }
+
+      .step {
+        padding: 36px 32px 40px 0;
+        border-bottom: 1px solid var(--line-2);
+      }
+
+      .step + .step {
+        padding-left: 32px;
+        border-left: 1px solid var(--line-2);
+      }
+
+      .step b {
+        display: block;
+        margin-bottom: 20px;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(48px, 5vw, 70px);
+        font-weight: 700;
+        line-height: 1;
+        /* Reads as a pale editorial numeral but still clears 3:1 at this size —
+           the step order is information, not decoration. */
+        color: #8f7a52;
+      }
+
+      .step h3 {
+        margin-bottom: 12px;
+      }
+
+      .step p {
+        font-size: 15px;
+      }
+
+      /* ---------------------------------------------------------------------
+         Bento flavour grid
+      --------------------------------------------------------------------- */
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: var(--space-4);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 46px;
+        padding: 0 20px;
+        border: 1px solid var(--line-2);
+        border-radius: var(--r-pill);
+        background: transparent;
+        color: var(--ink);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 200ms var(--ease), color 200ms var(--ease),
+          border-color 200ms var(--ease), transform 200ms var(--ease-out);
+      }
+
+      .chip:hover {
+        transform: translateY(-2px);
+        border-color: var(--ink);
+      }
+
+      .chip[aria-pressed="true"] {
+        background: var(--forest);
+        border-color: var(--forest);
+        color: var(--on-forest);
+      }
+
+      .chip b {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--green-text);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .chip[aria-pressed="true"] b {
+        color: var(--lime);
+      }
+
+      .bento {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+        grid-auto-rows: 300px;
+        grid-auto-flow: dense;
+        gap: 18px;
+      }
+
+      .card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: var(--r-lg);
+        background: var(--paper-2);
+        border: 1px solid var(--line);
+        text-decoration: none;
+        color: inherit;
+        transition: transform 320ms var(--ease-out), box-shadow 320ms var(--ease),
+          border-color 320ms var(--ease);
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        border-color: var(--line-2);
+        box-shadow: var(--shadow);
+      }
+
+      .card-media {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        background: #ece0cb;
+      }
+
+      .card-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 720ms var(--ease-out);
+      }
+
+      .card:hover .card-media img {
+        transform: scale(1.06);
+      }
+
+      .card-tag {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 13px;
+        border-radius: var(--r-pill);
+        background: rgba(255, 253, 248, 0.95);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .card-tag svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      .card-body {
+        padding: 20px;
+        border-top: 1px solid var(--line);
+      }
+
+      .card-body p {
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Featured tile: full-bleed image, copy sits on a scrim */
+      .card.is-featured {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+
+      .card.is-featured .card-media {
+        position: absolute;
+        inset: 0;
+      }
+
+      .card.is-featured .card-media::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(16, 26, 8, 0) 32%,
+          rgba(16, 26, 8, 0.72) 68%,
+          rgba(16, 26, 8, 0.94) 100%
+        );
+      }
+
+      .card.is-featured .card-body {
+        position: relative;
+        margin-top: auto;
+        padding: 30px;
+        border-top: 0;
+        color: var(--on-forest);
+      }
+
+      .card.is-featured h3 {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(26px, 2.6vw, 38px);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .card.is-featured p {
+        color: rgba(243, 239, 226, 0.94);
+        font-size: 15px;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        max-width: 46ch;
+      }
+
+      .card.is-featured .card-tag {
+        background: var(--lime);
+        color: #16210a;
+      }
+
+      .ph {
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        width: 100%;
+        height: 100%;
+        color: var(--green-text);
+        font-size: 12px;
+        font-weight: 700;
+        background:
+          repeating-linear-gradient(45deg, #f0e4d1 0 14px, #e9dcc6 14px 28px);
+      }
+
+      .ph svg {
+        width: 32px;
+        height: 32px;
+        opacity: 0.6;
+      }
+
+      /* Skeletons hold the exact tile footprint (no layout shift) */
+      .skeleton {
+        border-radius: var(--r-lg);
+        background: linear-gradient(90deg, #ece0cb 25%, #f6ecdb 50%, #ece0cb 75%);
+        background-size: 240% 100%;
+        animation: shimmer 1.5s linear infinite;
+      }
+
+      .notice {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 26px;
+        border-radius: var(--r-lg);
+        background: var(--paper-2);
+        border: 1px solid var(--line-2);
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .notice svg {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 auto;
+        color: var(--amber);
+      }
+
+      /* ---------------------------------------------------------------------
+         Pull quote
+      --------------------------------------------------------------------- */
+      .quote {
+        max-width: 22ch;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(30px, 4.4vw, 58px);
+        font-style: italic;
+        font-weight: 600;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+        color: var(--on-forest);
+      }
+
+      .quote-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: center;
+        gap: clamp(32px, 5vw, 80px);
+      }
+
+      .facts {
+        display: grid;
+        gap: 2px;
+      }
+
+      .fact {
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+        padding: 22px 0;
+        border-bottom: 1px solid var(--forest-line);
+      }
+
+      .fact:first-child {
+        border-top: 1px solid var(--forest-line);
+      }
+
+      .fact dt {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(38px, 4vw, 56px);
+        font-weight: 700;
+        line-height: 1;
+        color: var(--lime);
+        min-width: 2.6ch;
+      }
+
+      .fact dd {
+        margin: 0;
+        color: var(--on-forest-soft);
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      /* ---------------------------------------------------------------------
+         Download
+      --------------------------------------------------------------------- */
+      .download-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: clamp(32px, 5vw, 72px);
+      }
+
+      .store-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: var(--space-4);
+      }
+
+      .store-glyph {
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+      }
+
+      .store-glyph svg {
         width: 20px;
         height: 20px;
       }
@@ -283,166 +939,420 @@
       .play-mark-red { fill: #ff6b5f; }
 
       .qr-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .hero-download .qr-grid {
-        margin-top: 18px;
+        display: flex;
+        gap: 16px;
       }
 
       .qr-card {
-        min-height: 220px;
-        padding: 14px;
         display: flex;
         flex-direction: column;
         gap: 12px;
+        width: 158px;
+        padding: 14px;
+        border-radius: var(--r-lg);
+        background: var(--paper-2);
+        color: var(--ink);
         text-decoration: none;
-        color: #273611;
-        box-shadow: 0 10px 24px rgba(85, 69, 42, .08);
+        transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease);
       }
 
       .qr-card:hover {
         transform: translateY(-4px);
-        border-color: rgba(143,189,62,.42);
-        box-shadow: 0 18px 36px rgba(85, 69, 42, .14);
+        box-shadow: var(--shadow-lg);
       }
 
-      .qr-img {
+      .qr-card img {
+        width: 100%;
         aspect-ratio: 1 / 1;
-        border-radius: 16px;
-        overflow: hidden;
+        object-fit: cover;
+        border-radius: var(--r-md);
+        display: block;
       }
 
       .qr-card strong {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 7px;
-        text-align: center;
+        gap: 8px;
+        font-size: 13px;
       }
 
-      .disabled {
-        pointer-events: none;
-        opacity: .72;
+      /* ---------------------------------------------------------------------
+         Footer
+      --------------------------------------------------------------------- */
+      .site-footer {
+        background: var(--forest);
+        color: var(--on-forest-soft);
+        padding: var(--space-5) 0 var(--space-4);
       }
 
-      @keyframes fade-up {
-        from {
-          opacity: 0;
-          transform: translateY(18px);
-        }
+      .footer-inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 1px solid var(--forest-line);
+        font-size: 14px;
+      }
 
-        to {
-          opacity: 1;
-          transform: translateY(0);
+      .footer-links {
+        margin-left: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .footer-links a {
+        padding: 9px 13px;
+        border-radius: var(--r-pill);
+        color: var(--on-forest);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 180ms var(--ease), color 180ms var(--ease);
+      }
+
+      .footer-links a:hover {
+        background: var(--forest-2);
+        color: var(--lime);
+      }
+
+      /* ---------------------------------------------------------------------
+         Motion
+      --------------------------------------------------------------------- */
+      .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 760ms var(--ease-out), transform 760ms var(--ease-out);
+        transition-delay: var(--d, 0ms);
+      }
+
+      .reveal.is-in {
+        opacity: 1;
+        transform: none;
+      }
+
+      @keyframes slide {
+        from { transform: translate3d(0, 0, 0); }
+        to { transform: translate3d(-50%, 0, 0); }
+      }
+
+      @keyframes shimmer {
+        from { background-position: 140% 0; }
+        to { background-position: -140% 0; }
+      }
+
+      /* ---------------------------------------------------------------------
+         Responsive — 375 / 768 / 1024 / 1440
+      --------------------------------------------------------------------- */
+      @media (min-width: 900px) {
+        .header-cta {
+          display: inline-flex;
         }
       }
 
-      @keyframes soft-float {
-        0%, 100% {
-          transform: translateY(0);
+      @media (max-width: 1024px) {
+        .hero-grid,
+        .quote-grid,
+        .download-grid {
+          grid-template-columns: 1fr;
+          align-items: start;
         }
 
-        50% {
-          transform: translateY(-5px);
+        .hero-plate {
+          max-width: 460px;
+          aspect-ratio: 4 / 3;
+          transform: none;
+        }
+
+        .quote {
+          max-width: none;
+        }
+      }
+
+      @media (max-width: 899px) {
+        .site-nav {
+          display: none;
+        }
+
+        .card.is-featured {
+          grid-column: span 1;
+          grid-row: span 1;
+        }
+
+        .card.is-featured .card-media {
+          position: relative;
+          inset: auto;
+        }
+
+        .card.is-featured .card-body {
+          color: inherit;
+          padding: 20px;
+          border-top: 1px solid var(--line);
+        }
+
+        .card.is-featured h3 {
+          font-family: Lexend, sans-serif;
+          font-size: 19px;
+          font-weight: 700;
+        }
+
+        .card.is-featured p {
+          color: var(--ink-soft);
+          font-size: 14px;
+        }
+
+        .step,
+        .step + .step {
+          padding: 30px 0;
+          border-left: 0;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .wrap,
+        .wrap-tight {
+          width: calc(100% - 32px);
+        }
+
+        .bento {
+          grid-auto-rows: 340px;
+        }
+
+        .hero-actions .btn {
+          flex: 1 1 100%;
+        }
+
+        .qr-grid {
+          width: 100%;
+        }
+
+        .qr-card {
+          flex: 1;
+          width: auto;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .hero-copy,
-        .hero-download,
-        .hero-copy > img,
-        .card,
-        .qr-card,
-        .buttons a {
-          animation: none !important;
-          transition: none !important;
-        }
-      }
-
-      @media (max-width: 760px) {
-        .section-head,
-        .download {
-          display: block;
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
         }
 
-        .hero {
-          grid-template-columns: 1fr;
+        .reveal {
+          opacity: 1;
+          transform: none;
         }
 
-        .qr-grid {
-          margin-top: 22px;
+        .ticker-track {
+          animation: none;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <section class="hero">
-        <div class="hero-copy">
-          <img src="/assets/logo.png" alt="Ủ" />
-          <p class="eyebrow">Ủ - chăm sóc sức khỏe</p>
-          <h1>Các vị sữa Ủ</h1>
-          <p>Chọn vị sữa hạt phù hợp với thể trạng, nhu cầu năng lượng và nhịp sống mỗi ngày của bạn.</p>
-        </div>
-        <div class="hero-download" id="download-app">
-          <p class="eyebrow">Tải ứng dụng</p>
-          <h2 id="download-title">Tải app Ủ</h2>
-          <p id="download-copy">Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.</p>
-          <div class="buttons">
-            <a id="app-store" href="#">
-              <span class="store-glyph store-glyph-apple"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.2 2.7c.1 1.3-.4 2.5-1.2 3.4-.8.9-2.1 1.6-3.3 1.5-.1-1.2.5-2.5 1.2-3.3.9-1 2.3-1.7 3.4-1.6Zm4.1 15.5c-.6 1.3-.9 1.8-1.7 2.9-1.1 1.5-2.6 3.3-4.4 3.3-1.6 0-2.1-1-4-1s-2.5 1-4 1c-1.8 0-3.2-1.7-4.3-3.2-3-4.3-3.3-9.3-1.5-12 1.3-1.9 3.2-3 5.1-3 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.7 9.6Z"/></svg></span>
-              App Store
-            </a>
-            <a id="play-store" href="#">
-              <span class="store-glyph store-glyph-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-mark-blue" d="M4.2 3.4c-.3.3-.5.7-.5 1.2v14.8c0 .5.2.9.5 1.2l8.7-8.6-8.7-8.6Z"/><path class="play-mark-green" d="m13 12 2.6-2.6L6.1 3.9 13 12Z"/><path class="play-mark-yellow" d="m13 12-6.9 8.1 9.5-5.5L13 12Z"/><path class="play-mark-red" d="m15.6 9.4-2.6 2.6 2.6 2.6 3.5-2c1.1-.6 1.1-2.2 0-2.8l-3.5-2Z"/></svg></span>
-              CH Play
-            </a>
+    <a class="skip-link" href="#main">Bỏ qua tới nội dung chính</a>
+
+    <header class="site-header on-dark">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <img src="/assets/logo.png" alt="" />
+          <span>
+            <b>Ủ</b>
+            <small>Chăm sóc sức khỏe</small>
+          </span>
+        </a>
+        <nav class="site-nav" aria-label="Điều hướng trang">
+          <a href="#bo-suu-tap">Bộ sưu tập</a>
+          <a href="#cach-chon">Cách chọn vị</a>
+          <a href="#vi-sao">Vì sao chọn Ủ</a>
+        </nav>
+        <a class="btn btn-lime header-cta" href="#tai-app">Tải app Ủ</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ============================ HERO ============================ -->
+      <section class="hero on-dark">
+        <div class="wrap">
+          <div class="hero-grid">
+            <div class="reveal">
+              <p class="label">Bộ sưu tập 2026 — Sữa hạt thuần thực vật</p>
+              <h1 class="display">Bảy vị.<br /><em>Một cơ thể</em><br />của riêng bạn.</h1>
+              <div class="hero-sub">
+                <p class="lead">
+                  Mỗi vị được Ủ pha cho một nhu cầu riêng — bồi bổ, giữ dáng hay thanh lọc. App Ủ
+                  chấm chỉ số cơ thể rồi chỉ đúng chai bạn cần hôm nay.
+                </p>
+                <div class="hero-actions">
+                  <a class="btn btn-lime" href="#tai-app">
+                    Nhận gợi ý cho riêng bạn
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                  </a>
+                  <a class="btn btn-outline" href="#bo-suu-tap">Xem bộ sưu tập</a>
+                </div>
+              </div>
+
+              <ul class="hero-index" id="hero-index">
+                <li><b>01</b> Bồi bổ, tăng cân <span id="idx-1">—</span></li>
+                <li><b>02</b> Giữ phong độ <span id="idx-2">—</span></li>
+                <li><b>03</b> Thanh lọc, gọn dáng <span id="idx-3">—</span></li>
+              </ul>
+            </div>
+
+            <div class="reveal" style="--d: 140ms">
+              <figure class="hero-plate" id="hero-plate">
+                <div class="ph">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6v3l2 4v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l2-4V2Z"/><path d="M7 13h10"/></svg>
+                </div>
+                <figcaption class="hero-caption">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M5 10l7-7 7 7"/></svg>
+                  Gợi ý dựa trên chỉ số BMI của bạn
+                </figcaption>
+              </figure>
+            </div>
           </div>
-          <div class="qr-grid">
-            <a class="qr-card" id="app-store-qr-link" href="#">
-              <div class="qr-img" id="app-store-qr"><div class="placeholder">QR đang cập nhật</div></div>
-              <strong>
-                <span class="store-glyph store-glyph-apple"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.2 2.7c.1 1.3-.4 2.5-1.2 3.4-.8.9-2.1 1.6-3.3 1.5-.1-1.2.5-2.5 1.2-3.3.9-1 2.3-1.7 3.4-1.6Zm4.1 15.5c-.6 1.3-.9 1.8-1.7 2.9-1.1 1.5-2.6 3.3-4.4 3.3-1.6 0-2.1-1-4-1s-2.5 1-4 1c-1.8 0-3.2-1.7-4.3-3.2-3-4.3-3.3-9.3-1.5-12 1.3-1.9 3.2-3 5.1-3 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.7 9.6Z"/></svg></span>
+        </div>
+
+        <div class="ticker" aria-hidden="true">
+          <div class="ticker-track" id="ticker-track"></div>
+        </div>
+      </section>
+
+      <!-- ======================= FLAVOUR BENTO ======================= -->
+      <section class="section" id="bo-suu-tap">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <p class="label">Bộ sưu tập</p>
+            <h2 class="display">Bảy vị, <em>mỗi vị một nhiệm vụ</em></h2>
+            <p class="lead">Lọc theo mục tiêu của bạn để xem những vị Ủ dành riêng cho nhóm đó.</p>
+          </div>
+
+          <div class="filters reveal" id="filters" role="group" aria-label="Lọc vị sữa theo mục tiêu" hidden></div>
+
+          <div class="bento" id="milk-grid" aria-live="polite" aria-busy="true">
+            <div class="skeleton is-featured" style="grid-column: span 2; grid-row: span 2"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= PULL QUOTE ========================= -->
+      <section class="section band-dark on-dark" id="vi-sao">
+        <div class="wrap quote-grid">
+          <div class="reveal">
+            <p class="label">Vì sao chọn Ủ</p>
+            <blockquote class="quote">Không ai giống ai, nên không vị nào hợp tất cả.</blockquote>
+          </div>
+          <dl class="facts reveal" style="--d: 120ms">
+            <div class="fact">
+              <dt>07</dt>
+              <dd>vị sữa hạt thuần thực vật: gạo lứt, óc chó, hạt sen, mè đen, rau má, đậu nành, hạt điều.</dd>
+            </div>
+            <div class="fact">
+              <dt>03</dt>
+              <dd>nhóm thể trạng, mỗi nhóm có danh sách vị riêng thay vì gợi ý chung chung.</dd>
+            </div>
+            <div class="fact">
+              <dt>0đ</dt>
+              <dd>chi phí dùng app để chấm chỉ số và theo dõi bữa ăn mỗi ngày.</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ========================== 3 STEPS ========================== -->
+      <section class="section" id="cach-chon">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <p class="label">Cách chọn vị</p>
+            <h2 class="display">Ba bước để biết <em>hôm nay uống gì</em></h2>
+          </div>
+          <div class="steps">
+            <article class="step reveal">
+              <b>01</b>
+              <h3>Chấm chỉ số cơ thể</h3>
+              <p>Nhập chiều cao và cân nặng — app tính BMI rồi xếp bạn vào nhóm thể trạng tương ứng.</p>
+            </article>
+            <article class="step reveal" style="--d: 100ms">
+              <b>02</b>
+              <h3>Nhận vị được gợi ý</h3>
+              <p>Ủ lọc ra những vị hợp mục tiêu của bạn: bồi bổ, giữ phong độ hay thanh lọc.</p>
+            </article>
+            <article class="step reveal" style="--d: 200ms">
+              <b>03</b>
+              <h3>Uống và theo dõi</h3>
+              <p>Ghi lại bữa ăn, nước và vận động trong app để Ủ chỉnh gợi ý theo tiến độ thật.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= DOWNLOAD ========================= -->
+      <section class="section band-dark on-dark" id="tai-app">
+        <div class="wrap download-grid">
+          <div class="reveal">
+            <p class="label">Tải ứng dụng</p>
+            <h2 class="display" id="download-title">Tải app Ủ</h2>
+            <p class="lead" id="download-copy">
+              Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp ngay trên điện thoại.
+            </p>
+            <div class="store-buttons">
+              <a class="btn btn-paper" id="app-store" href="#">
+                <span class="store-glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.2 2.7c.1 1.3-.4 2.5-1.2 3.4-.8.9-2.1 1.6-3.3 1.5-.1-1.2.5-2.5 1.2-3.3.9-1 2.3-1.7 3.4-1.6Zm4.1 15.5c-.6 1.3-.9 1.8-1.7 2.9-1.1 1.5-2.6 3.3-4.4 3.3-1.6 0-2.1-1-4-1s-2.5 1-4 1c-1.8 0-3.2-1.7-4.3-3.2-3-4.3-3.3-9.3-1.5-12 1.3-1.9 3.2-3 5.1-3 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.7 9.6Z"/></svg></span>
                 App Store
-              </strong>
-            </a>
-            <a class="qr-card" id="play-store-qr-link" href="#">
-              <div class="qr-img" id="play-store-qr"><div class="placeholder">QR đang cập nhật</div></div>
-              <strong>
-                <span class="store-glyph store-glyph-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-mark-blue" d="M4.2 3.4c-.3.3-.5.7-.5 1.2v14.8c0 .5.2.9.5 1.2l8.7-8.6-8.7-8.6Z"/><path class="play-mark-green" d="m13 12 2.6-2.6L6.1 3.9 13 12Z"/><path class="play-mark-yellow" d="m13 12-6.9 8.1 9.5-5.5L13 12Z"/><path class="play-mark-red" d="m15.6 9.4-2.6 2.6 2.6 2.6 3.5-2c1.1-.6 1.1-2.2 0-2.8l-3.5-2Z"/></svg></span>
+              </a>
+              <a class="btn btn-paper" id="play-store" href="#">
+                <span class="store-glyph"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-mark-blue" d="M4.2 3.4c-.3.3-.5.7-.5 1.2v14.8c0 .5.2.9.5 1.2l8.7-8.6-8.7-8.6Z"/><path class="play-mark-green" d="m13 12 2.6-2.6L6.1 3.9 13 12Z"/><path class="play-mark-yellow" d="m13 12-6.9 8.1 9.5-5.5L13 12Z"/><path class="play-mark-red" d="m15.6 9.4-2.6 2.6 2.6 2.6 3.5-2c1.1-.6 1.1-2.2 0-2.8l-3.5-2Z"/></svg></span>
                 CH Play
-              </strong>
-            </a>
+              </a>
+            </div>
           </div>
+          <div class="qr-grid reveal" id="qr-grid" style="--d: 120ms" hidden></div>
         </div>
       </section>
-
-      <section class="section">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Danh sách vị</p>
-            <h2>Sữa hạt của Ủ</h2>
-          </div>
-        </div>
-        <div class="grid" id="milk-grid"></div>
-      </section>
-
     </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p>© <span id="year">2026</span> Ủ — Chăm sóc sức khỏe.</p>
+        <nav class="footer-links" aria-label="Liên kết chân trang">
+          <a href="/privacy/">Chính sách bảo mật</a>
+          <a href="/account-deletion/">Xóa tài khoản</a>
+          <a href="#tai-app">Tải app</a>
+        </nav>
+      </div>
+    </footer>
 
     <script>
       const API_URL = 'https://u-app-be.onrender.com';
-      const labels = {
-        lt_18_5: 'BMI < 18.5',
-        range_18_5_22_9: 'BMI 18.5 - 24.9',
-        gt_23: 'BMI >= 25',
-        any: 'Mọi chỉ số BMI',
-      };
+
+      // The BMI rule is the most useful thing we know about a flavour, so it
+      // drives the filters, the tags and the hero index all at once.
+      const GROUPS = [
+        { id: 'all', label: 'Tất cả', tag: '' },
+        { id: 'lt_18_5', label: 'Bồi bổ, tăng cân', tag: 'BMI dưới 18.5' },
+        { id: 'range_18_5_22_9', label: 'Giữ phong độ', tag: 'BMI 18.5 – 24.9' },
+        { id: 'gt_23', label: 'Thanh lọc, gọn dáng', tag: 'BMI từ 25' },
+        { id: 'any', label: 'Mọi thể trạng', tag: 'Mọi chỉ số BMI' },
+      ];
+
+      const APPLE_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.2 2.7c.1 1.3-.4 2.5-1.2 3.4-.8.9-2.1 1.6-3.3 1.5-.1-1.2.5-2.5 1.2-3.3.9-1 2.3-1.7 3.4-1.6Zm4.1 15.5c-.6 1.3-.9 1.8-1.7 2.9-1.1 1.5-2.6 3.3-4.4 3.3-1.6 0-2.1-1-4-1s-2.5 1-4 1c-1.8 0-3.2-1.7-4.3-3.2-3-4.3-3.3-9.3-1.5-12 1.3-1.9 3.2-3 5.1-3 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.6 0 3.3.9 4.5 2.4-4 2.2-3.3 7.9.7 9.6Z"/></svg>';
+      const PLAY_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="play-mark-blue" d="M4.2 3.4c-.3.3-.5.7-.5 1.2v14.8c0 .5.2.9.5 1.2l8.7-8.6-8.7-8.6Z"/><path class="play-mark-green" d="m13 12 2.6-2.6L6.1 3.9 13 12Z"/><path class="play-mark-yellow" d="m13 12-6.9 8.1 9.5-5.5L13 12Z"/><path class="play-mark-red" d="m15.6 9.4-2.6 2.6 2.6 2.6 3.5-2c1.1-.6 1.1-2.2 0-2.8l-3.5-2Z"/></svg>';
+      const BOTTLE_GLYPH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6v3l2 4v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l2-4V2Z"/><path d="M7 13h10"/></svg>';
+      const LEAF_GLYPH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 18 4h3v3a7 7 0 0 1-7 7h-3v6Z"/></svg>';
+
+      const $ = (id) => document.getElementById(id);
 
       function escapeHtml(value) {
-        return String(value || '').replace(/[&<>"']/g, (char) => ({
+        return String(value == null ? '' : value).replace(/[&<>"']/g, (char) => ({
           '&': '&amp;',
           '<': '&lt;',
           '>': '&gt;',
@@ -451,51 +1361,244 @@
         }[char]));
       }
 
+      /**
+       * Ask Cloudinary for a right-sized, auto-format render instead of the raw
+       * upload — the originals are multi-MB phone photos.
+       */
+      function sizedImage(url, width) {
+        if (typeof url !== 'string') return '';
+        if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+        return url.replace('/upload/', `/upload/f_auto,q_auto,c_fill,w_${width}/`);
+      }
+
+      function groupOf(bmiRule) {
+        return GROUPS.find((group) => group.id === bmiRule) || GROUPS[GROUPS.length - 1];
+      }
+
       function setLink(id, url) {
-        const el = document.getElementById(id);
+        const el = $(id);
         if (!el) return;
         if (url) {
           el.href = url;
-          el.classList.remove('disabled');
+          el.classList.remove('is-disabled');
+          el.removeAttribute('aria-disabled');
         } else {
           el.removeAttribute('href');
-          el.classList.add('disabled');
+          el.classList.add('is-disabled');
+          el.setAttribute('aria-disabled', 'true');
         }
       }
 
-      fetch(`${API_URL}/api/config/milk-page`)
-        .then((res) => res.json())
-        .then((json) => {
-          const data = json.data;
-          const grid = document.getElementById('milk-grid');
-          grid.innerHTML = data.flavors.map((flavor) => `
-            <article class="card">
-              <div class="image">
-                ${flavor.imageUrl ? `<img src="${escapeHtml(flavor.imageUrl)}" alt="${escapeHtml(flavor.nameVi)}" />` : '<div class="placeholder">Đang cập nhật ảnh</div>'}
-              </div>
-              <div class="body">
-                <span>${labels[flavor.bmiRule] || 'Mọi chỉ số BMI'}</span>
-                <h3>${escapeHtml(flavor.nameVi)}</h3>
-                <p>${escapeHtml(flavor.positioningVi)}</p>
-              </div>
-            </article>
-          `).join('');
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-          document.getElementById('download-title').textContent = data.download.headlineVi || 'Tải app Ủ';
-          document.getElementById('download-copy').textContent = data.download.copyVi || 'Theo dõi sức khỏe, bữa ăn, tập luyện và nhận gợi ý sữa Ủ phù hợp.';
-          setLink('app-store', data.download.appStoreUrl);
-          setLink('play-store', data.download.playStoreUrl);
-          setLink('app-store-qr-link', data.download.appStoreUrl);
-          setLink('play-store-qr-link', data.download.playStoreUrl);
-          if (data.download.appStoreQrUrl) {
-            document.getElementById('app-store-qr').innerHTML = `<img src="${escapeHtml(data.download.appStoreQrUrl)}" alt="QR App Store" />`;
+      // ---------------------------------------------------------------------
+      // Scroll reveal
+      // ---------------------------------------------------------------------
+      const revealObserver = prefersReducedMotion || !('IntersectionObserver' in window)
+        ? null
+        : new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('is-in');
+              revealObserver.unobserve(entry.target);
+            });
+          }, { rootMargin: '0px 0px -10% 0px', threshold: 0.06 });
+
+      function watchReveal(root) {
+        (root || document).querySelectorAll('.reveal:not(.is-in)').forEach((el) => {
+          if (revealObserver) revealObserver.observe(el);
+          else el.classList.add('is-in');
+        });
+      }
+
+      watchReveal();
+
+      // ---------------------------------------------------------------------
+      // Hero parallax — rAF-throttled, transform only, skipped when the user
+      // asked for reduced motion or the plate is off screen.
+      // ---------------------------------------------------------------------
+      if (!prefersReducedMotion) {
+        const plate = $('hero-plate');
+        let ticking = false;
+
+        const applyParallax = () => {
+          const media = plate.querySelector('img, .ph');
+          if (media) {
+            const shift = Math.min(window.scrollY, 700) * 0.08;
+            media.style.transform = `translate3d(0, ${shift}px, 0) scale(1.08)`;
           }
-          if (data.download.playStoreQrUrl) {
-            document.getElementById('play-store-qr').innerHTML = `<img src="${escapeHtml(data.download.playStoreQrUrl)}" alt="QR CH Play" />`;
-          }
+          ticking = false;
+        };
+
+        window.addEventListener('scroll', () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(applyParallax);
+        }, { passive: true });
+      }
+
+      $('year').textContent = String(new Date().getFullYear());
+
+      // ---------------------------------------------------------------------
+      // Rendering
+      // ---------------------------------------------------------------------
+      let allFlavors = [];
+      let activeGroup = 'all';
+
+      function cardMarkup(flavor, index, featured) {
+        const group = groupOf(flavor.bmiRule);
+        const width = featured ? 900 : 560;
+        const image = sizedImage(flavor.imageUrl, width);
+        const media = image
+          ? `<img src="${escapeHtml(image)}" alt="Sữa hạt vị ${escapeHtml(flavor.nameVi)}" loading="lazy" decoding="async" />`
+          : `<div class="ph">${BOTTLE_GLYPH}<span>Đang cập nhật ảnh</span></div>`;
+
+        return `
+          <article class="card reveal${featured ? ' is-featured' : ''}" style="--d: ${Math.min(index, 6) * 60}ms">
+            <div class="card-media">
+              ${media}
+              <span class="card-tag">${LEAF_GLYPH}${escapeHtml(group.tag || group.label)}</span>
+            </div>
+            <div class="card-body">
+              <h3>${escapeHtml(flavor.nameVi)}</h3>
+              <p>${escapeHtml(flavor.positioningVi)}</p>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderGrid() {
+        const grid = $('milk-grid');
+        const visible = activeGroup === 'all'
+          ? allFlavors
+          : allFlavors.filter((flavor) => (flavor.bmiRule || 'any') === activeGroup);
+
+        grid.setAttribute('aria-busy', 'false');
+
+        if (!visible.length) {
+          grid.innerHTML = '<p class="notice">Chưa có vị nào trong nhóm này.</p>';
+          return;
+        }
+
+        // The big tile only earns its space when there is enough behind it to
+        // fill the rest of the row — otherwise every tile stays equal.
+        const useFeatured = visible.length >= 5;
+        grid.innerHTML = visible
+          .map((flavor, index) => cardMarkup(flavor, index, useFeatured && index === 0))
+          .join('');
+        watchReveal(grid);
+      }
+
+      function renderFilters() {
+        const container = $('filters');
+        const countIn = (id) => allFlavors.filter((flavor) => (flavor.bmiRule || 'any') === id).length;
+        const available = GROUPS.filter((group) => group.id === 'all' || countIn(group.id) > 0);
+
+        if (available.length < 3) return;
+
+        container.hidden = false;
+        container.innerHTML = available.map((group) => {
+          const count = group.id === 'all' ? allFlavors.length : countIn(group.id);
+          return `
+            <button type="button" class="chip" data-group="${escapeHtml(group.id)}"
+              aria-pressed="${group.id === activeGroup}">
+              ${escapeHtml(group.label)}<b>${count}</b>
+            </button>
+          `;
+        }).join('');
+
+        container.querySelectorAll('.chip').forEach((chip) => {
+          chip.addEventListener('click', () => {
+            activeGroup = chip.dataset.group;
+            container.querySelectorAll('.chip').forEach((other) => {
+              other.setAttribute('aria-pressed', String(other === chip));
+            });
+            renderGrid();
+          });
+        });
+      }
+
+      function renderHeroIndex() {
+        const ids = ['lt_18_5', 'range_18_5_22_9', 'gt_23'];
+        ids.forEach((id, i) => {
+          const count = allFlavors.filter((flavor) => (flavor.bmiRule || 'any') === id).length;
+          const slot = $(`idx-${i + 1}`);
+          if (slot) slot.textContent = `${String(count).padStart(2, '0')} vị`;
+        });
+      }
+
+      function renderHeroPlate() {
+        const featured = allFlavors.find((flavor) => flavor.imageUrl);
+        if (!featured) return;
+        const plate = $('hero-plate');
+        const caption = plate.querySelector('.hero-caption');
+        plate.innerHTML = `<img src="${escapeHtml(sizedImage(featured.imageUrl, 900))}" alt="" fetchpriority="high" decoding="async" />`;
+        if (caption) plate.appendChild(caption);
+      }
+
+      function renderTicker() {
+        const names = allFlavors.map((flavor) => flavor.nameVi).filter(Boolean);
+        if (!names.length) return;
+        // Duplicated once so the -50% keyframe loops seamlessly.
+        const run = names.map((name) => `<span>${escapeHtml(name)}</span>`).join('');
+        $('ticker-track').innerHTML = run + run;
+      }
+
+      function renderDownload(download) {
+        if (!download) return;
+        if (download.headlineVi) $('download-title').textContent = download.headlineVi;
+        if (download.copyVi) $('download-copy').textContent = download.copyVi;
+
+        setLink('app-store', download.appStoreUrl);
+        setLink('play-store', download.playStoreUrl);
+
+        // Only surface the QR block once a code actually exists — two empty
+        // placeholder squares read as a broken page, not as a feature.
+        const codes = [
+          { qr: download.appStoreQrUrl, url: download.appStoreUrl, label: 'App Store', glyph: APPLE_GLYPH },
+          { qr: download.playStoreQrUrl, url: download.playStoreUrl, label: 'CH Play', glyph: PLAY_GLYPH },
+        ].filter((code) => Boolean(code.qr));
+
+        if (!codes.length) return;
+
+        const container = $('qr-grid');
+        container.hidden = false;
+        container.innerHTML = codes.map((code) => `
+          <a class="qr-card" ${code.url ? `href="${escapeHtml(code.url)}"` : ''}>
+            <img src="${escapeHtml(code.qr)}" alt="Mã QR tải app Ủ trên ${escapeHtml(code.label)}" loading="lazy" decoding="async" />
+            <strong><span class="store-glyph">${code.glyph}</span>${escapeHtml(code.label)}</strong>
+          </a>
+        `).join('');
+        watchReveal(container.parentElement);
+      }
+
+      fetch(`${API_URL}/api/config/milk-page`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((json) => {
+          const data = (json && json.data) || {};
+          allFlavors = Array.isArray(data.flavors) ? data.flavors : [];
+
+          if (!allFlavors.length) throw new Error('empty');
+
+          renderHeroPlate();
+          renderHeroIndex();
+          renderTicker();
+          renderFilters();
+          renderGrid();
+          renderDownload(data.download);
         })
         .catch(() => {
-          document.getElementById('milk-grid').innerHTML = '<div class="card body">Chưa tải được danh sách vị sữa. Vui lòng thử lại sau.</div>';
+          const grid = $('milk-grid');
+          grid.setAttribute('aria-busy', 'false');
+          grid.innerHTML = `
+            <p class="notice">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+              Chưa tải được danh sách vị sữa. Vui lòng thử lại sau ít phút.
+            </p>
+          `;
         });
     </script>
   </body>
